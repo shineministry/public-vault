@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Shine Mail Composer | Shine Ministry</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<style>
+  :root{--ink:#1c2b2e;--paper:#f6f1e6;--brass:#9c7a3c;--brass-dark:#7a5e2c;--line:#d8cdb0;--navy:#1a365d}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;color:var(--ink);background:linear-gradient(180deg,#f8f3e8,var(--paper));line-height:1.75;padding:40px 16px}
+  .sheet{max-width:780px;margin:0 auto;background:#fffdf7;border:1px solid var(--line);padding:40px 44px;box-shadow:0 12px 40px rgba(28,43,46,.12)}
+  h1{font-size:1.9rem;color:var(--navy);margin:0 0 6px}
+  .subtitle{color:var(--brass-dark);font-size:.9rem;margin-bottom:28px}
+  h2{font-size:1.15rem;color:var(--navy);margin:32px 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px}
+  h3{font-size:1rem;color:var(--brass-dark);margin:18px 0 8px}
+  p,li{font-size:.95rem}
+  ul{padding-left:22px}
+  a{color:#2b6cb0}
+  .badge{display:inline-block;background:var(--navy);color:#f6ad55;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:99px;margin-bottom:14px}
+  .foot{margin-top:36px;border-top:1px dashed var(--line);padding-top:18px;font-size:.82rem;color:#6b5e44}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="badge">Shine Mail Composer · Shine Ministry</div>
+  <h1>Privacy Policy</h1>
+  <div class="subtitle">Effective date: 11 September 2026 · App: <strong>Shine Mail Composer</strong> (mail-composer-502617) · Domain: https://72oe-v2sx.shine-ministry.com · Contact: shinumaths989@gmail.com</div>
+
+  <p>This Privacy Policy describes how <strong>Shine Mail Composer</strong> ("we", "our", "the App"), a correspondence tool operated by <strong>Shine Ministry</strong> and Shineil Keith Mathias, collects, uses, and protects information when you use <a href="https://72oe-v2sx.shine-ministry.com/email-composer.html">https://72oe-v2sx.shine-ministry.com/email-composer.html</a>. The App helps the owner compose and send designed HTML emails via their own Gmail account.</p>
+
+  <h2>1. Who we are</h2>
+  <p><strong>Shine Ministry</strong> is a family-operated initiative based in Salzburg, Austria / Anif, Austria. The App is published under Google Cloud project <code>mail-composer-502617</code> as <strong>Shine Mail Composer</strong>. For any privacy question contact <a href="mailto:shinumaths989@gmail.com">shinumaths989@gmail.com</a>.</p>
+
+  <h2>2. What Google data the App accesses</h2>
+  <p>The App requests <strong>only</strong> the following Google OAuth scope, after your explicit consent:</p>
+  <ul>
+    <li><code>https://www.googleapis.com/auth/gmail.send</code> — <strong>Send email on your behalf</strong>. Used solely to transmit an email you composed in the App through your Gmail account via the Gmail API.</li>
+  </ul>
+  <p>We do <strong>not</strong> request read, inbox, contacts, drive, calendar, or profile scopes. We do not access your inbox, labels, attachments, contact lists, or any other Google service.</p>
+
+  <h3>How the permission is used</h3>
+  <ul>
+    <li>When you click <em>Send now</em> in the composer, the front-end sends <code>to, subject, body (text), html, attachments</code> to our Cloudflare Worker <code>https://email.shinumaths909.workers.dev/send-email</code>.</li>
+    <li>The Worker obtains a short-lived <code>access_token</code> from Google's OAuth server using the stored <code>refresh_token</code> and then calls <code>gmail.users.messages.send</code>. The email is delivered from <strong>your</strong> Gmail address.</li>
+    <li>No email content is retained on the Worker after the API call completes (except transient logs for debugging delivery failures, auto-purged within 7 days).</li>
+  </ul>
+
+  <h2>3. What we collect and what we don't</h2>
+  <ul>
+    <li><strong>We collect:</strong> The recipient address, subject, body, and any files you actively attach at send time — only to perform the send you requested.</li>
+    <li><strong>We store locally only:</strong> Your recent recipient history and signature preferences are stored in <em>your browser's localStorage</em> (<code>ecRecipientHistoryV1</code>, <code>ecCustomSignaturesV1</code>) for convenience. This never leaves your device unless you send an email.</li>
+    <li><strong>We do NOT collect:</strong> Your Gmail password, inbox contents, contacts, browsing history, location, or any personal data beyond what you type into the composer.</li>
+    <li><strong>No third-party analytics</strong> or ad trackers are embedded on the composer page.</li>
+  </ul>
+
+  <h2>4. Data retention and storage</h2>
+  <ul>
+    <li><strong>OAuth tokens:</strong> The Worker's <code>refresh_token</code> for <code>shinumaths989@gmail.com</code> is stored encrypted as a Cloudflare Worker secret (not in code or browser). <code>access_tokens</code> live ~1 hour in memory and are not persisted.</li>
+    <li><strong>Sent mail:</strong> A copy is kept in your Gmail <em>Sent</em> folder per Gmail's normal behavior. We do not maintain a separate database of sent emails.</li>
+    <li><strong>Attachments:</strong> Base64-encoded only for the duration of the API call, then discarded. Files are not saved to R2 or Firestore.</li>
+  </ul>
+
+  <h2>5. How we share data</h2>
+  <p>We do not sell, rent, or share your data with third parties. The only external transfer is to <strong>Google's Gmail API</strong> (googleapis.com) to deliver the message you authored, and to the recipient mail servers. We do not use the data for AI training, profiling, or marketing.</p>
+
+  <h2>6. Security</h2>
+  <ul>
+    <li>All connections use HTTPS/TLS.</li>
+    <li>OAuth tokens are stored as Cloudflare encrypted secrets, never exposed to the browser.</li>
+    <li>The composer page enforces a Content Security Policy and client-side validation; the Worker enforces Origin checks.</li>
+    <li>You can revoke the App's access anytime at <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">myaccount.google.com/permissions</a> → remove <em>Shine Mail Composer</em>. The stored refresh token will then return <code>invalid_grant</code> and sending will be blocked until you re-authorize.</li>
+  </ul>
+
+  <h2>7. Your choices and rights</h2>
+  <ul>
+    <li>Use the App is entirely optional — you can also use <em>Copy full email</em> or <em>Open in mail app</em> to send via a mailto: link without granting Gmail API scope.</li>
+    <li>Clear browser localStorage to erase recipient history.</li>
+    <li>Revoke OAuth access as described above to stop all Gmail API access.</li>
+    <li>Contact us to request deletion of any transient server logs containing your email address.</li>
+  </ul>
+
+  <h2>8. Children's privacy</h2>
+  <p>The App is not directed to children under 13 and does not knowingly collect personal information from children.</p>
+
+  <h2>9. Changes</h2>
+  <p>We will update the Effective date above when this policy changes. Material changes will be noted on the <a href="https://72oe-v2sx.shine-ministry.com/email-composer.html">composer page</a>.</p>
+
+  <h2>10. Contact</h2>
+  <p>Shineil Keith Mathias — Shine Ministry<br>Salzburg / Anif, Austria<br>Email: <a href="mailto:shinumaths989@gmail.com">shinumaths989@gmail.com</a><br>Website: <a href="https://72oe-v2sx.shine-ministry.com/">https://72oe-v2sx.shine-ministry.com</a></p>
+
+  <p>This policy is linked from the App's <a href="https://72oe-v2sx.shine-ministry.com/email-composer.html">homepage</a> and from the Google OAuth consent screen.</p>
+
+  <div class="foot">
+    <div>Document version: 1.0 · Last updated: 11 Sep 2026</div>
+    <div><a href="https://72oe-v2sx.shine-ministry.com/email-composer.html">Shine Mail Composer</a> · <a href="https://72oe-v2sx.shine-ministry.com/terms.html">Terms of Service</a> · <a href="https://72oe-v2sx.shine-ministry.com/">Home</a></div>
+  </div>
+</div>
+</body>
+</html>

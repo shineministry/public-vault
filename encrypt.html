@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encryptor</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#0f172a,#1e293b,#111827);
+    overflow:hidden;
+}
+
+/* Animated Background */
+
+body::before{
+    content:"";
+    position:absolute;
+    width:650px;
+    height:650px;
+    background:rgba(255,255,255,0.05);
+    border-radius:50%;
+    top:-220px;
+    left:-180px;
+    animation:float 8s infinite ease-in-out;
+}
+
+body::after{
+    content:"";
+    position:absolute;
+    width:500px;
+    height:500px;
+    background:rgba(255,255,255,0.04);
+    border-radius:50%;
+    bottom:-180px;
+    right:-120px;
+    animation:float2 10s infinite ease-in-out;
+}
+
+@keyframes float{
+    0%{transform:translateY(0);}
+    50%{transform:translateY(30px);}
+    100%{transform:translateY(0);}
+}
+
+@keyframes float2{
+    0%{transform:translateY(0);}
+    50%{transform:translateY(-30px);}
+    100%{transform:translateY(0);}
+}
+
+.container{
+    position:relative;
+    z-index:2;
+    width:430px;
+    padding:35px;
+    border-radius:24px;
+    background:rgba(255,255,255,0.08);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,0.12);
+    box-shadow:0 15px 40px rgba(0,0,0,0.35);
+    animation:fadeIn 1s ease;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.title{
+    text-align:center;
+    color:white;
+    font-size:32px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.subtitle{
+    text-align:center;
+    color:#cbd5e1;
+    margin-bottom:28px;
+    font-size:14px;
+}
+
+.file-box{
+    border:2px dashed rgba(255,255,255,0.2);
+    padding:25px;
+    border-radius:18px;
+    text-align:center;
+    transition:0.3s;
+    cursor:pointer;
+    color:#fff;
+    margin-bottom:20px;
+    background:rgba(255,255,255,0.03);
+}
+
+.file-box:hover{
+    transform:scale(1.02);
+    border-color:#60a5fa;
+    background:rgba(96,165,250,0.08);
+}
+
+.file-box input{
+    display:none;
+}
+
+.file-label{
+    font-size:16px;
+    font-weight:bold;
+}
+
+.file-info{
+    margin-top:10px;
+    color:#94a3b8;
+    font-size:13px;
+}
+
+.password-box{
+    width:100%;
+    padding:15px;
+    border:none;
+    outline:none;
+    border-radius:14px;
+    background:rgba(255,255,255,0.08);
+    color:white;
+    font-size:15px;
+    margin-bottom:22px;
+    transition:0.3s;
+}
+
+.password-box:focus{
+    background:rgba(255,255,255,0.12);
+    box-shadow:0 0 15px rgba(96,165,250,0.35);
+}
+
+.password-box::placeholder{
+    color:#94a3b8;
+}
+
+.encrypt-btn{
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:16px;
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.encrypt-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(59,130,246,0.4);
+}
+
+.encrypt-btn:active{
+    transform:scale(0.98);
+}
+
+.status{
+    text-align:center;
+    margin-top:18px;
+    color:#93c5fd;
+    font-size:14px;
+    min-height:20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="title">
+        🔐 PDF Encryptor
+    </div>
+
+    <div class="subtitle">
+        Encrypt PDFs, Images or upgrade old .enc files
+    </div>
+
+    <label class="file-box">
+
+        <div class="file-label">
+            📁 Select PDF, Image or ENC Files
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            No files selected
+        </div>
+
+        <input
+            type="file"
+            id="file"
+            accept=".pdf,.enc,.jpg,.jpeg,.png,.gif,.webp,.bmp"
+            multiple
+            onchange="updateFileInfo()"
+        >
+
+    </label>
+
+    <input
+        type="password"
+        id="password"
+        class="password-box"
+        placeholder="Enter password"
+    >
+
+    <button
+        class="encrypt-btn"
+        onclick="encrypt()"
+    >
+        Encrypt / Upgrade Files
+    </button>
+
+    <div class="status" id="status"></div>
+
+</div>
+
+<script>
+
+function updateFileInfo(){
+
+    const files =
+        document.getElementById("file").files;
+
+    const fileInfo =
+        document.getElementById("fileInfo");
+
+    if(files.length === 0){
+
+        fileInfo.innerText =
+            "No files selected";
+
+    }else{
+
+        fileInfo.innerText =
+            files.length + " file(s) selected";
+    }
+}
+
+async function sha256(text){
+
+    const enc = new TextEncoder();
+
+    const hash =
+        await crypto.subtle.digest(
+            "SHA-256",
+            enc.encode(text)
+        );
+
+    return new Uint8Array(hash);
+}
+
+async function deriveKey(passwordHash,salt){
+
+    const keyMaterial =
+        await crypto.subtle.importKey(
+            "raw",
+            passwordHash,
+            "PBKDF2",
+            false,
+            ["deriveKey"]
+        );
+
+    return await crypto.subtle.deriveKey(
+        {
+            name:"PBKDF2",
+            salt:salt,
+            iterations:300000,
+            hash:"SHA-256"
+        },
+        keyMaterial,
+        {
+            name:"AES-GCM",
+            length:256
+        },
+        false,
+        ["encrypt","decrypt"]
+    );
+}
+
+async function encryptData(data,password){
+
+    const passwordHash =
+        await sha256(password);
+
+    const salt =
+        crypto.getRandomValues(
+            new Uint8Array(16)
+        );
+
+    const iv =
+        crypto.getRandomValues(
+            new Uint8Array(12)
+        );
+
+    const key =
+        await deriveKey(
+            passwordHash,
+            salt
+        );
+
+    const encrypted =
+        await crypto.subtle.encrypt(
+            {
+                name:"AES-GCM",
+                iv:iv
+            },
+            key,
+            data
+        );
+
+    const settings = {
+
+        version:2,
+
+        method:"HASH_DERIVED_KEY",
+
+        algorithm:"AES-GCM",
+
+        hash:"SHA-256",
+
+        iterations:300000
+
+    };
+
+    const settingsBytes =
+        new TextEncoder().encode(
+            JSON.stringify(settings)
+        );
+
+    const settingsLength =
+        new Uint32Array([
+            settingsBytes.length
+        ]);
+
+    return new Blob(
+        [
+            settingsLength,
+            settingsBytes,
+            salt,
+            iv,
+            new Uint8Array(encrypted)
+        ],
+        {
+            type:"application/octet-stream"
+        }
+    );
+}
+
+async function decryptOldENC(data,password){
+
+    const enc = new TextEncoder();
+
+    const iv =
+        data.slice(0,12);
+
+    const encrypted =
+        data.slice(12);
+
+    const keyMaterial =
+        await crypto.subtle.importKey(
+            "raw",
+            enc.encode(password),
+            "PBKDF2",
+            false,
+            ["deriveKey"]
+        );
+
+    const key =
+        await crypto.subtle.deriveKey(
+            {
+                name:"PBKDF2",
+                salt:enc.encode(
+                    "UltraSecureSalt987!"
+                ),
+                iterations:250000,
+                hash:"SHA-256"
+            },
+            keyMaterial,
+            {
+                name:"AES-GCM",
+                length:256
+            },
+            false,
+            ["decrypt"]
+        );
+
+    return await crypto.subtle.decrypt(
+        {
+            name:"AES-GCM",
+            iv:new Uint8Array(iv)
+        },
+        key,
+        encrypted
+    );
+}
+
+async function processFile(file,password){
+
+    const data =
+        await file.arrayBuffer();
+
+    let finalBlob;
+
+    if(file.name.endsWith(".enc")){
+
+        const decrypted =
+            await decryptOldENC(
+                data,
+                password
+            );
+
+        finalBlob =
+            await encryptData(
+                decrypted,
+                password
+            );
+
+    }else{
+
+        finalBlob =
+            await encryptData(
+                data,
+                password
+            );
+    }
+
+    const a =
+        document.createElement("a");
+
+    a.href =
+        URL.createObjectURL(finalBlob);
+
+if(file.name.endsWith(".enc")){
+
+    // keep same filename
+    a.download = file.name;
+
+}else{
+
+    a.download =
+        file.name.replace(
+            /\.(pdf|jpg|jpeg|png|gif|webp|bmp)$/i,
+            ".enc"
+        );
+}
+
+    a.click();
+}
+
+async function encrypt(){
+
+    const files =
+        document.getElementById("file").files;
+
+    const password =
+        document.getElementById("password").value;
+
+    const status =
+        document.getElementById("status");
+
+    if(files.length === 0){
+
+        status.innerText =
+            "⚠ Please select files.";
+
+        return;
+    }
+
+    if(password.trim() === ""){
+
+        status.innerText =
+            "⚠ Enter password.";
+
+        return;
+    }
+
+    status.innerText =
+        "🔄 Processing files...";
+
+    for(let i=0;i<files.length;i++){
+
+        try{
+
+            await processFile(
+                files[i],
+                password
+            );
+
+        }catch(err){
+
+            console.error(err);
+
+            status.innerText =
+                "❌ Failed: " +
+                files[i].name;
+
+            return;
+        }
+    }
+
+    status.innerText =
+        "✅ All files processed.";
+}
+
+</script>
+
+</body>
+</html>

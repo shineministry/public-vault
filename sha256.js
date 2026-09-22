@@ -1,0 +1,28 @@
+/* =========================
+   SHA-256 UTILITY
+   (No Firebase SDK — all Firestore access is via Cloudflare Worker backend)
+========================= */
+
+window.sha256 = async function(text){
+
+    const msgBuffer =
+    new TextEncoder().encode(text);
+
+    const hashBuffer =
+    await crypto.subtle.digest(
+        'SHA-256',
+        msgBuffer
+    );
+
+    const hashArray =
+    Array.from(
+        new Uint8Array(hashBuffer)
+    );
+
+    return hashArray
+    .map(b =>
+        b.toString(16).padStart(2,'0')
+    )
+    .join('');
+
+}
