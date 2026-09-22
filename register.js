@@ -75,12 +75,55 @@ function openRegister(){
 }
 function closeRegister(){ const m=document.getElementById('register-modal'); if(m) m.style.display='none'; }
 
+// ── DEMO mode — admin only, hidden. Not shown to users. ──────────────
+// Trigger: triple-click the lock icon + URL ?demo=1 or localStorage admin flag
+async function enterDemoMode(){
+  const secret = prompt('Admin demo secret:');
+  if(!secret) return;
+  try{
+    const backend=(window.PUBLIC_WORKER_URL||'https://__PUBLIC_WORKER_URL__').replace(/\/$/,'');
+    const r=await fetch(`${backend}/public/demo-login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.success) throw new Error(j.error||'Demo login failed');
+    sessionStorage.setItem('vaultSession', j.sessionToken);
+    sessionStorage.setItem('vaultSessionToken', j.sessionToken);
+    sessionStorage.setItem('vaultMode','DEMO');
+    localStorage.setItem('vaultDemo','1');
+    sessionStorage.setItem('vaultDemo','1');
+    showNotification('Demo Mode — Admin Only','Demo active: unlimited storage, no payment gate, hidden from users.',{type:'success'});
+    setTimeout(()=>location.reload(),700);
+  }catch(e){ showNotification('Demo failed', e.message,{type:'error'}); }
+}
+function exitDemoMode(){
+  localStorage.removeItem('vaultDemo'); sessionStorage.removeItem('vaultDemo'); sessionStorage.removeItem('vaultMode');
+  // keep session but reload will enforce normal plan gate
+  location.reload();
+}
+// Show demo badge when active
+function renderDemoBadge(){
+  if(!isDemoMode()) return;
+  const h=document.getElementById('landHeader');
+  if(h && !document.getElementById('demo-badge')){
+    const b=document.createElement('div');
+    b.id='demo-badge'; b.style.cssText='background:#0f172a;color:#f59e0b;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:6px;margin-left:12px;cursor:pointer;';
+    b.innerHTML='DEMO — Admin Only <span onclick="exitDemoMode()" style="background:#f59e0b;color:#0f172a;padding:2px 8px;border-radius:999px;cursor:pointer;">Exit</span>';
+    b.title='Demo mode — unlimited, no payment. Hidden from normal users.';
+    h.querySelector('.land-title')?.appendChild(b);
+  }
+}
+
 // Hook login button to offer register alternative
 document.addEventListener('DOMContentLoaded', ()=>{
+  renderDemoBadge();
+  // Auto-enter demo if ?demo=1 and admin secret in hash (hidden path)
+  if(new URLSearchParams(location.search).has('demo') || location.hash.includes('admin-demo')){
+    // don't auto-login, just reveal trigger
+    const t=document.querySelector('.land-title');
+    if(t){ t.style.cursor='pointer'; t.title='Triple-click for admin demo'; let c=0; t.addEventListener('click',()=>{ c++; if(c>=3){ c=0; enterDemoMode(); } setTimeout(()=>c=0,1200); }); }
+  }
   // If user not logged in, show Register as primary on landing CTA
   const cta=document.querySelector('.land-cta');
   if(cta && !sessionStorage.getItem('vaultSession')){
-    cta.textContent='Create Free Account →';
-    cta.setAttribute('onclick','openRegister()');
+    // keep Register as primary — demo is hidden via title triple-click only
   }
 });

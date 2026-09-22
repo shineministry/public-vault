@@ -1621,9 +1621,25 @@ async handleVerifyTOTP(request, env, corsOrigin) {
   async handlePublicMe(request, env, corsOrigin){
     const session = await Controllers.requireAuth(request, env);
     if(!session) return createJsonResponse({error:"Unauthorized — login or pay for plan"},401,corsOrigin);
-    // Return quota info; real usage would sum R2 usage
+    // Admin/demo bypass — unlimited, no gate
+    if(session.mode==='ADMIN' || session.mode==='DEMO'){
+      return createJsonResponse({success:true, plan:'demo', storageGB:9999, usedGB:0, demo:true, note:"DEMO / ADMIN — unlimited, no payment required. Hidden mode, not shown to users."},200,corsOrigin);
+    }
     const plan = PUBLIC_PLANS.free;
     return createJsonResponse({success:true, plan:'free', storageGB:plan.storageGB, usedGB:0, note:"Free strictly 10GB — R2 free tier. Upgrade to Normal/Pro/Family/Business (€3–10 / $3–10 / ₹299–999) for more, else uploads blocked."},200,corsOrigin);
+  },
+  async handlePublicDemoLogin(request, env, corsOrigin){
+    try{
+      const body = await request.json().catch(()=>null);
+      const secret = String(body?.secret||"").trim();
+      const expected = (env.DEMO_ADMIN_SECRET || env.MASTER_PASSWORD || "").trim();
+      // Also accept hash comparison if ADMIN_HASH env set
+      const hash = await sha256Hex(secret);
+      const isValid = expected && (timingSafeEqual(secret, expected) || (env.ADMIN_HASH && timingSafeEqual(hash, env.ADMIN_HASH)));
+      if(!isValid) return createJsonResponse({success:false, error:"Invalid demo secret"},403,corsOrigin);
+      const token = await createSessionToken(env, 'DEMO');
+      return createJsonResponse({success:true, sessionToken:token, mode:'DEMO', demo:true},200,corsOrigin);
+    }catch(e){ return createJsonResponse({success:false, error:e.message},500,corsOrigin); }
   },
 
   // ─── POST /ai-file-indexed ─────────────────────────
@@ -2884,11 +2900,12 @@ if (method === "POST" || method === "PUT") {
   }
 }
 
-      // ── Public SaaS routes (self-register, pricing, Stripe) ──────────────
+      // ── Public SaaS routes (self-register, pricing, Stripe, demo) ───────
       if (url.pathname === "/public/register"       && method === "POST") return Controllers.handlePublicRegister(request, env, corsOrigin);
       if (url.pathname === "/public/create-checkout"&& method === "POST") return Controllers.handlePublicCreateCheckout(request, env, corsOrigin);
       if (url.pathname === "/public/stripe-webhook"&& method === "POST") return Controllers.handlePublicStripeWebhook(request, env, corsOrigin);
       if (url.pathname === "/public/me"             && method === "GET")  return Controllers.handlePublicMe(request, env, corsOrigin);
+      if (url.pathname === "/public/demo-login"     && method === "POST") return Controllers.handlePublicDemoLogin(request, env, corsOrigin);
 
       // ── Auth routes ───────────────────────────────────────────────────
       if (url.pathname === "/get-secret"      && method === "POST") return Controllers.handleGetSecret(request, env, corsOrigin);

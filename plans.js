@@ -53,7 +53,11 @@ function renderPricing(){
   if(selEl) selEl.textContent = `${sel.name} — ${sel.storageGB>=1024?'1TB':sel.storageGB+'GB'} — ${formatPrice(sel,_selectedCurrency)}`;
 }
 
+function isDemoMode(){
+  return sessionStorage.getItem('vaultMode')==='DEMO' || localStorage.getItem('vaultDemo')==='1' || sessionStorage.getItem('vaultDemo')==='1';
+}
 function enforceStorageGate(usedGB){
+  if(isDemoMode()) return true; // admin demo — unlimited, no gate
   const plan = getSelectedPlan() || VAULT_PLANS.free;
   const curPlan = JSON.parse(localStorage.getItem('vaultPlan')||'null') || plan;
   const limit = curPlan.storageGB;
