@@ -1134,7 +1134,11 @@ Recommended:
   <div class="land-hero">
     <h1>Your Fortress for<br>Secure Digital Documents</h1>
     <p>The Online Vault is a fully encrypted document management platform - store, view, share, and organize your most sensitive files with military-grade protection. No data leaves your control.</p>
-    <button class="land-cta" onclick="trustedGoToDashboard()"><i data-lucide="key" style="width:18px;height:18px;"></i> Access Your Vault -></button>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <button class="land-cta" onclick="openRegister()"><i data-lucide="user-plus" style="width:18px;height:18px;"></i> Register — Start Free (10GB)</button>
+      <button class="land-cta" onclick="trustedGoToDashboard()" style="background:#fff;color:#2563eb;border:1px solid #e2e8f0;box-shadow:none;"><i data-lucide="key" style="width:18px;height:18px;"></i> Login</button>
+    </div>
+    <div style="margin-top:14px;font-size:12px;color:#64748b;font-weight:600;"><i data-lucide="triangle-alert" style="width:12px;height:12px;color:#f59e0b;"></i> Free is strictly 10GB (R2 free tier). Beyond 10GB, R2 is paid — upgrade to Normal/Pro/Family/Business (€3–10 / $3–10 / ₹299–999 / mo) or uploads are blocked.</div>
   </div>
 
   <div class="land-features">
@@ -1195,8 +1199,37 @@ Recommended:
       </div>
     </div>
   </div>
+
+  <!-- PRICING -->
+  <div id="pricing" style="max-width:1100px;margin:24px auto 0;padding:0 24px;">
+    <h2 style="text-align:center;font-weight:900;font-size:22px;color:#0f172a;margin-bottom:6px;">Choose Your Vault — Free strictly 10GB</h2>
+    <p style="text-align:center;color:#64748b;font-size:13px;max-width:640px;margin:0 auto 16px;">R2 is free only till 10GB — beyond that we pay Cloudflare per GB. So Free is capped at 10GB. Paid tiers fund R2 + support. No payment = no access beyond Free limit. Currency auto-detects — switch below.</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px;">
+      <button onclick="setCurrency('EUR')" style="padding:8px 14px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;font-weight:700;cursor:pointer;">€ EUR</button>
+      <button onclick="setCurrency('USD')" style="padding:8px 14px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;font-weight:700;cursor:pointer;">$ USD</button>
+      <button onclick="setCurrency('INR')" style="padding:8px 14px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;font-weight:700;cursor:pointer;">₹ INR</button>
+    </div>
+    <div id="pricing-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;"></div>
+    <div style="text-align:center;margin-top:16px;"><button onclick="openRegister()" style="padding:14px 28px;border-radius:12px;border:none;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-weight:800;cursor:pointer;">Register with <span id="selected-plan-label">Free — 10GB — Free</span> →</button><div style="font-size:11px;color:#94a3b8;margin-top:6px;">By registering you agree to <a href="terms.html" target="_blank" style="color:#2563eb;">Terms</a> & <a href="privacy.html" target="_blank" style="color:#2563eb;">Privacy</a> — tick required at signup.</div></div>
+  </div>
 </div>
 <!-- ---- END LANDING ---- -->
+
+<!-- REGISTER MODAL -->
+<div id="register-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.6);backdrop-filter:blur(6px);z-index:99999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:20px;max-width:520px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;overflow:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="margin:0;font-weight:900;color:#0f172a;">Create Account</h3><button onclick="closeRegister()" style="border:none;background:#f1f5f9;width:32px;height:32px;border-radius:50%;cursor:pointer;">✕</button></div>
+    <div id="register-pricing-mini" style="margin-bottom:12px;font-size:12px;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px;">Selected: <b id="register-plan-label">Free — 10GB</b> — <span style="color:#dc2626;font-weight:700;">Free is strictly 10GB. Upgrade needed after.</span> <a href="#pricing" onclick="closeRegister();document.getElementById('pricing').scrollIntoView({behavior:'smooth'});" style="color:#2563eb;">Change plan</a></div>
+    <div style="display:grid;gap:12px;">
+      <input id="reg-name" placeholder="Full name" style="padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;">
+      <input id="reg-email" placeholder="Email" type="email" style="padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;">
+      <input id="reg-pass" placeholder="Password (min 8 chars)" type="password" style="padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:14px;">
+      <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;color:#475569;cursor:pointer;"><input id="reg-terms" type="checkbox" style="margin-top:3px;"><span>I tick to agree to <a href="terms.html" target="_blank" style="color:#2563eb;font-weight:700;">Terms & Conditions</a> and <a href="privacy.html" target="_blank" style="color:#2563eb;font-weight:700;">Privacy Policy</a>. I understand Free is strictly 10GB (R2 free tier); paid tiers €3–10 / $3–10 / ₹299–999 / mo fund R2 beyond 10GB and are required for more storage. No payment = no access beyond limit.</span></label>
+    </div>
+    <button id="reg-btn" onclick="handleRegister()" style="width:100%;margin-top:16px;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-weight:800;font-size:14px;cursor:pointer;">Create Account & Continue</button>
+    <div style="text-align:center;margin-top:10px;font-size:12px;color:#64748b;">Paid plans redirect to secure Stripe Checkout — you cannot use Normal/Pro/Family/Business storage without successful payment.</div>
+  </div>
+</div>
 
 <!-- OFFLINE BANNER -->
   <div id="offline-banner"><i data-lucide="zap" style="width:16px;height:16px;vertical-align:middle;"></i> You are offline - Vault is running from cache (Cloudflare R2)</div><!-- HOVER PREVIEW TOOLTIP -->
@@ -5474,13 +5507,17 @@ Recommended:
   }
   function closeFilesModal(){ const m=document.getElementById('filesWindowModal'); if(m) m.style.display='none'; }
   // Allow popup to request token
-  window.addEventListener('message', function(e){
+   window.addEventListener('message', function(e){
     if(e.data && e.data.type==='REQUEST_VAULT_TOKEN'){
       const t=sessionStorage.getItem('vaultSessionToken')||sessionStorage.getItem('vaultSession')||'';
       try{ e.source.postMessage({type:'VAULT_TOKEN', token:t}, '*'); }catch(err){}
     }
   });
   </script>
+<script>window.PUBLIC_WORKER_URL='https://__PUBLIC_WORKER_URL__';</script>
+<script src="plans.js"></script>
+<script src="register.js"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{ if(typeof renderPricing==='function') renderPricing(); });</script>
 </body>
 
 </html>

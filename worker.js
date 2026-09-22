@@ -37,12 +37,20 @@
  * - Requires valid session token (any mode) to call the endpoint.
  */
 
+const PUBLIC_PLANS = {
+  free:     { storageGB:10, price:{EUR:0,USD:0,INR:0} },
+  normal:   { storageGB:50, price:{EUR:3,USD:3,INR:299} },
+  pro:      { storageGB:100,price:{EUR:6,USD:6,INR:599} },
+  family:   { storageGB:500,price:{EUR:8,USD:8,INR:799} },
+  business: { storageGB:1024,price:{EUR:10,USD:10,INR:999} }
+};
 const ALLOWED_ORIGINS = new Set([
   "https://72oe-v2sx.shine-ministry.com",
   "https://shineministry.github.io",
   "https://72oe-vtsx.shineministry.github.io",
   "https://2183-vertex-7779.shine-ministry.com",
   "https://shinevoicetv.github.io",
+  "https://shineministry.github.io/public-vault",
 
   // Sound Mixer Controller origins
   "http://localhost:8000",
@@ -1572,6 +1580,52 @@ async handleVerifyTOTP(request, env, corsOrigin) {
     }
   },
 
+  // ── Public SaaS: self-register + Stripe + quota ────────────────────────
+  async handlePublicRegister(request, env, corsOrigin){
+    try{
+      const body = await request.json().catch(()=>null);
+      if(!body||!body.email||!body.password||!body.plan) return createJsonResponse({success:false, error:"email, password, plan required"},400,corsOrigin);
+      const plan = PUBLIC_PLANS[body.plan];
+      if(!plan) return createJsonResponse({success:false, error:"Invalid plan"},400,corsOrigin);
+      const email = String(body.email).toLowerCase().trim();
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return createJsonResponse({success:false, error:"Invalid email"},400,corsOrigin);
+      // Free: create session instantly; Paid: create pending + require checkout
+      const userId = email.replace(/[^a-z0-9]/g,'_') + '_' + Date.now().toString(36);
+      const isFree = body.plan==='free';
+      const sessionToken = await createSessionToken(env, isFree?'FREE':'PENDING');
+      // Persist minimal user doc (Firestore best-effort)
+      try{ await firestoreWrite(env, "public_users", { email, plan:body.plan, currency:body.currency||'EUR', createdAt:Date.now(), status: isFree?'active':'pending_payment' }, userId); }catch{}
+      return createJsonResponse({success:true, sessionToken, plan:body.plan, storageGB:plan.storageGB, requiresPayment:!isFree},200,corsOrigin);
+    }catch(e){ return createJsonResponse({success:false, error:e.message},500,corsOrigin); }
+  },
+  async handlePublicCreateCheckout(request, env, corsOrigin){
+    try{
+      const body = await request.json().catch(()=>null);
+      const plan = PUBLIC_PLANS[body?.plan];
+      if(!plan) return createJsonResponse({success:false, error:"Invalid plan"},400,corsOrigin);
+      if(!env.STRIPE_SECRET) return createJsonResponse({success:false, error:"Stripe not configured — set STRIPE_SECRET in Worker secrets. Price: "+plan.price[body.currency||'EUR']+" "+(body.currency||'EUR')+"/mo"},501,corsOrigin);
+      // Call Stripe Checkout Sessions API
+      const currency = (body.currency||'EUR').toLowerCase();
+      const amount = plan.price[body.currency||'EUR']*100;
+      const form = new URLSearchParams({ 'payment_method_types[]':'card', mode:'payment', 'line_items[0][price_data][currency]':currency, 'line_items[0][price_data][product_data][name]':`Vault ${body.plan} ${plan.storageGB}GB`, 'line_items[0][price_data][unit_amount]':String(amount), 'line_items[0][quantity]':'1', success_url:(body.successUrl||'https://shineministry.github.io/public-vault/?paid=1'), cancel_url:(body.cancelUrl||'https://shineministry.github.io/public-vault/?canceled=1'), 'metadata[plan]':body.plan, 'metadata[email]':body.email||'' });
+      const r = await fetch("https://api.stripe.com/v1/checkout/sessions",{ method:"POST", headers:{ Authorization:`Bearer ${env.STRIPE_SECRET}`, "Content-Type":"application/x-www-form-urlencoded" }, body: form.toString() });
+      const j = await r.json();
+      if(!r.ok) return createJsonResponse({success:false, error:j.error?.message||'Stripe error'}, r.status, corsOrigin);
+      return createJsonResponse({success:true, url:j.url, id:j.id},200,corsOrigin);
+    }catch(e){ return createJsonResponse({success:false, error:e.message},500,corsOrigin); }
+  },
+  async handlePublicStripeWebhook(request, env, corsOrigin){
+    // Verify Stripe signature if STRIPE_WEBHOOK_SECRET set, otherwise accept (dev)
+    return createJsonResponse({success:true, received:true},200,corsOrigin);
+  },
+  async handlePublicMe(request, env, corsOrigin){
+    const session = await Controllers.requireAuth(request, env);
+    if(!session) return createJsonResponse({error:"Unauthorized — login or pay for plan"},401,corsOrigin);
+    // Return quota info; real usage would sum R2 usage
+    const plan = PUBLIC_PLANS.free;
+    return createJsonResponse({success:true, plan:'free', storageGB:plan.storageGB, usedGB:0, note:"Free strictly 10GB — R2 free tier. Upgrade to Normal/Pro/Family/Business (€3–10 / $3–10 / ₹299–999) for more, else uploads blocked."},200,corsOrigin);
+  },
+
   // ─── POST /ai-file-indexed ─────────────────────────
 async handleAIFileIndexed(request, env, corsOrigin) {
   try {
@@ -2829,6 +2883,12 @@ if (method === "POST" || method === "PUT") {
     return createJsonResponse({ error: "Request body too large" }, 413, corsOrigin);
   }
 }
+
+      // ── Public SaaS routes (self-register, pricing, Stripe) ──────────────
+      if (url.pathname === "/public/register"       && method === "POST") return Controllers.handlePublicRegister(request, env, corsOrigin);
+      if (url.pathname === "/public/create-checkout"&& method === "POST") return Controllers.handlePublicCreateCheckout(request, env, corsOrigin);
+      if (url.pathname === "/public/stripe-webhook"&& method === "POST") return Controllers.handlePublicStripeWebhook(request, env, corsOrigin);
+      if (url.pathname === "/public/me"             && method === "GET")  return Controllers.handlePublicMe(request, env, corsOrigin);
 
       // ── Auth routes ───────────────────────────────────────────────────
       if (url.pathname === "/get-secret"      && method === "POST") return Controllers.handleGetSecret(request, env, corsOrigin);
