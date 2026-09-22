@@ -27,7 +27,7 @@
 
 window.SHINE_OFFLINE_AUTH_VERSION = '20260609-clean';
 
-const _WORKER_URL = window.BACKEND_URL || 'https://__PUBLIC_WORKER_URL__';
+const _WORKER_URL = window.BACKEND_URL || 'https://backend.shinumaths989.workers.dev';
 
 // ── IndexedDB setup ────────────────────────────────────────────────────────
 const _AUTH_DB_NAME    = 'vaultOfflineDB';

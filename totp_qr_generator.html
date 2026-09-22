@@ -1,0 +1,131 @@
+
+<style>
+.wrap{padding:1rem 0;font-family:var(--font-sans)}
+.card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1rem}
+.label{font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:6px}
+.row{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.row input{flex:1;font-family:var(--font-mono);font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.qr-area{display:flex;flex-direction:column;align-items:center;padding:1.25rem;background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;min-height:200px;justify-content:center}
+#qrCanvas{border-radius:8px;background:white;padding:12px}
+.hint{font-size:11px;color:var(--text-muted);margin-top:10px;text-align:center;line-height:1.6}
+.empty{font-size:13px;color:var(--text-muted);text-align:center}
+.empty i{font-size:32px;display:block;margin-bottom:8px;color:var(--text-muted)}
+.warn{background:var(--bg-warning);border:0.5px solid var(--border-warning);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text-warning);display:flex;gap:8px;align-items:flex-start}
+</style>
+
+<h2 class="sr-only">TOTP QR code generator from Base32 secret</h2>
+
+<div class="wrap">
+  <div class="card">
+    <div class="label">Base32 secret key</div>
+    <div class="row">
+      <input type="text" id="secretIn" placeholder="e.g. JBSWY3DPEHPK3PXP" oninput="onInput()" spellcheck="false" autocomplete="off">
+      <button onclick="paste()" title="Paste from clipboard"><i class="ti ti-clipboard" aria-hidden="true"></i></button>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="label">Account name</div>
+        <input type="text" id="accountIn" value="Online Vault" oninput="onInput()">
+      </div>
+      <div>
+        <div class="label">Issuer</div>
+        <input type="text" id="issuerIn" value="SKM Vault" oninput="onInput()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">QR code — scan with Google Authenticator or Authy</div>
+    <div class="qr-area" id="qrArea">
+      <div class="empty" id="emptyMsg">
+        <i class="ti ti-qrcode" aria-hidden="true"></i>
+        Enter your Base32 key above to generate the QR code
+      </div>
+      <canvas id="qrCanvas" style="display:none"></canvas>
+      <div class="hint" id="qrHint" style="display:none">
+        8 digits · 60-second period · SHA-1<br>
+        <strong id="otpauthStr" style="font-size:10px;word-break:break-all;color:var(--text-secondary)"></strong>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button id="dlBtn" onclick="downloadQR()" style="flex:1;display:none">
+        <i class="ti ti-download" aria-hidden="true"></i> Save as image
+      </button>
+      <button id="copyUriBtn" onclick="copyURI()" style="flex:1;display:none">
+        <i class="ti ti-copy" aria-hidden="true"></i> Copy URI
+      </button>
+    </div>
+  </div>
+
+  <div class="warn">
+    <i class="ti ti-shield-lock" style="font-size:15px;flex-shrink:0;margin-top:1px" aria-hidden="true"></i>
+    Save this QR code image securely — anyone who scans it can generate your login codes.
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+const B32 = /^[A-Z2-7\s=]+$/i;
+
+function isValid(s){ return B32.test(s.trim()) && s.replace(/[\s=]/g,'').length >= 8; }
+
+function buildURI(){
+  const secret  = document.getElementById('secretIn').value.trim().toUpperCase().replace(/\s/g,'');
+  const account = encodeURIComponent(document.getElementById('accountIn').value.trim() || 'Vault');
+  const issuer  = encodeURIComponent(document.getElementById('issuerIn').value.trim()  || 'SKM');
+  return `otpauth://totp/${account}?secret=${secret}&issuer=${issuer}&digits=8&period=60&algorithm=SHA1`;
+}
+
+function onInput(){
+  const secret = document.getElementById('secretIn').value.trim();
+  if(!secret || !isValid(secret)){
+    document.getElementById('qrCanvas').style.display='none';
+    document.getElementById('emptyMsg').style.display='block';
+    document.getElementById('qrHint').style.display='none';
+    document.getElementById('dlBtn').style.display='none';
+    document.getElementById('copyUriBtn').style.display='none';
+    return;
+  }
+  const uri = buildURI();
+  QRCode.toCanvas(document.getElementById('qrCanvas'), uri, {
+    width: 220, margin: 1,
+    color:{ dark:'#0f172a', light:'#ffffff' },
+    errorCorrectionLevel:'M'
+  }, err => {
+    if(err){ console.error(err); return; }
+    document.getElementById('qrCanvas').style.display='block';
+    document.getElementById('emptyMsg').style.display='none';
+    document.getElementById('qrHint').style.display='block';
+    document.getElementById('otpauthStr').textContent = uri;
+    document.getElementById('dlBtn').style.display='block';
+    document.getElementById('copyUriBtn').style.display='block';
+  });
+}
+
+function downloadQR(){
+  const canvas = document.getElementById('qrCanvas');
+  const link   = document.createElement('a');
+  link.download = 'vault-totp-qr.png';
+  link.href     = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function copyURI(){
+  const uri = buildURI();
+  try{ await navigator.clipboard.writeText(uri); }
+  catch{ const t=document.createElement('textarea');t.value=uri;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t); }
+  const btn = document.getElementById('copyUriBtn');
+  btn.innerHTML='<i class="ti ti-check" aria-hidden="true"></i> Copied!';
+  setTimeout(()=>{ btn.innerHTML='<i class="ti ti-copy" aria-hidden="true"></i> Copy URI'; },2000);
+}
+
+async function paste(){
+  try{
+    const text = await navigator.clipboard.readText();
+    document.getElementById('secretIn').value = text.trim();
+    onInput();
+  } catch{ alert('Paste manually into the key field (Ctrl+V / Cmd+V)'); }
+}
+</script>

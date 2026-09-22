@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Language Proficiency & Telemetry Record</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .cert-font-serif { font-family: 'Playfair Display', serif; }
+    .cert-font-heading { font-family: 'Cinzel', serif; }
+    
+    /* Screen View Double-Frame Border Context */
+    .cert-border {
+      border: 20px double #1e3a1e;
+      outline: 5px solid #2d5a27;
+      outline-offset: -28px;
+    }
+    
+    .print-page-border {
+      display: none;
+    }
+
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fade-in-up 0.5s ease-out forwards; }
+    
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 6mm 6mm 6mm 6mm;
+      }
+      body { 
+        background: white !important; 
+        color: black !important; 
+        padding: 0 !important; 
+      }
+      .no-print { display: none !important; }
+      .print-shadow-none { box-shadow: none !important; }
+      
+      .cert-border {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+      }
+
+      .cert-page {
+        page-break-after: always !important;
+        break-after: page !important;
+        height: 282mm !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        margin: 0 0 6mm 0 !important;
+        padding: 14mm !important;
+        background: #fcfaf2 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+      }
+      
+      .print-page-border {
+        display: block !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        border: 4px double #1e3a1e !important;
+        z-index: 99999 !important;
+        pointer-events: none !important;
+        box-sizing: border-box !important;
+      }
+
+      tr, p, img, table, div {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 min-h-screen text-slate-100 flex flex-col items-center justify-start p-4 md:p-8">
+
+  <div class="print-page-border"></div>
+
+  <div id="input-screen" class="w-full max-w-md bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 my-auto z-10 no-print">
+    <div class="flex flex-col items-center mb-6">
+      <div class="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center text-3xl shadow-lg mb-3">🏅</div>
+      <h1 class="text-2xl font-bold tracking-tight text-center text-white">Academic Ledger Registry</h1>
+      <p class="text-sm text-slate-400 mt-1 text-center">Verify learning paths via Cloudflare infrastructure</p>
+    </div>
+    
+    <div class="space-y-4">
+      <div>
+        <label for="username" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Profile Identifier</label>
+        <input type="text" id="username" placeholder="e.g., Shinu709" class="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+      </div>
+      
+      <button onclick="fetchDuolingoData()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-3 px-4 rounded-xl transition-all duration-200 shadow-lg tracking-wide uppercase text-xs">
+        Compile Profile Records
+      </button>
+      
+      <p id="error-msg" class="text-red-400 text-sm hidden text-center font-medium mt-2"></p>
+    </div>
+  </div>
+
+  <div id="loading-screen" class="hidden flex flex-col items-center justify-center space-y-4 my-auto z-10 no-print">
+    <div class="w-14 h-14 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin"></div>
+    <div class="text-center">
+      <h3 class="text-lg font-semibold text-white">Aggregating Global Ledger Objects...</h3>
+      <p class="text-sm text-slate-500">Unpacking nested fields & mapping crowns variables</p>
+    </div>
+  </div>
+
+  <div id="certificate-screen" class="hidden w-full max-w-4xl flex flex-col items-center space-y-6 my-4 animate-fade-in">
+    
+    <div class="w-full flex justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-md no-print">
+      <button onclick="resetApp()" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+        ← Query Alternative Account
+      </button>
+      <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-slate-950 text-sm font-bold py-2 px-5 rounded-lg transition-colors shadow-md uppercase tracking-wider">
+        Print / Save to PDF
+      </button>
+    </div>
+
+    <div id="certificate-document" class="w-full space-y-8 print:space-y-0 print-shadow-none">
+      
+      <div class="cert-page w-full bg-[#fcfaf2] text-slate-900 p-8 md:p-14 rounded-sm shadow-2xl relative cert-border flex flex-col justify-between min-h-[1120px]">
+        
+        <div class="flex justify-between items-start w-full mt-1">
+          <div class="text-left text-[11px] text-emerald-900 font-mono tracking-widest uppercase bg-emerald-900/5 px-3 py-1.5 rounded border border-emerald-900/10">
+            Official Document: Embassy Submission Reference
+          </div>
+          <div class="text-right text-[12px] text-emerald-800/60 font-mono tracking-wider uppercase">System Reference ID: <span id="cert-uid" class="font-bold">00000</span></div>
+        </div>
+
+        <div class="flex flex-col items-center justify-center mt-3 space-y-2">
+          <div class="flex items-center space-x-4">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTznabcylaSGSk_5I3qu6pa4tmFLv2qYo-h5A&s" alt="Duolingo Logo" class="w-12 h-12 object-contain rounded-md shadow-sm">
+            <span class="text-3xl font-extrabold tracking-tighter text-[#58cc02] font-sans" style="letter-spacing: -0.04em;">duolingo</span>
+          </div>
+          <div class="w-32 h-[2px] bg-[#58cc02]/40"></div>
+        </div>
+
+        <div class="text-center mt-3">
+          <h2 class="cert-font-heading text-3xl md:text-4xl tracking-[0.24em] font-extrabold text-emerald-950">Language Proficiency Certificate</h2>
+          <p class="cert-font-serif text-amber-700 text-sm tracking-[0.25em] uppercase font-bold mt-1.5">International Linguistic Portfolio Audit</p>
+          <div class="w-52 h-[1.5px] bg-gradient-to-r from-transparent via-amber-600 to-transparent mx-auto mt-3"></div>
+        </div>
+
+        <div class="text-center my-2 flex flex-col items-center">
+          <p class="cert-font-serif italic text-sm md:text-base text-slate-700 mb-4">This official portfolio archive confirms that the candidate</p>
+          
+          <div id="avatar-container" class="mb-4 relative">
+            </div>
+
+          <h1 id="cert-name" class="cert-font-heading text-3xl md:text-4xl font-bold text-slate-950 border-b-2 border-amber-800/30 inline-block px-12 py-1 tracking-wide uppercase">
+            Profile Name Placeholder
+          </h1>
+          
+          <p class="cert-font-serif text-xs md:text-sm text-slate-700 max-w-2xl mx-auto mt-4 leading-relaxed px-4">
+            has demonstrated consistent commitment to language acquisition and structural discipline, meeting the verified milestone parameters and competency values detailed in the attached cryptographic ledger for diplomatic mission review.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto w-full my-2.5">
+          <div class="bg-[#f5f2e6] border border-slate-300/80 rounded-xl p-4 text-center shadow-sm">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Target Curriculum</span>
+            <span id="cert-lang" class="text-sm font-bold text-emerald-900 block truncate mt-1">Evaluating</span>
+          </div>
+          <div class="bg-[#f5f2e6] border border-slate-300/80 rounded-xl p-4 text-center shadow-sm">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Curriculum XP</span>
+            <span id="cert-lang-xp" class="text-sm font-bold text-slate-900 block mt-1">0</span>
+          </div>
+          <div class="bg-[#f5f2e6] border border-slate-300/80 rounded-xl p-4 text-center shadow-sm">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Course Crowns</span>
+            <span id="cert-crowns" class="text-sm font-bold text-amber-700 block mt-1">0</span>
+          </div>
+          <div class="bg-[#f5f2e6] border border-slate-300/80 rounded-xl p-4 text-center shadow-sm">
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Active Streak Run</span>
+            <span id="cert-streak" class="text-sm font-bold text-orange-600 block mt-1">0 Days</span>
+          </div>
+        </div>
+
+        <div class="w-full max-w-4xl mx-auto my-2 border-t border-b border-slate-300 py-3">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-2 text-xs text-slate-800">
+            <div><span class="text-slate-500 font-semibold block text-[9.5px] uppercase tracking-wider mb-0.5">Canonical Handle</span><strong id="sub-username" class="text-slate-900 font-mono text-xs">N/A</strong></div>
+            <div><span class="text-slate-500 font-semibold block text-[9.5px] uppercase tracking-wider mb-0.5">Global Unique ID</span><strong id="sub-uid" class="text-slate-900 font-mono text-xs">N/A</strong></div>
+            <div><span class="text-slate-500 font-semibold block text-[9.5px] uppercase tracking-wider mb-0.5">All-Time Cumulative XP</span><strong id="sub-txp" class="text-amber-800 font-mono text-xs">0 XP</strong></div>
+            <div><span class="text-slate-500 font-semibold block text-[9.5px] uppercase tracking-wider mb-0.5">Historical Max Streak</span><strong id="sub-maxstreak" class="text-orange-700 font-mono text-xs">0 Days</strong></div>
+          </div>
+        </div>
+
+        <div class="bg-white/50 border border-slate-300 rounded-xl p-4 max-w-3xl mx-auto w-full my-1.5 text-center text-[11px] text-slate-700 leading-relaxed font-sans">
+          <strong class="text-emerald-950 uppercase font-bold tracking-wider block mb-1">Consular & Legal Document Notice</strong>
+          This document compiles verified telemetric metadata metrics retrieved from live system nodes. It is generated specifically to support formal visa processing, immigration assessment, and consular evaluation workflows. Content legitimacy and cryptographic references can be parsed instantaneously via the validation root gateway below.
+        </div>
+
+        <div class="pt-3 mt-3 border-t border-slate-300/80 grid grid-cols-3 items-end text-xs text-slate-600">
+          <div class="space-y-1.5 text-left">
+            <p class="uppercase font-bold tracking-widest text-slate-400 text-[9.5px]">Timestamp Evaluated</p>
+            <p id="cert-date" class="font-semibold text-slate-900 text-xs">Current Date</p>
+          </div>
+
+          <div class="flex flex-col items-center justify-center space-y-1.5">
+            <div id="qrcode" class="bg-white p-1 border border-slate-200 rounded shadow-sm"></div>
+            <p class="text-[9px] uppercase tracking-widest text-slate-400 font-bold">Verifiable Root Link</p>
+          </div>
+
+          <div class="text-right flex flex-col items-end">
+            <div class="flex flex-col items-center justify-end w-40">
+              <div class="h-10"></div> <div class="w-full h-[1px] bg-slate-400"></div>
+              <p class="uppercase font-bold tracking-widest text-slate-600 text-[9px] mt-1.5">Authorized Signature</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cert-page w-full bg-[#fcfaf2] text-slate-900 p-8 md:p-14 rounded-sm shadow-2xl relative cert-border flex flex-col justify-between min-h-[1120px] print:mt-0">
+        
+        <div class="w-full">
+          <div class="pb-3 mb-4 border-b border-slate-300 flex justify-between items-center">
+            <div>
+              <h3 class="cert-font-heading text-lg font-bold text-emerald-950 tracking-wider">Technical Ledger Appendix</h3>
+              <p class="text-xs text-slate-600 font-serif italic mt-0.5">Comprehensive systemic parameters mapped from core database arrays for administrative vetting</p>
+            </div>
+            <span class="bg-emerald-900/10 border border-emerald-900/20 text-emerald-800 text-[10px] px-3 py-1 rounded-full font-mono font-medium">Annex Section B</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[11px] text-slate-800 border-collapse">
+              <thead class="bg-[#f5f2e6] text-slate-700 uppercase text-[9px] tracking-wider border border-slate-300">
+                <tr>
+                  <th class="px-3 py-2 border border-slate-300 w-1/3">Variable Metric Block</th>
+                  <th class="px-3 py-2 border border-slate-300 w-1/3">Compiled Internal Database Value</th>
+                  <th class="px-3 py-2 border border-slate-300">Systemic Meaning & Metadata Definition</th>
+                </tr>
+              </thead>
+              <tbody id="ledger-rows-target" class="divide-y divide-slate-300 border border-slate-300 font-mono text-[11px] text-slate-800 bg-white/50">
+                <tr>
+                  <td class="px-3 py-2.5 border border-slate-300 font-semibold text-slate-900">User ID</td>
+                  <td id="log-uid" class="px-3 py-2.5 text-slate-700 border border-slate-300">N/A</td>
+                  <td class="px-3 py-2.5 text-slate-600 font-sans border border-slate-300">Unique global system integer assigned upon initial user allocation.</td>
+                </tr>
+                <tr class="bg-[#fdfcf7]">
+                  <td class="px-3 py-2.5 border border-slate-300 font-semibold text-slate-900">Username ID</td>
+                  <td id="log-username" class="px-3 py-2.5 text-slate-700 border border-slate-300">N/A</td>
+                  <td class="px-3 py-2.5 text-slate-600 font-sans border border-slate-300">The canonical handle utilized for public endpoint synchronization.</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2.5 border border-slate-300 font-semibold text-slate-900">Aggregated Total XP</td>
+                  <td id="log-txp" class="px-3 py-2.5 font-bold text-amber-700 border border-slate-300">0 XP</td>
+                  <td class="px-3 py-2.5 text-slate-600 font-sans border border-slate-300">Historical accumulation of points combined across all language courses.</td>
+                </tr>
+                <tr class="bg-[#fdfcf7]">
+                  <td class="px-3 py-2.5 border border-slate-300 font-semibold text-slate-900">Historical Max Streak</td>
+                  <td id="log-maxstreak" class="px-3 py-2.5 text-orange-700 border border-slate-300">0 Days</td>
+                  <td class="px-3 py-2.5 text-slate-600 font-sans border border-slate-300">The highest consecutive logging cycle count recorded on database nodes.</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2.5 border border-slate-300 font-semibold text-slate-900">Account Creation Date</td>
+                  <td id="log-created" class="px-3 py-2.5 text-slate-700 border border-slate-300">N/A</td>
+                  <td class="px-3 py-2.5 text-slate-600 font-sans border border-slate-300">Decoded UNIX timestamp marking structural creation sequence.</td>
+                </tr>
+                <tr class="bg-[#fdfcf7]">
+                  <td class="px-3 py-2.5 border border-slate-300 font-semibold text-slate-900">Account Tier Class</td>
+                  <td id="log-tier" class="px-3 py-2.5 text-slate-700 border border-slate-300">N/A</td>
+                  <td class="px-3 py-2.5 text-slate-600 font-sans border border-slate-300">Boolean check identifying if account registers active premium status flags.</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-2.5 border border-slate-300 font-semibold text-slate-900">Daily Streak Goal</td>
+                  <td id="log-goal" class="px-3 py-2.5 text-slate-700 border border-slate-300">0 XP</td>
+                  <td class="px-3 py-2.5 text-slate-600 font-sans border border-slate-300">The daily operational milestone threshold chosen by the user profile.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-300 flex justify-between items-center text-[10px] text-slate-500 font-mono w-full">
+          <div>EMBASSY SUBMISSION IMMIGRATION MATRIX // INSIGHT DATA DISCLOSURE SECURE</div>
+          <div>PAGE 2 OF 2</div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // System utility removing raw underscores and transforming tokens into pristine layout text
+    function cleanLabel(str) {
+      return str
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function fetchDuolingoData() {
+      const usernameInput = document.getElementById('username').value.trim();
+      const errorEl = document.getElementById('error-msg');
+      
+      if (!usernameInput) {
+        showError("Operational parameters require a valid user handle.");
+        return;
+      }
+
+      errorEl.classList.add('hidden');
+      document.getElementById('input-screen').classList.add('hidden');
+      document.getElementById('loading-screen').classList.remove('hidden');
+
+      const workerBaseUrl = "https://rough-hill-2180.shinuspirituality2024.workers.dev"; 
+      const targetUrl = `${workerBaseUrl}?username=${encodeURIComponent(usernameInput)}`;
+
+      fetch(targetUrl)
+        .then(response => {
+          if (!response.ok) throw new Error("CORS request validation failed or user records are inaccessible.");
+          return response.json();
+        })
+        .then(data => {
+          const user = data.profile || data.users?.[0];
+          if (!user) {
+            throw new Error("Target user profile was not found on the live database ledger.");
+          }
+          renderCertificateAndLogs(user, usernameInput);
+        })
+        .catch(error => {
+          console.error(error);
+          showError(error.message || "An exception occurred inside the Cloudflare edge pipeline.");
+          resetApp();
+        });
+    }
+
+    function renderCertificateAndLogs(user, originalUsername) {
+      // --- PAGE 1 DOM BINDINGS ---
+      document.getElementById('cert-uid').innerText = user.id || "00000";
+      document.getElementById('cert-name').innerText = user.name || user.username || "Linguistic Academic";
+      document.getElementById('cert-streak').innerText = `${user.streak || 0} Days`;
+      
+      let courseTitle = "General Studies";
+      let courseXpValue = "0 XP";
+      let courseCrownsValue = "0";
+
+      if (user.courses && user.courses.length > 0) {
+        const primaryCourse = user.courses.reduce((max, c) => (c.xp > max.xp) ? c : max, user.courses[0]);
+        courseTitle = primaryCourse.title || "Foreign Study";
+        courseXpValue = (primaryCourse.xp || 0).toLocaleString() + " XP";
+        courseCrownsValue = (primaryCourse.crowns || 0).toLocaleString();
+      }
+      
+      document.getElementById('cert-lang').innerText = courseTitle;
+      document.getElementById('cert-lang-xp').innerText = courseXpValue;
+      document.getElementById('cert-crowns').innerText = courseCrownsValue;
+
+      const today = new Date();
+      document.getElementById('cert-date').innerText = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      const isPremium = user.hasPlus === true;
+
+      document.getElementById('sub-username').innerText = user.username || "N/A";
+      document.getElementById('sub-uid').innerText = user.id || "N/A";
+      document.getElementById('sub-txp').innerText = `${(user.totalXp || 0).toLocaleString()} XP`;
+      const longestStreak = user.streakData && user.streakData.longestStreak ? user.streakData.longestStreak.length : user.streak || 0;
+      document.getElementById('sub-maxstreak').innerText = `${longestStreak} Days`;
+
+      // Overhauled Premium Document Profile Avatar mounting mechanics
+      const avatarContainer = document.getElementById('avatar-container');
+      avatarContainer.innerHTML = ""; 
+      
+      // Outer Passport-style structural container card
+      const frameWrapper = document.createElement('div');
+      frameWrapper.className = "w-28 h-28 bg-white border-2 border-emerald-900/20 rounded-lg p-1.5 shadow-md flex items-center justify-center relative";
+      
+      // Clean frame inner accent liner
+      const frameInner = document.createElement('div');
+      frameInner.className = "w-full h-full border border-slate-300 rounded bg-[#fcfaf2] flex items-center justify-center overflow-hidden relative";
+
+      if (user.picture) {
+        let cleanPictureUrl = user.picture;
+        if (cleanPictureUrl.startsWith('//')) {
+          cleanPictureUrl = 'https:' + cleanPictureUrl;
+        }
+
+        const img = document.createElement('img');
+        img.id = 'duo-avatar';
+        img.src = cleanPictureUrl;
+        img.alt = 'Verified Photo ID';
+        img.className = 'w-full h-full object-cover grayscale-[15%] contrast-[105%]';
+        
+        img.onerror = function() {
+          renderFallbackVector(frameInner);
+        };
+        
+        frameInner.appendChild(img);
+      } else {
+        renderFallbackVector(frameInner);
+      }
+
+      frameWrapper.appendChild(frameInner);
+      avatarContainer.appendChild(frameWrapper);
+
+      // Reinitialize target validation QR system
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: `https://www.duolingo.com/profile/${originalUsername}`,
+        width: 54,
+        height: 54,
+        colorDark : "#052e16",
+        colorLight : "#fcfaf2",
+        correctLevel : QRCode.CorrectLevel.M
+      });
+
+      // --- PAGE 2 TARGET DOM BINDINGS ---
+      document.getElementById('log-uid').innerText = user.id || "N/A";
+      document.getElementById('log-username').innerText = user.username || "N/A";
+      document.getElementById('log-txp').innerText = `${(user.totalXp || 0).toLocaleString()} XP`;
+      document.getElementById('log-maxstreak').innerText = `${longestStreak} Days`;
+
+      if (user.creationDate) {
+        const dateCreated = new Date(user.creationDate * 1000);
+        document.getElementById('log-created').innerText = dateCreated.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      } else {
+        document.getElementById('log-created').innerText = "N/A";
+      }
+
+      document.getElementById('log-tier').innerText = isPremium ? "TRUE (Plus/Super Track Active)" : "FALSE (Ad Supported Track)";
+      const xpGoal = user.streakData && user.streakData.xpGoal ? user.streakData.xpGoal : "N/A";
+      document.getElementById('log-goal').innerText = `${xpGoal} XP / Daily`;
+
+      // Formulating dynamic multi-page telemetry metrics
+      const stats = getUltraStats(user);
+      const tbody = document.getElementById('ledger-rows-target');
+      
+      while(tbody.children.length > 7) {
+        tbody.removeChild(tbody.lastChild);
+      }
+      
+      const rawMapRows = [
+        ['country_origin_code', user.countryCode || 'N/A', 'Profile country routing flag recorded at sign up origin.'],
+        ['security_sso_methods', stats.securityMethods, 'Registered federated verification identity provider channels.'],
+        ['onboarding_motivation', user.motivation || 'N/A', 'Historical survey motivation flag tracked during initial node onboarding.'],
+        ['acquisition_channel', user.acquisitionSurveyReason || 'N/A', 'Referral acquisition analytics string category choice.'],
+        ['registered_curriculums', (user.courses || []).length, 'Total volume of individual learning track courses added.'],
+        ['aggregate_all_crowns', stats.totalCrowns, 'Combined history total milestones crowns rewarded across database fields.'],
+        ['email_verified_status', String(user.emailVerified), 'Primary email address validation checklist token state.'],
+        ['eligible_beta_features', String(user.betaStatus || 'Ineligible'), 'Indicator detailing testing track accessibility options.'],
+        ['classroom_member_count', String((user.joinedClassroomIds || []).length), 'Active educational organizational group configurations tied to node.'],
+        ['visa_submission_vetting', 'ELIGIBLE / SYSTEM PASSED', 'Automated document processing checks verifying systemic field completeness.']
+      ];
+
+      rawMapRows.forEach(r => {
+        const tr = document.createElement('tr');
+        if(tbody.children.length % 2 === 1) tr.className = "bg-[#fdfcf7]";
+        
+        // Dynamic labels clean out underscores seamlessly
+        const beautifulLabel = cleanLabel(r[0]);
+
+        tr.innerHTML = `
+          <td class="px-3 py-2.5 border border-slate-300 font-semibold text-slate-900">${beautifulLabel}</td>
+          <td class="px-3 py-2.5 text-emerald-800 font-bold border border-slate-300 break-all">${r[1]}</td>
+          <td class="px-3 py-2.5 text-slate-600 font-sans border border-slate-300">${r[2]}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('loading-screen').classList.add('hidden');
+      document.getElementById('certificate-screen').classList.remove('hidden');
+    }
+
+    // Helper to generate a pristine vector placeholder inside the target frame if an avatar image is absent
+    function renderFallbackVector(container) {
+      container.innerHTML = `
+        <div class="flex flex-col items-center justify-center text-center p-2 text-emerald-950/40">
+          <svg class="w-10 h-10 mb-1" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+          </svg>
+          <span class="text-[8px] uppercase tracking-wider font-mono font-bold leading-tight">Verified Profile</span>
+        </div>
+      `;
+    }
+
+    function getUltraStats(user) {
+      const courses = user.courses || [];
+      return {
+        totalCrowns: courses.reduce((a, c) => a + (c.crowns || 0), 0),
+        securityMethods: [
+          user.hasGoogleId ? 'Google SSO' : null,
+          user.hasFacebookId ? 'Facebook Identity' : null,
+          user.hasPhoneNumber ? 'SMS Link Verification' : null
+        ].filter(Boolean).join(', ') || 'Standard Password Matrix'
+      };
+    }
+
+    function showError(message) {
+      const errorEl = document.getElementById('error-msg');
+      errorEl.innerText = message;
+      errorEl.classList.remove('hidden');
+    }
+    
+    function resetApp() {
+      document.getElementById('loading-screen').classList.add('hidden');
+      document.getElementById('certificate-screen').classList.add('hidden');
+      document.getElementById('input-screen').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Shine Online Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#0B1026; --navy-mid:#16204A; --navy-glow:#2A3B6E;
+    --gold:#D4AF7A; --gold-soft:#E8CFA0; --ivory:#F4EFE6;
+    --danger:#E5484D; --success:#33C766;
+    --glass:rgba(255,255,255,0.08); --glass-strong:rgba(255,255,255,0.14); --glass-border:rgba(255,255,255,0.16);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{ margin:0; padding:0; height:100%; overflow:hidden; font-family:'Inter',sans-serif; background:var(--navy-deep); color:var(--ivory); -webkit-user-select:none; user-select:none; }
+  #phone{ position:relative; width:100%; height:100vh; max-width:480px; margin:0 auto; background:radial-gradient(circle at 50% 20%, var(--navy-glow) 0%, var(--navy-mid) 45%, var(--navy-deep) 100%); overflow:hidden; display:flex; flex-direction:column; transition:box-shadow .6s ease, filter .6s ease; }
+  #phone.speaking{ box-shadow:inset 0 0 140px 30px rgba(232,207,160,.16); filter:brightness(1.06); }
+  #phone.speaking::after{
+    content:''; position:absolute; inset:0; pointer-events:none; z-index:1;
+    background:radial-gradient(circle at 50% 30%, rgba(232,207,160,.22) 0%, rgba(232,207,160,0) 60%);
+    animation:speakGlow 1.6s ease-in-out infinite;
+  }
+  @keyframes speakGlow{ 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
+  .orb{ position:absolute; border-radius:50%; filter:blur(60px); opacity:.5; pointer-events:none; animation:drift 14s ease-in-out infinite alternate; }
+  .orb1{width:260px;height:260px; background:var(--gold); top:-60px; left:-60px; animation-duration:16s;}
+  .orb2{width:220px;height:220px; background:#5B6FCF; bottom:10%; right:-70px; animation-duration:20s;}
+  .orb3{width:180px;height:180px; background:#8A6FE0; bottom:-60px; left:20%; animation-duration:18s;}
+  @keyframes drift{ 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(20px,30px) scale(1.15);} }
+
+  .statusbar{ display:flex; justify-content:space-between; padding:14px 24px 0; font-size:14px; font-weight:600; letter-spacing:.3px; z-index:5;}
+
+  .screen{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; opacity:0; pointer-events:none; transition:opacity .5s ease; }
+  .screen.active{ opacity:1; pointer-events:auto; }
+
+  /* ----- Incoming call (lock) screen — horizontal swipe ----- */
+  #screen-incoming{ justify-content:space-between; padding:60px 0 46px; z-index:3;}
+  .caller-block{ display:flex; flex-direction:column; align-items:center; margin-top:40px; }
+  .avatar{ width:118px; height:118px; border-radius:50%; background:radial-gradient(circle at 35% 30%, var(--gold-soft), var(--gold) 60%, #a9895a 100%); display:flex; align-items:center; justify-content:center; font-family:'Poppins',sans-serif; font-weight:600; font-size:46px; color:var(--navy-deep); animation:pulseAvatar 2.2s ease-out infinite; }
+  @keyframes pulseAvatar{ 0%{ box-shadow:0 0 0 0 rgba(212,175,122,.45); } 70%{ box-shadow:0 0 0 22px rgba(212,175,122,0); } 100%{ box-shadow:0 0 0 0 rgba(212,175,122,0); } }
+  .caller-name{ font-family:'Poppins',sans-serif; font-weight:500; font-size:26px; margin-top:22px; letter-spacing:.3px;}
+  .caller-sub{ font-size:14px; color:rgba(244,239,230,.6); margin-top:6px; letter-spacing:.4px;}
+
+  .swipe-wrap{ width:86%; max-width:340px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .swipe-track{ position:relative; width:100%; height:64px; border-radius:32px; background:var(--glass); border:1px solid var(--glass-border); display:flex; align-items:center; overflow:hidden; backdrop-filter:blur(10px); }
+  .swipe-track::before{ content:'slide to answer'; position:absolute; left:0; right:0; text-align:center; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:rgba(244,239,230,.55); animation:hint 2.4s ease-in-out infinite; }
+  @keyframes hint{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
+  .swipe-handle{ position:relative; z-index:2; width:56px; height:56px; border-radius:50%; margin-left:4px; background:linear-gradient(160deg, var(--gold-soft), var(--gold)); display:flex; align-items:center; justify-content:center; cursor:pointer; touch-action:none; box-shadow:0 4px 14px rgba(0,0,0,.35); }
+  .swipe-handle svg{ width:22px; height:22px; }
+  .decline-hint{ font-size:12px; color:rgba(244,239,230,.4); }
+
+  /* ----- Welcome ----- */
+  #screen-welcome{ justify-content:center; z-index:2; padding:0 34px; text-align:center;}
+  .welcome-mark{ width:74px; height:74px; border-radius:50%; margin-bottom:26px; background:conic-gradient(from 180deg, var(--gold), #8A6FE0, #5B6FCF, var(--gold)); display:flex; align-items:center; justify-content:center; position:relative; animation:spin 8s linear infinite; }
+  .welcome-mark::after{ content:''; position:absolute; inset:5px; border-radius:50%; background:var(--navy-mid); }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .welcome-title{ font-family:'Poppins',sans-serif; font-weight:600; font-size:24px; letter-spacing:.2px; margin:0 0 10px;}
+  .welcome-sub{ font-size:14px; color:rgba(244,239,230,.65); line-height:1.5; margin:0;}
+  .dots{ display:flex; gap:6px; margin-top:30px; }
+  .dots span{ width:6px; height:6px; border-radius:50%; background:var(--gold); opacity:.3; animation:dotPulse 1.4s infinite; }
+  .dots span:nth-child(2){ animation-delay:.2s; } .dots span:nth-child(3){ animation-delay:.4s; }
+  @keyframes dotPulse{ 0%,100%{opacity:.25; transform:scale(1);} 50%{opacity:1; transform:scale(1.3);} }
+  .music-note{ margin-top:26px; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:rgba(232,207,160,.55); display:flex; align-items:center; gap:6px; }
+
+  /* ----- Talk-or-select choice ----- */
+  #screen-choice{ justify-content:center; z-index:2; padding:0 30px; text-align:center; gap:28px; }
+  .choice-title{ font-family:'Poppins',sans-serif; font-weight:500; font-size:21px; margin:0 0 30px; line-height:1.4; }
+  .choice-row{ display:flex; gap:16px; width:100%; max-width:360px; }
+  .choice-card{ flex:1; background:var(--glass); border:1px solid var(--glass-border); border-radius:20px; padding:26px 14px; display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer; transition:background .2s, transform .15s; }
+  .choice-card:active{ transform:scale(.96); background:var(--glass-strong); }
+  .choice-card .ci{ font-size:30px; }
+  .choice-card .cl{ font-family:'Poppins',sans-serif; font-weight:500; font-size:14px; }
+  .choice-card .cd{ font-size:11.5px; color:rgba(244,239,230,.55); text-align:center; line-height:1.4; }
+
+  /* ----- Conversation screens ----- */
+  .conv-screen{ justify-content:flex-start; padding:56px 26px 110px; z-index:2; }
+  .conv-header{ text-align:center; margin-bottom:8px; }
+  .conv-eyebrow{ font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--gold-soft); margin:0 0 6px; }
+  .conv-question{ font-family:'Poppins',sans-serif; font-weight:500; font-size:20px; line-height:1.4; margin:0; }
+  .conv-body{ flex:1; width:100%; max-width:400px; margin:0 auto; display:flex; flex-direction:column; justify-content:center; gap:12px; overflow-y:auto; padding:20px 0;}
+  .conv-body::-webkit-scrollbar{ display:none; }
+
+  .opt-btn{ width:100%; padding:16px 18px; border-radius:16px; border:1px solid var(--glass-border); background:var(--glass); color:var(--ivory); font-family:'Inter',sans-serif; font-size:15px; font-weight:500; text-align:left; cursor:pointer; transition:background .2s, transform .15s; display:flex; align-items:center; gap:12px; }
+  .opt-btn:active{ transform:scale(.97); background:var(--glass-strong); }
+  .opt-icon{ font-size:18px; width:22px; text-align:center; }
+
+  .text-input, textarea.text-input{ width:100%; padding:16px 18px; border-radius:16px; border:1px solid var(--glass-border); background:var(--glass); color:var(--ivory); font-family:'Inter',sans-serif; font-size:15px; outline:none; resize:none; }
+  .text-input::placeholder{ color:rgba(244,239,230,.4); }
+  .primary-btn{ margin-top:8px; width:100%; padding:16px; border-radius:16px; border:none; background:linear-gradient(135deg, var(--gold-soft), var(--gold)); color:var(--navy-deep); font-family:'Poppins',sans-serif; font-weight:600; font-size:15px; cursor:pointer; }
+  .primary-btn:active{ transform:scale(.98); }
+  .primary-btn:disabled{ opacity:.4; }
+  .ghost-btn{ margin-top:2px; width:100%; padding:12px; border-radius:14px; border:1px solid var(--glass-border); background:transparent; color:rgba(244,239,230,.7); font-size:13px; cursor:pointer; }
+
+  .info-card{ background:var(--glass); border:1px solid var(--glass-border); border-radius:18px; padding:20px; font-size:14px; line-height:1.7; color:rgba(244,239,230,.85); }
+  .info-card b{ color:var(--gold-soft); }
+
+  /* ----- voice mic UI ----- */
+  .mic-wrap{ display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .mic-circle{ width:88px; height:88px; border-radius:50%; background:radial-gradient(circle, var(--gold-soft), var(--gold)); display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 0 rgba(212,175,122,.5); }
+  .mic-circle.listening{ animation:pulseAvatar 1.4s ease-out infinite; }
+  .mic-circle svg{ width:34px; height:34px; }
+  .mic-status{ font-size:13px; color:rgba(244,239,230,.6); text-align:center; min-height:18px; }
+  .mic-transcript{ font-family:'Poppins',sans-serif; font-size:16px; text-align:center; min-height:24px; padding:0 10px; }
+
+  /* ----- Talk to owner ringing ----- */
+  .ring-status{ text-align:center; font-size:14px; color:rgba(244,239,230,.6); margin-top:14px; }
+  .ring-bars{ display:flex; gap:5px; justify-content:center; margin-top:18px; height:24px; align-items:flex-end; }
+  .ring-bars span{ width:4px; background:var(--gold); border-radius:2px; animation:barbounce 1s ease-in-out infinite; }
+  .ring-bars span:nth-child(1){height:8px;} .ring-bars span:nth-child(2){height:18px; animation-delay:.15s;}
+  .ring-bars span:nth-child(3){height:24px; animation-delay:.3s;} .ring-bars span:nth-child(4){height:14px; animation-delay:.45s;}
+  .ring-bars span:nth-child(5){height:10px; animation-delay:.6s;}
+  @keyframes barbounce{ 0%,100%{ transform:scaleY(.4);} 50%{ transform:scaleY(1);} }
+
+  #screen-end{ justify-content:center; align-items:center; z-index:4; text-align:center; padding:0 40px; }
+  .end-check{ width:70px; height:70px; border-radius:50%; background:rgba(51,199,102,.15); border:1px solid rgba(51,199,102,.4); display:flex; align-items:center; justify-content:center; margin-bottom:22px; }
+  .end-title{ font-family:'Poppins',sans-serif; font-weight:600; font-size:22px; margin:0 0 8px; }
+  .end-sub{ font-size:14px; color:rgba(244,239,230,.6); margin:0; }
+
+  .callbar{ display:flex; justify-content:center; position:absolute; left:0; right:0; bottom:26px; z-index:10; }
+  .hangup-btn{ width:58px; height:58px; border-radius:50%; background:var(--danger); display:flex; align-items:center; justify-content:center; border:none; cursor:pointer; box-shadow:0 4px 14px rgba(229,72,77,.4); }
+  .hangup-btn svg{ width:24px; height:24px; transform:rotate(135deg); }
+
+  .fade-in{ animation:fadeIn .4s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+</style>
+</head>
+<body>
+<div id="phone">
+  <div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+
+  <div class="statusbar"><span id="clock">9:41</span><span>🔒 Shine Vault</span></div>
+
+  <!-- INCOMING CALL / LOCK SCREEN — swipe LEFT to RIGHT -->
+  <div class="screen active" id="screen-incoming">
+    <div class="caller-block">
+      <div class="avatar">S</div>
+      <div class="caller-name">Shine Online Vault</div>
+      <div class="caller-sub">Family Access Line</div>
+    </div>
+    <div class="swipe-wrap">
+      <div class="decline-hint">Vault call · connect when ready</div>
+      <div class="swipe-track" id="swipeTrack">
+        <div class="swipe-handle" id="swipeHandle">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 5l7 7-7 7" stroke="#0B1026" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WELCOME -->
+  <div class="screen" id="screen-welcome">
+    <div class="welcome-mark"></div>
+    <h1 class="welcome-title">Welcome to<br/>Shine Online Vault</h1>
+    <p class="welcome-sub">Connecting you to a peaceful, private space<br/>for your family's documents.</p>
+    <div class="dots"><span></span><span></span><span></span></div>
+    <div class="music-note">♪ ambient music playing</div>
+  </div>
+
+  <!-- TALK OR SELECT/MESSAGE CHOICE -->
+  <div class="screen" id="screen-choice">
+    <h2 class="choice-title">Would you like to talk,<br/>or select &amp; message?</h2>
+    <div class="choice-row">
+      <div class="choice-card" onclick="chooseInputMode('talk')">
+        <div class="ci">🎙️</div>
+        <div class="cl">Talk</div>
+        <div class="cd">Speak your answers out loud</div>
+      </div>
+      <div class="choice-card" onclick="chooseInputMode('select')">
+        <div class="ci">💬</div>
+        <div class="cl">Select / Message</div>
+        <div class="cd">Tap options and type instead</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE -->
+  <div class="screen conv-screen" id="screen-mode">
+    <div class="conv-header fade-in"><p class="conv-eyebrow">Step 1 of 4</p><h2 class="conv-question">Which mode are you signing in as?</h2></div>
+    <div class="conv-body fade-in" id="modeOptions"></div>
+  </div>
+
+  <!-- COUNTRY -->
+  <div class="screen conv-screen" id="screen-country">
+    <div class="conv-header fade-in"><p class="conv-eyebrow">Step 2 of 4</p><h2 class="conv-question">Which country are you calling from?</h2></div>
+    <div class="conv-body fade-in" id="countryBody">
+      <input class="text-input" id="countryInput" placeholder="e.g. India" autocomplete="off">
+      <button class="primary-btn" onclick="submitCountry()">Continue</button>
+    </div>
+  </div>
+
+  <!-- NAME -->
+  <div class="screen conv-screen" id="screen-name">
+    <div class="conv-header fade-in"><p class="conv-eyebrow">Step 3 of 4</p><h2 class="conv-question">And what's your name?</h2></div>
+    <div class="conv-body fade-in" id="nameBody">
+      <input class="text-input" id="nameInput" placeholder="Your name" autocomplete="off">
+      <button class="primary-btn" onclick="submitName()">Continue</button>
+    </div>
+  </div>
+
+  <!-- PURPOSE -->
+  <div class="screen conv-screen" id="screen-purpose">
+    <div class="conv-header fade-in"><p class="conv-eyebrow">Step 4 of 4</p><h2 class="conv-question">What brings you here today, <span id="purposeName">friend</span>?</h2></div>
+    <div class="conv-body fade-in" id="purposeOptions"></div>
+  </div>
+
+  <!-- DETAIL -->
+  <div class="screen conv-screen" id="screen-detail">
+    <div class="conv-header fade-in"><p class="conv-eyebrow" id="detailEyebrow">Detail</p><h2 class="conv-question" id="detailQuestion">—</h2></div>
+    <div class="conv-body fade-in" id="detailBody"></div>
+  </div>
+
+  <!-- LIVE CALL (shown once the WebRTC connection is established) -->
+  <div class="screen" id="screen-call" style="justify-content:center; align-items:center; text-align:center;">
+    <canvas id="audioWave" width="240" height="60" style="border-radius:12px; margin-bottom:8px; width:240px; height:60px; display:block;"></canvas>
+    <h2 class="end-title">Connected with Shineil</h2>
+    <p class="end-sub" id="callLiveTimer">00:00</p>
+  </div>
+
+  <!-- END -->
+  <div class="screen" id="screen-end">
+    <div class="end-check"><svg viewBox="0 0 24 24" width="30" height="30" fill="none"><path d="M4 12l5 5L20 6" stroke="#33C766" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h2 class="end-title">Thank You for<br/>Calling With Us</h2>
+    <p class="end-sub">Have a nice day!</p>
+  </div>
+
+  <div class="callbar" id="callbar" style="display:none;">
+    <button class="hangup-btn" onclick="hangUp()">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" fill="#fff"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+/* =================== STATE =================== */
+const state = { mode:'', country:'', name:'', purpose:'', detail:'', inputMode:'select' };
+
+/* =================== WORKER URL (set this to your Cloudflare Worker) =================== */
+const WORKER_URL = 'https://backend.shinumaths989.workers.dev';
+
+/* =================== CLOCK =================== */
+function updateClock(){ document.getElementById('clock').textContent = new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
+updateClock(); setInterval(updateClock, 30000);
+
+/* =================== SHARED AUDIO CONTEXT (unlocked on first touch/click) =================== */
+let sharedAudioCtx = null;
+function ensureAudioCtx(){
+  if(!sharedAudioCtx){
+    try{ sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ console.warn('Web Audio unavailable', e); return null; }
+  }
+  if(sharedAudioCtx.state === 'suspended'){ sharedAudioCtx.resume().catch(()=>{}); }
+  return sharedAudioCtx;
+}
+// Unlock audio as early as possible on any first tap/click/touch anywhere on the phone
+['touchstart','mousedown','click'].forEach(evt=>{
+  document.getElementById('phone').addEventListener(evt, ()=>ensureAudioCtx(), {once:true, passive:true});
+});
+
+/* =================== AMBIENT BACKGROUND MUSIC (Web Audio API pad) =================== */
+let musicNodes=[], musicMasterGain=null;
+function startAmbientMusic(){
+  const ctx = ensureAudioCtx();
+  if(!ctx) return;
+  try{
+    musicMasterGain = ctx.createGain();
+    musicMasterGain.gain.value = 0.18;
+    musicMasterGain.connect(ctx.destination);
+    const notes = [196.0, 246.94, 293.66]; // G3, B3, D4 — soft major triad
+    notes.forEach((freq, i)=>{
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      osc.connect(g); g.connect(musicMasterGain);
+      osc.start();
+      // slow breathing fade in/out per note, staggered, repeated for a long call
+      const now = ctx.currentTime;
+      const cycle = 6 + i;
+      for(let t=0; t<600; t+=cycle){
+        g.gain.linearRampToValueAtTime(0.6, now + t + i*0.6);
+        g.gain.linearRampToValueAtTime(0.05, now + t + cycle/2 + i*0.6);
+      }
+      musicNodes.push({osc,g});
+    });
+  }catch(e){ console.warn('Ambient music unavailable', e); }
+}
+function stopAmbientMusic(){
+  const ctx = sharedAudioCtx;
+  musicNodes.forEach(({osc,g})=>{ try{ g.gain.cancelScheduledValues(ctx.currentTime); g.gain.linearRampToValueAtTime(0, ctx.currentTime+0.8); osc.stop(ctx.currentTime+0.9); }catch(e){} });
+  musicNodes = [];
+}
+
+/* =================== RINGBACK TONE (while waiting for owner to answer) =================== */
+let ringInterval=null, ringNodes=[];
+function startRingback(){
+  const ctx = ensureAudioCtx();
+  if(!ctx) return;
+  const playBurst = ()=>{
+    const g = ctx.createGain();
+    g.gain.value = 0;
+    g.connect(ctx.destination);
+    const bursts = [];
+    [440, 480].forEach(freq=>{
+      const osc = ctx.createOscillator();
+      osc.type='sine'; osc.frequency.value=freq;
+      osc.connect(g);
+      osc.start();
+      osc.stop(ctx.currentTime + 1.9);
+      bursts.push(osc);
+    });
+    const now = ctx.currentTime;
+    g.gain.linearRampToValueAtTime(0.3, now+0.05);
+    g.gain.setValueAtTime(0.3, now+1.8);
+    g.gain.linearRampToValueAtTime(0, now+1.9);
+    ringNodes.push(g, ...bursts);
+  };
+  playBurst();
+  ringInterval = setInterval(playBurst, 4000); // classic 2s on / 2s off cadence
+}
+function stopRingback(){
+  if(ringInterval) clearInterval(ringInterval);
+  ringInterval = null;
+  ringNodes.forEach(n=>{ try{ n.stop && n.stop(); n.disconnect && n.disconnect(); }catch(e){} });
+  ringNodes = [];
+}
+
+/* =================== SPEECH: TTS + STT =================== */
+const synth = window.speechSynthesis;
+function speak(text, onend){
+  if(!synth){ if(onend) onend(); return; }
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.98; u.pitch = 1.02; u.volume = 1;
+  u.onstart = ()=>{ document.getElementById('phone').classList.add('speaking'); };
+  u.onend = ()=>{ document.getElementById('phone').classList.remove('speaking'); if(onend) onend(); };
+  synth.speak(u);
+}
+
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+function listenOnce(onResult, onFail){
+  if(!SpeechRec){ if(onFail) onFail('unsupported'); return null; }
+  const rec = new SpeechRec();
+  rec.lang = 'en-US'; rec.continuous = false; rec.interimResults = true;
+  let finalTranscript = '';
+  let done = false;
+  rec.onresult = (e)=>{
+    let interim='';
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      if(e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    document.querySelectorAll('.mic-transcript').forEach(el=>{ el.textContent = finalTranscript || interim; });
+  };
+  rec.onerror = (e)=>{ if(!done){ done=true; if(onFail) onFail(e.error); } };
+  rec.onend = ()=>{ if(!done){ done=true; if(onResult) onResult(finalTranscript.trim()); } };
+  rec.start();
+  rec._markDone = ()=>{ done = true; };
+  return rec;
+}
+
+function fuzzyMatch(transcript, options){
+  const t = transcript.toLowerCase();
+  let best=null, bestScore=0;
+  options.forEach(opt=>{
+    const label = opt.toLowerCase();
+    let score = 0;
+    if(t.includes(label) || label.includes(t)) score = Math.max(label.length, t.length ? t.length/label.length : 0)+50;
+    label.split(/\W+/).forEach(word=>{ if(word.length>2 && t.includes(word)) score += word.length; });
+    if(score>bestScore){ bestScore=score; best=opt; }
+  });
+  return bestScore>0 ? best : null;
+}
+
+/* =================== SCREEN NAV =================== */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('callbar').style.display = (id==='screen-incoming'||id==='screen-end') ? 'none':'flex';
+}
+
+/* =================== SWIPE LEFT → RIGHT TO ANSWER =================== */
+const handle = document.getElementById('swipeHandle');
+const track = document.getElementById('swipeTrack');
+let dragging=false, startX=0;
+function pos(e){ return e.touches ? e.touches[0].clientX : e.clientX; }
+function onStart(e){ dragging=true; startX=pos(e); }
+function onMove(e){
+  if(!dragging) return;
+  const dx = pos(e) - startX;
+  const max = track.clientWidth - handle.clientWidth - 8;
+  const dist = Math.max(0, Math.min(dx, max));
+  handle.style.transform = `translateX(${dist}px)`;
+  if(dist > max*0.82){ answerCall(); }
+}
+function onEnd(){
+  if(!dragging) return;
+  dragging=false;
+  handle.style.transition='transform .25s ease';
+  handle.style.transform='translateX(0)';
+  setTimeout(()=>handle.style.transition='',260);
+}
+handle.addEventListener('mousedown', onStart);
+handle.addEventListener('touchstart', onStart, {passive:true});
+window.addEventListener('mousemove', onMove);
+window.addEventListener('touchmove', onMove, {passive:true});
+window.addEventListener('mouseup', onEnd);
+window.addEventListener('touchend', onEnd);
+
+let answered=false;
+function answerCall(){
+  if(answered) return;
+  answered=true;
+  showScreen('screen-welcome');
+  startAmbientMusic();
+  speak('Welcome to Shine Online Vault.', ()=>{
+    setTimeout(()=>{
+      showScreen('screen-choice');
+    }, 900);
+  });
+}
+
+/* =================== TALK vs SELECT/MESSAGE =================== */
+function chooseInputMode(m){
+  state.inputMode = m;
+  showScreen('screen-mode');
+  if(m==='talk'){ askModeByVoice(); } else { renderModes(); }
+}
+
+/* =================== MODE =================== */
+const MODES = [
+  ['SHINEIL','👤'], ['KEVIN','👤'], ['ADMIN','🛠️'],
+  ["SHINEIL'S PARENTS",'👪'], ["KEVIN'S PARENTS",'👪'],
+  ['PARENTS','👪'], ['OFFICIAL','💼']
+];
+function renderModes(){
+  const wrap = document.getElementById('modeOptions');
+  wrap.innerHTML='';
+  MODES.forEach(([label,icon])=>{
+    const b = document.createElement('button');
+    b.className='opt-btn';
+    b.innerHTML = `<span class="opt-icon">${icon}</span>${label}`;
+    b.onclick = ()=>{ state.mode=label; goToCountry(); };
+    wrap.appendChild(b);
+  });
+}
+function askModeByVoice(){
+  const wrap = document.getElementById('modeOptions');
+  wrap.innerHTML = voiceMicMarkup();
+  speak("Which mode are you signing in as? You can say Shineil, Kevin, Admin, Shineil's Parents, Kevin's Parents, Parents, or Official.", ()=>{
+    runVoiceCapture(wrap, (transcript)=>{
+      const labels = MODES.map(m=>m[0]);
+      const match = fuzzyMatch(transcript, labels) || labels[0];
+      state.mode = match;
+      speak(`Got it, ${match}.`, goToCountry);
+    });
+  });
+}
+function goToCountry(){
+  showScreen('screen-country');
+  if(state.inputMode==='talk'){ askCountryByVoice(); }
+  else{ document.getElementById('countryInput').focus(); }
+}
+
+/* =================== COUNTRY =================== */
+function submitCountry(){
+  const v = document.getElementById('countryInput').value.trim();
+  if(!v) return;
+  state.country = v;
+  goToName();
+}
+function askCountryByVoice(){
+  const body = document.getElementById('countryBody');
+  body.innerHTML = voiceMicMarkup();
+  speak('Which country are you calling from?', ()=>{
+    runVoiceCapture(body, (transcript)=>{
+      state.country = transcript || 'Unknown';
+      speak(`Thanks, calling from ${state.country}.`, goToName);
+    });
+  });
+}
+function goToName(){
+  showScreen('screen-name');
+  if(state.inputMode==='talk'){ askNameByVoice(); }
+  else{ document.getElementById('nameInput').focus(); }
+}
+
+/* =================== NAME =================== */
+function submitName(){
+  const v = document.getElementById('nameInput').value.trim();
+  if(!v) return;
+  state.name = v;
+  document.getElementById('purposeName').textContent = v;
+  showScreen('screen-purpose');
+  renderPurposes();
+}
+function askNameByVoice(){
+  const body = document.getElementById('nameBody');
+  body.innerHTML = voiceMicMarkup();
+  speak("And what's your name?", ()=>{
+    runVoiceCapture(body, (transcript)=>{
+      state.name = transcript || 'Friend';
+      document.getElementById('purposeName').textContent = state.name;
+      speak(`Nice to meet you, ${state.name}.`, ()=>{
+        showScreen('screen-purpose');
+        askPurposeByVoice();
+      });
+    });
+  });
+}
+
+/* =================== PURPOSE =================== */
+const PURPOSES = [
+  ['Feedback','📝'],
+  ['Info about Shine Online Vault','ℹ️'],
+  ['Suggestions','💡'],
+  ['Complaint','⚠️'],
+  ['Talk to Owner','📞'],
+  ['Report a Bug / Technical Issue','🐞'],
+  ['Emergency Family Contact','🚨'],
+  ['Request Document Access','📂'],
+];
+function renderPurposes(){
+  const wrap = document.getElementById('purposeOptions');
+  wrap.innerHTML='';
+  PURPOSES.forEach(([label,icon])=>{
+    const b=document.createElement('button');
+    b.className='opt-btn';
+    b.innerHTML = `<span class="opt-icon">${icon}</span>${label}`;
+    b.onclick = ()=>{ state.purpose=label; routePurpose(label); };
+    wrap.appendChild(b);
+  });
+}
+function askPurposeByVoice(){
+  const wrap = document.getElementById('purposeOptions');
+  wrap.innerHTML = voiceMicMarkup();
+  speak('What brings you here today? Feedback, Info about the Vault, Suggestions, Complaint, Talk to Owner, Report a Bug, Emergency Family Contact, or Request Document Access?', ()=>{
+    runVoiceCapture(wrap, (transcript)=>{
+      const labels = PURPOSES.map(p=>p[0]);
+      const match = fuzzyMatch(transcript, labels) || labels[1];
+      state.purpose = match;
+      speak(`Okay, ${match}.`, ()=>routePurpose(match));
+    });
+  });
+}
+
+/* =================== SHARED VOICE UI =================== */
+function voiceMicMarkup(){
+  return `
+    <div class="mic-wrap">
+      <div class="mic-circle listening" id="micCircle">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z" fill="#0B1026"/><path d="M19 11a7 7 0 0 1-14 0M12 19v3" stroke="#0B1026" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="mic-status" id="micStatus">Listening…</div>
+      <div class="mic-transcript" id="micTranscript"></div>
+      <button class="ghost-btn" onclick="switchToTypeFallback()">Type instead</button>
+    </div>`;
+}
+function runVoiceCapture(container, onDone){
+  const status = container.querySelector('#micStatus') || document.getElementById('micStatus');
+  let settled = false;
+  const rec = listenOnce(
+    (transcript)=>{
+      if(settled) return; settled = true; clearTimeout(waitTimer);
+      if(status) status.textContent = transcript ? 'Got it' : "Didn't catch that";
+      if(!transcript){ setTimeout(()=>runVoiceCapture(container, onDone), 600); return; }
+      onDone(transcript);
+    },
+    (err)=>{
+      if(settled) return; settled = true; clearTimeout(waitTimer);
+      if(status) status.textContent = 'Voice unavailable — switching to typing';
+      setTimeout(()=>{ state.inputMode='select'; rerenderCurrentStepAsSelect(); }, 900);
+    }
+  );
+  // No response within 13 seconds → stop listening and drop to typing for the rest of the call
+  const waitTimer = setTimeout(()=>{
+    if(settled) return; settled = true;
+    if(rec){ try{ rec._markDone(); rec.abort(); }catch(e){} }
+    if(status) status.textContent = "Didn't hear you — switching to typing";
+    setTimeout(()=>{ state.inputMode='select'; rerenderCurrentStepAsSelect(); }, 900);
+  }, 13000);
+}
+function switchToTypeFallback(){
+  state.inputMode = 'select';
+  synth && synth.cancel();
+  rerenderCurrentStepAsSelect();
+}
+function rerenderCurrentStepAsSelect(){
+  const active = document.querySelector('.screen.active').id;
+  if(active==='screen-mode') renderModes();
+  else if(active==='screen-country'){ document.getElementById('countryBody').innerHTML = `<input class="text-input" id="countryInput" placeholder="e.g. India" autocomplete="off"><button class="primary-btn" onclick="submitCountry()">Continue</button>`; document.getElementById('countryInput').focus(); }
+  else if(active==='screen-name'){ document.getElementById('nameBody').innerHTML = `<input class="text-input" id="nameInput" placeholder="Your name" autocomplete="off"><button class="primary-btn" onclick="submitName()">Continue</button>`; document.getElementById('nameInput').focus(); }
+  else if(active==='screen-purpose') renderPurposes();
+  else if(active==='screen-detail') routePurpose(state.purpose);
+}
+
+/* =================== DETAIL ROUTING =================== */
+function routePurpose(label){
+  showScreen('screen-detail');
+  const eyebrow = document.getElementById('detailEyebrow');
+  const question = document.getElementById('detailQuestion');
+  const body = document.getElementById('detailBody');
+  body.innerHTML='';
+
+  if(label==='Feedback'){
+    eyebrow.textContent = 'Feedback';
+    question.textContent = 'A few quick questions for you';
+    body.innerHTML = `
+      <div class="info-card">Feedback questions load from the vault's feedback form. This demo doesn't have that question set wired in yet — send the source PDF and I'll swap this card for the real, question-by-question flow (voice or typed).</div>
+      <button class="primary-btn" onclick="finishFlow()">Skip for now</button>`;
+    if(state.inputMode==='talk') speak("Feedback questions aren't set up yet in this demo. Send the questions and I'll wire them in.", ()=>finishFlow());
+    return;
+  }
+  if(label==='Info about Shine Online Vault'){
+    const infoText = "Shine Online Vault is a private, family-only document vault created and maintained by Shineil Keith Mathias. It keeps important family documents organised, encrypted, and reachable from any device, with separate access modes for each family member, offline access when you're without signal, and a home dashboard for pinned files, recent activity and quick search. Every file is protected end to end, and access is logged so the family always knows who opened what, when.";
+    eyebrow.textContent = 'Info';
+    question.textContent = 'About the Vault';
+    body.innerHTML = `<div class="info-card"><b>Shine Online Vault</b> is a private, family-only document vault created and maintained by <b>Shineil Keith Mathias</b>. It keeps important family documents organised, encrypted, and reachable from any device — with separate access modes for each family member, offline access when you're without signal, and a home dashboard for pinned files, recent activity and quick search. Every file is protected end-to-end, and access is logged so the family always knows who opened what, when.</div>
+      <button class="primary-btn" onclick="finishFlow()">Got it, thanks</button>`;
+    if(state.inputMode==='talk') speak(infoText, ()=>{ /* wait for user to end call or auto-continue */ });
+    return;
+  }
+  if(label==='Suggestions' || label==='Complaint' || label==='Report a Bug / Technical Issue'){
+    const map = {
+      'Suggestions': ['Suggestions', "What's on your mind? We're listening."],
+      'Complaint': ['Complaint', "We're sorry to hear that. Tell us what happened."],
+      'Report a Bug / Technical Issue': ['Bug Report', 'Describe what went wrong, as clearly as you can.']
+    };
+    eyebrow.textContent = map[label][0];
+    question.textContent = map[label][1];
+    if(state.inputMode==='talk'){
+      body.innerHTML = voiceMicMarkup();
+      speak(map[label][1], ()=>{
+        runVoiceCapture(body, (transcript)=>{
+          state.detail = transcript;
+          speak('Thanks for letting me know.', ()=>finishFlow());
+        });
+      });
+    } else {
+      body.innerHTML = `<textarea class="text-input" rows="5" id="detailText" placeholder="Type here…"></textarea><button class="primary-btn" id="detailSubmit" disabled onclick="submitDetailText()">Submit</button>`;
+      document.getElementById('detailText').addEventListener('input', e=>{ document.getElementById('detailSubmit').disabled = !e.target.value.trim(); });
+    }
+    return;
+  }
+  if(label==='Talk to Owner'){
+    eyebrow.textContent = '';
+    question.textContent = '';
+    body.innerHTML = `
+      <div style="text-align:center;">
+        <div class="avatar" style="margin:30px auto 0; width:90px; height:90px; font-size:36px;">S</div>
+        <div class="caller-name" style="margin-top:18px;">Shineil</div>
+        <div class="ring-status">Calling…</div>
+      </div>`;
+    if(state.inputMode==='talk') speak('Calling Shineil now.');
+    // Automatically place the call — the visitor never sees where it connects to
+    setTimeout(callOwner, 1600);
+    return;
+  }
+  if(label==='Emergency Family Contact'){
+    eyebrow.textContent = 'Emergency';
+    question.textContent = 'This will alert the family immediately';
+    body.innerHTML = `<div class="info-card" style="border-color:rgba(229,72,77,.4); background:rgba(229,72,77,.1);">Emergency contact requests are flagged as urgent and should reach every admin device right away, bypassing normal notification rules. Confirm below to simulate sending that alert.</div>
+      <button class="primary-btn" style="background:linear-gradient(135deg,#F19A9D,var(--danger)); color:#fff;" onclick="finishFlow('Emergency alert sent to the family.')">Send Emergency Alert</button>`;
+    if(state.inputMode==='talk') speak('This will alert the family immediately. Tap send emergency alert to confirm.');
+    return;
+  }
+  if(label==='Request Document Access'){
+    eyebrow.textContent = 'Document Access';
+    question.textContent = 'Which document or category do you need?';
+    if(state.inputMode==='talk'){
+      body.innerHTML = voiceMicMarkup();
+      speak('Which document or category do you need?', ()=>{
+        runVoiceCapture(body, (transcript)=>{
+          state.detail = transcript;
+          speak('Request noted. Thank you.', ()=>finishFlow());
+        });
+      });
+    } else {
+      body.innerHTML = `<textarea class="text-input" rows="4" id="detailText" placeholder="e.g. Passport copies, 2023 tax folder…"></textarea><button class="primary-btn" id="detailSubmit" disabled onclick="submitDetailText()">Send Request</button>`;
+      document.getElementById('detailText').addEventListener('input', e=>{ document.getElementById('detailSubmit').disabled = !e.target.value.trim(); });
+    }
+    return;
+  }
+}
+function submitDetailText(){ state.detail = document.getElementById('detailText').value.trim(); finishFlow(); }
+function callOwner(){
+  const callId = 'call_' + Date.now();
+  const callPayload = {
+    callId,
+    name: state.name || 'Vault Visitor',
+    mode: state.mode || '—',
+    country: state.country || '—',
+    reason: state.purpose || 'Talk to Owner'
+  };
+
+  startRingback();
+  document.getElementById('detailQuestion').textContent = '';
+  const ringStatusEl = document.querySelector('#screen-detail .ring-status');
+
+  let settled = false;
+  let channel = null;
+  try{ channel = new BroadcastChannel('shine-vault-call'); }catch(e){ channel = null; }
+  activeCallChannel = channel;
+  activeCallId = callId;
+
+  // ─── POST to worker API for cross-device push ──────────────────────────
+  let statusPollTimer = null;
+  workerCallId = null;
+  if (WORKER_URL) {
+    fetch(WORKER_URL + '/api/trigger-call', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(callPayload)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data.success && data.callId) {
+        workerCallId = data.callId;
+        // Poll for status every 2 seconds
+        statusPollTimer = setInterval(function(){
+          fetch(WORKER_URL + '/api/call-status/' + workerCallId)
+            .then(function(r2){ return r2.json(); })
+            .then(function(statusData){
+              if (settled) { clearInterval(statusPollTimer); return; }
+              if (statusData.status === 'signaling') {
+                settled = true;
+                stopRingback();
+                if (statusPollTimer) clearInterval(statusPollTimer);
+                clearTimeout(waitTimer);
+                startWebRTC(workerCallId);
+              } else if (statusData.status === 'declined') conclude(false);
+            })
+            .catch(function(){});
+        }, 2000);
+      }
+    })
+    .catch(function(err){ console.warn('[trigger-call] Worker POST failed:', err); });
+  }
+
+  const conclude = (accepted)=>{
+    if(settled) return; settled = true;
+    stopRingback();
+    if (statusPollTimer) clearInterval(statusPollTimer);
+    clearTimeout(waitTimer);
+
+    // Notify worker of end if call was accepted (visitor hung up)
+    if (accepted && workerCallId && WORKER_URL) {
+      fetch(WORKER_URL + '/api/end-call/' + workerCallId, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }
+      }).catch(function(){});
+    }
+
+    if(accepted){
+      if(ringStatusEl) ringStatusEl.textContent = 'Connected — go ahead';
+      speak("You're connected. Go ahead.", ()=>{
+        showScreen('screen-call');
+        startLiveCallTimer();
+      });
+    } else {
+      if(channel) channel.close();
+      activeCallChannel = null; activeCallId = null;
+      if(ringStatusEl) ringStatusEl.textContent = 'Shineil is not answering';
+      speak('Shineil is not answering the call right now. You can try calling again later.', ()=>finishFlow('No answer — please try again later.'));
+    }
+  };
+
+  if(channel){
+    channel.onmessage = (e)=>{
+      if(!e.data || e.data.callId !== callId) return;
+      if(e.data.type === 'accepted') {
+        if (settled) return;
+        settled = true;
+        stopRingback();
+        if (statusPollTimer) clearInterval(statusPollTimer);
+        clearTimeout(waitTimer);
+        startWebRTC(workerCallId || callId);
+      }
+      if(e.data.type === 'declined') conclude(false);
+      if(e.data.type === 'ended') endLiveCallFromRemote();
+    };
+    channel.postMessage({ type:'call-request', ...callPayload });
+  }
+
+  const waitTimer = setTimeout(function(){
+    if (!settled) conclude(false);
+  }, 30000); // wait up to 30 seconds for the owner to answer
+}
+
+/* =================== LIVE CALL (stays connected until either side hangs up) =================== */
+let activeCallChannel = null;
+let activeCallId = null;
+let workerCallId = null; // set by callOwner() for worker API path
+let liveCallInterval = null;
+function startLiveCallTimer(){
+  let secs = 0;
+  const el = document.getElementById('callLiveTimer');
+  clearInterval(liveCallInterval);
+  liveCallInterval = setInterval(()=>{
+    secs++;
+    const m = String(Math.floor(secs/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    if(el) el.textContent = `${m}:${s}`;
+  }, 1000);
+}
+function endLiveCallFromRemote(){
+  // Owner ended the call from their side — reflect that here instead of just going silent.
+  clearInterval(liveCallInterval);
+  stopAudioWave();
+  if(activeCallChannel) activeCallChannel.close();
+  activeCallChannel = null; activeCallId = null;
+  finishFlow('Shineil ended the call. Have a nice day!');
+}
+
+/* =================== END / HANGUP =================== */
+function finishFlow(customSub){
+  document.getElementById('screen-end').querySelector('.end-sub').textContent = customSub || 'Have a nice day!';
+  showScreen('screen-end');
+  speak('Thank you for calling with us. Have a nice day!');
+  setTimeout(resetFlow, 3400);
+}
+function hangUp(){
+  stopAudioWave();
+  if(activeCallChannel && activeCallId){
+    activeCallChannel.postMessage({ callId: activeCallId, type: 'visitor-ended' });
+    activeCallChannel.close();
+    activeCallChannel = null; activeCallId = null;
+  }
+  // Notify worker (use workerCallId, not local activeCallId)
+  var endId = workerCallId || activeCallId;
+  if (endId && WORKER_URL) {
+    fetch(WORKER_URL + '/api/end-call/' + endId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }
+    }).catch(function(){});
+  }
+  clearInterval(liveCallInterval);
+  finishFlow();
+}
+
+
+function resetFlow(){
+  answered=false;
+  synth && synth.cancel();
+  stopAmbientMusic();
+  stopRingback();
+  stopAudioWave();
+  // Notify worker if we had a live call
+  var endId = workerCallId || activeCallId;
+  if (endId && WORKER_URL && !activeCallChannel) {
+    fetch(WORKER_URL + '/api/end-call/' + endId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }
+    }).catch(function(){});
+  }
+  Object.keys(state).forEach(k=>state[k]= k==='inputMode' ? 'select' : '');
+  const ci=document.getElementById('countryInput'); if(ci) ci.value='';
+  const ni=document.getElementById('nameInput'); if(ni) ni.value='';
+  showScreen('screen-incoming');
+}
+
+/* =================== WEBRTC + AUDIO WAVE =================== */
+var RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }] };
+var localStream = null, pc = null, waveAnimId = null, audioWaveCtx = null;
+
+function startWebRTC(callId){
+  if (!callId) { showConnected(); return; }
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    .then(function(stream){
+      localStream = stream;
+      pc = new RTCPeerConnection(RTC_CONFIG);
+      stream.getTracks().forEach(function(t){ pc.addTrack(t, stream); });
+      pc.onicecandidate = function(e){
+        if(!e.candidate || !callId) return;
+        fetch(WORKER_URL + '/api/signal/' + callId, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind:'candidate', side:'visitor', candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex })
+        }).catch(function(){});
+      };
+      pc.ontrack = function(e){
+        var ra = document.createElement('audio');
+        ra.srcObject = e.streams[0]; ra.autoplay = true; ra.style.display = 'none';
+        document.body.appendChild(ra);
+        setupAudioWave(e.streams[0]);
+        showConnected();
+      };
+      pc.createOffer().then(function(o){ return pc.setLocalDescription(o); })
+        .then(function(){
+          return fetch(WORKER_URL + '/api/signal/' + callId, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ kind:'offer', sdp: pc.localDescription.sdp, sdpType: pc.localDescription.type })
+          });
+        })
+        .then(function(){ pollForSignal(callId, 'visitor'); })
+        .catch(function(err){ console.warn('[WebRTC]', err); showConnected(); });
+    })
+    .catch(function(err){ console.warn('[getUserMedia]', err); showConnected(); });
+}
+
+function pollForSignal(callId, side){
+  var lastCandidateCount = 0;
+  var poller = setInterval(function(){
+    fetch(WORKER_URL + '/api/signal/' + callId)
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.success || !d.signal) return;
+        if(side === 'visitor' && d.signal.answer && pc && !pc.remoteDescription){
+          clearInterval(poller);
+          pc.setRemoteDescription(new RTCSessionDescription({ sdp: d.signal.answer.sdp, type: d.signal.answer.type })).catch(function(){});
+          lastCandidateCount = (d.signal.adminCandidates||[]).length;
+        }
+        if(side === 'admin' && d.signal.offer && pc && !pc.remoteDescription){
+          clearInterval(poller);
+          pc.setRemoteDescription(new RTCSessionDescription({ sdp: d.signal.offer.sdp, type: d.signal.offer.type }))
+            .then(function(){ return pc.createAnswer(); })
+            .then(function(a){ return pc.setLocalDescription(a); })
+            .then(function(){
+              return fetch(WORKER_URL + '/api/signal/' + callId, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ kind:'answer', sdp: pc.localDescription.sdp, sdpType: pc.localDescription.type })
+              });
+            })
+            .catch(function(err){ console.warn('[WebRTC answer]', err); });
+          lastCandidateCount = (d.signal.visitorCandidates||[]).length;
+        }
+        // Add remote candidates if any
+        if(pc && pc.remoteDescription){
+          var remoteCandidates = side === 'visitor' ? (d.signal.adminCandidates||[]) : (d.signal.visitorCandidates||[]);
+          for(var i = lastCandidateCount; i < remoteCandidates.length; i++){
+            var c = remoteCandidates[i];
+            pc.addIceCandidate(new RTCIceCandidate({ candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex })).catch(function(){});
+          }
+          lastCandidateCount = remoteCandidates.length;
+        }
+      })
+      .catch(function(){});
+  }, 1000);
+}
+
+function showConnected(){
+  showScreen('screen-call');
+  startLiveCallTimer();
+}
+
+function setupAudioWave(stream){
+  try{
+    var canvas = document.getElementById('audioWave');
+    if(!canvas) return;
+    var ctx = canvas.getContext('2d');
+    audioWaveCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var src = audioWaveCtx.createMediaStreamSource(stream);
+    var analyser = audioWaveCtx.createAnalyser();
+    analyser.fftSize = 128;
+    src.connect(analyser);
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    document.getElementById('phone').classList.add('speaking');
+    (function draw(){
+      waveAnimId = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(data);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#D4AF7A';
+      var len = data.length, barW = canvas.width / len * 2.2;
+      for(var i = 0; i < len; i++){
+        var h = (data[i] / 255) * canvas.height;
+        ctx.fillRect(i * (barW + 2) + 4, canvas.height - h, barW, h);
+      }
+    })();
+  }catch(e){ console.warn('[AudioWave]', e); }
+}
+
+function stopAudioWave(){
+  if(waveAnimId){ cancelAnimationFrame(waveAnimId); waveAnimId = null; }
+  if(audioWaveCtx){ audioWaveCtx.close().catch(function(){}); audioWaveCtx = null; }
+  if(localStream){ localStream.getTracks().forEach(function(t){ t.stop(); }); localStream = null; }
+  if(pc){ pc.close(); pc = null; }
+  document.getElementById('phone').classList.remove('speaking');
+}
+</script>
+</body>
+</html>

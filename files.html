@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Files Manager - Vault Studio</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="theme-color" content="#1a73e8">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="sha256.js"></script>
+<script src="offline-auth.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;color:#1e293b;background:#f8fafc;}
+
+/* ====== TITLE BAR ====== */
+.fm-titlebar{display:flex;align-items:center;height:36px;background:linear-gradient(135deg,#1a73e8,#1557b0);padding:0 14px;gap:8px;user-select:none;flex-shrink:0;}
+.fm-titlebar svg{width:18px;height:18px;color:#fff;}
+.fm-titlebar-text{color:#fff;font-size:13px;font-weight:700;flex:1;letter-spacing:.3px;}
+.fm-titlebar-btn{background:none;border:none;color:rgba(255,255,255,.7);cursor:pointer;padding:2px 6px;border-radius:4px;font-size:16px;line-height:1;}
+.fm-titlebar-btn:hover{color:#fff;background:rgba(255,255,255,.15);}
+
+/* ====== TOOLBAR ====== */
+.fm-toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#fff;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;flex-shrink:0;}
+.fm-tb-group{display:flex;align-items:center;gap:4px;}
+.fm-tb-sep{width:1px;height:22px;background:#e2e8f0;margin:0 4px;}
+.fm-tb-label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.fm-tb-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:11px;font-weight:600;color:#475569;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.fm-tb-btn:hover{background:#f1f5f9;border-color:#cbd5e1;color:#1e293b;}
+.fm-tb-btn svg{width:13px;height:13px;}
+.fm-tb-btn.primary{background:#1a73e8;color:#fff;border-color:#1557b0;}
+.fm-tb-btn.primary:hover{background:#1557b0;}
+.fm-tb-btn.success{background:#0d9488;color:#fff;border-color:#0f766e;}
+.fm-tb-btn.success:hover{background:#0f766e;}
+.fm-tb-btn.danger{background:#dc2626;color:#fff;border-color:#b91c1c;}
+.fm-tb-btn.danger:hover{background:#b91c1c;}
+.fm-tb-search{display:flex;align-items:center;gap:5px;padding:4px 10px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;flex:1;min-width:140px;max-width:280px;}
+.fm-tb-search svg{width:13px;height:13px;color:#94a3b8;flex-shrink:0;}
+.fm-tb-search input{border:none;background:none;outline:none;font-size:12px;width:100%;color:#1e293b;font-family:inherit;}
+.fm-tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+
+/* ====== LAYOUT ====== */
+.fm-layout{display:flex;flex:1;overflow:hidden;}
+
+/* ====== SIDEBAR (CATEGORIES) ====== */
+.fm-sidebar{width:240px;min-width:200px;background:#fff;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.fm-sidebar-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e8f0;}
+.fm-sidebar-head span{font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;}
+.fm-sidebar-head button{background:none;border:1px solid #e2e8f0;border-radius:5px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#475569;transition:all .15s;}
+.fm-sidebar-head button:hover{background:#f1f5f9;border-color:#cbd5e1;}
+.fm-sidebar-head button svg{width:14px;height:14px;}
+.fm-cat-list{flex:1;overflow-y:auto;padding:6px;}
+.fm-cat-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:#475569;transition:all .12s;margin-bottom:2px;position:relative;}
+.fm-cat-item:hover{background:#f1f5f9;}
+.fm-cat-item.active{background:#eff6ff;color:#1a73e8;font-weight:700;}
+.fm-cat-item svg{width:15px;height:15px;flex-shrink:0;}
+.fm-cat-item .fm-cat-count{margin-left:auto;font-size:10px;font-weight:700;color:#94a3b8;background:#f1f5f9;padding:1px 6px;border-radius:8px;}
+.fm-cat-item.active .fm-cat-count{background:#dbeafe;color:#1a73e8;}
+.fm-cat-item .fm-cat-del{display:none;position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer;padding:2px;border-radius:3px;}
+.fm-cat-item .fm-cat-del:hover{color:#dc2626;background:#fef2f2;}
+.fm-cat-item:hover .fm-cat-del{display:flex;}
+.fm-cat-item .fm-cat-del svg{width:12px;height:12px;}
+
+/* ====== MAIN AREA ====== */
+.fm-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ====== CATEGORY HEADER ====== */
+.fm-cat-header{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid #e2e8f0;background:#fff;flex-shrink:0;}
+.fm-cat-header h2{font-size:16px;font-weight:800;color:#1e293b;flex:1;}
+.fm-cat-header .fm-cat-badge{font-size:11px;font-weight:600;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:12px;}
+
+/* ====== CARDS GRID ====== */
+.fm-cards{flex:1;overflow-y:auto;padding:16px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-content:start;}
+
+/* ====== FILE CARD ====== */
+.fm-upload-area{border:2px dashed #cbd5e1;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:6px;color:#94a3b8;font-size:12px;font-weight:600;}
+.fm-upload-area:hover,.fm-upload-area.drag-over{border-color:#1a73e8;color:#1a73e8;background:#f0f7ff;}
+.fm-upload-area span{pointer-events:none;}
+.fm-upload-info{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;color:#166534;margin-top:6px;}
+.fm-upload-info span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fm-card{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px;cursor:default;transition:all .15s;position:relative;display:flex;flex-direction:column;gap:8px;}
+.fm-card:hover{border-color:#cbd5e1;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.fm-card.dragging{opacity:.5;border-style:dashed;}
+.fm-card.drag-over{border-color:#1a73e8;background:#f0f7ff;}
+.fm-card-top{display:flex;align-items:flex-start;gap:10px;}
+.fm-card-icon{width:38px;height:38px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fm-card-icon svg{width:20px;height:20px;color:#1a73e8;}
+.fm-card-info{flex:1;min-width:0;}
+.fm-card-name{font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fm-card-file{font-size:11px;color:#64748b;font-family:'Cascadia Code','Fira Code',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.fm-card-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:#94a3b8;flex-wrap:wrap;}
+.fm-card-meta svg{width:11px;height:11px;}
+.fm-card-meta span{display:flex;align-items:center;gap:3px;}
+.fm-card-members{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.fm-member-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 6px;border-radius:10px;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s;}
+.fm-member-chip.on{background:#16a34a;color:#ffffff;border:1px solid #15803d;box-shadow:0 0 0 1px rgba(22,163,74,0.25);}
+.fm-member-chip.on::before{content:'\2713';font-weight:900;}
+.fm-member-chip.off{background:transparent;color:#94a3b8;border:1px dashed #cbd5e1;opacity:0.6;text-decoration:line-through;}
+.fm-member-chip.off::before{content:'\2715';font-weight:900;font-size:9px;color:#cbd5e1;}
+.fm-member-chip.on:hover{background:#15803d;}
+.fm-member-chip.off:hover{opacity:0.85;border-color:#94a3b8;}
+.fm-card-actions{display:flex;gap:4px;position:absolute;top:10px;right:10px;opacity:0;transition:opacity .15s;}
+.fm-card:hover .fm-card-actions{opacity:1;}
+.fm-card-act[disabled]{opacity:.3;cursor:not-allowed;}
+@media (hover:none){ .fm-card-actions{opacity:1;} }
+.fm-card-act{width:26px;height:26px;border:1px solid #e2e8f0;border-radius:5px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;transition:all .12s;}
+.fm-card-act:hover{background:#f1f5f9;color:#1e293b;}
+.fm-card-act.del:hover{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
+.fm-card-act svg{width:13px;height:13px;}
+
+/* ====== ADD CARD ====== */
+.fm-add-card{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:8px;padding:20px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#94a3b8;transition:all .15s;min-height:120px;}
+.fm-add-card:hover{border-color:#1a73e8;color:#1a73e8;background:#f0f7ff;}
+.fm-add-card svg{width:24px;height:24px;}
+.fm-add-card span{font-size:12px;font-weight:600;}
+
+/* ====== EMPTY STATE ====== */
+.fm-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:#94a3b8;}
+.fm-empty svg{width:48px;height:48px;margin-bottom:12px;opacity:.4;}
+.fm-empty h3{font-size:15px;font-weight:700;color:#64748b;margin-bottom:4px;}
+.fm-empty p{font-size:12px;}
+
+/* ====== JSON PANEL ====== */
+.fm-json-panel{width:0;overflow:hidden;background:#1e293b;border-left:1px solid #334155;display:flex;flex-direction:column;transition:width .2s;flex-shrink:0;}
+.fm-json-panel.open{width:380px;}
+.fm-json-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #334155;}
+.fm-json-head span{font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;}
+.fm-json-head button{background:none;border:none;color:#94a3b8;cursor:pointer;padding:2px;}
+.fm-json-head button:hover{color:#fff;}
+.fm-json-head button svg{width:14px;height:14px;}
+.fm-json-body{flex:1;overflow:auto;padding:10px;}
+.fm-json-body pre{font-family:'Cascadia Code','Fira Code',monospace;font-size:11px;color:#e2e8f0;line-height:1.5;white-space:pre-wrap;word-break:break-all;margin:0;}
+.fm-json-body .jk{color:#7dd3fc;}
+.fm-json-body .js{color:#86efac;}
+.fm-json-body .jn{color:#fbbf24;}
+.fm-json-body .jb{color:#c084fc;}
+
+/* ====== SECTION HEADERS ====== */
+.fm-section{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;margin-top:8px;user-select:none;border-left:4px solid transparent;}
+.fm-section:first-child{margin-top:0;}
+.fm-section-name{font-size:13px;font-weight:700;flex:1;}
+.fm-section-count{font-size:10px;font-weight:700;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;padding:1px 7px;border-radius:8px;}
+.fm-section-del{width:28px;height:28px;border:none;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;color:#cbd5e1;transition:all .15s;flex-shrink:0;}
+.fm-section-del:hover{color:#dc2626;background:#fef2f2;}
+.fm-section-del svg{width:13px;height:13px;}
+body.dark .fm-section{background:linear-gradient(135deg,#1e2a3f,#1e293b);}
+body.dark .fm-section-name{color:#e2e8f0;}
+body.dark .fm-section-count{background:#1e293b;border-color:#334155;color:#64748b;}
+body.dark .fm-section-del{color:#475569;}
+body.dark .fm-section-del:hover{color:#ef4444;background:#3b1111;}
+
+/* ====== SECTION FILE PICKER (in section modal) ====== */
+.fm-sec-file{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:6px;cursor:pointer;transition:background .1s;font-size:12px;color:#475569;}
+.fm-sec-file:hover{background:#f1f5f9;}
+.fm-sec-file input[type="checkbox"]{accent-color:#1a73e8;width:15px;height:15px;cursor:pointer;}
+.fm-sec-file-name{font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fm-sec-file-path{font-size:10px;color:#94a3b8;font-family:'Cascadia Code','Fira Code',monospace;}
+body.dark .fm-sec-file{color:#94a3b8;}
+body.dark .fm-sec-file:hover{background:#334155;}
+
+/* ====== MODAL ====== */
+.fm-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999;}
+.fm-modal-overlay.show{display:flex;}
+.fm-modal{background:#fff;border-radius:10px;padding:0;width:420px;max-width:92vw;box-shadow:0 16px 48px rgba(0,0,0,.2);overflow:hidden;}
+.fm-modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e2e8f0;}
+.fm-modal-head h3{font-size:14px;font-weight:700;color:#1e293b;}
+.fm-modal-head button{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1;}
+.fm-modal-head button:hover{color:#dc2626;}
+.fm-modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;}
+.fm-modal-body label{font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.3px;}
+.fm-modal-body input,.fm-modal-body select{padding:8px 10px;border:1px solid #e2e8f0;border-radius:6px;font:inherit;font-size:13px;color:#1e293b;background:#fff;}
+.fm-modal-body input:focus,.fm-modal-body select:focus{outline:2px solid #1a73e8;outline-offset:-1px;border-color:#1a73e8;}
+.fm-modal-body .fm-field-row{display:flex;gap:8px;}
+.fm-modal-body .fm-field-row>div{flex:1;}
+.fm-modal-foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid #e2e8f0;background:#f8fafc;}
+.fm-modal-foot button{padding:7px 18px;border-radius:6px;border:1px solid #e2e8f0;font:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s;}
+.fm-modal-foot .fm-save{background:#1a73e8;color:#fff;border-color:#1557b0;}
+.fm-modal-foot .fm-save:hover{background:#1557b0;}
+.fm-modal-foot .fm-cancel{background:#fff;color:#475569;}
+.fm-modal-foot .fm-cancel:hover{background:#f1f5f9;}
+
+/* ====== MEMBER TOGGLES IN MODAL ====== */
+.fm-modal-members{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0;}
+
+/* ====== TOAST ====== */
+.fm-toast{position:fixed;bottom:40px;right:16px;background:#1e293b;color:#fff;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;}
+.fm-toast.show{opacity:1;transform:translateY(0);}
+
+/* ====== STATUS BAR ====== */
+.fm-statusbar{display:flex;align-items:center;justify-content:space-between;height:24px;background:#1e293b;padding:0 14px;flex-shrink:0;}
+.fm-statusbar span{color:rgba(255,255,255,.65);font-size:11px;display:flex;align-items:center;gap:4px;}
+.fm-statusbar svg{width:11px;height:11px;color:rgba(255,255,255,.65);}
+
+/* ====== DARK MODE ====== */
+body.dark{background:#0f172a;color:#e2e8f0;}
+body.dark .fm-toolbar{background:#1e293b;border-color:#334155;}
+body.dark .fm-tb-btn{background:#1e293b;color:#94a3b8;border-color:#334155;}
+body.dark .fm-tb-btn:hover{background:#334155;color:#e2e8f0;}
+body.dark .fm-tb-search{background:#1e293b;border-color:#334155;}
+body.dark .fm-tb-search input{color:#e2e8f0;}
+body.dark .fm-sidebar{background:#1e293b;border-color:#334155;}
+body.dark .fm-sidebar-head{border-color:#334155;}
+body.dark .fm-sidebar-head button{border-color:#334155;color:#94a3b8;}
+body.dark .fm-cat-item{color:#94a3b8;}
+body.dark .fm-cat-item:hover{background:#334155;}
+body.dark .fm-cat-item.active{background:#1e3a5f;color:#60a5fa;}
+body.dark .fm-cat-item .fm-cat-count{background:#334155;color:#64748b;}
+body.dark .fm-cat-item.active .fm-cat-count{background:#1e3a5f;color:#60a5fa;}
+body.dark .fm-cat-header{background:#1e293b;border-color:#334155;}
+body.dark .fm-cat-header h2{color:#e2e8f0;}
+body.dark .fm-card{background:#1e293b;border-color:#334155;}
+body.dark .fm-card:hover{border-color:#475569;}
+body.dark .fm-card-icon{background:#334155;}
+body.dark .fm-card-icon svg{color:#60a5fa;}
+body.dark .fm-card-name{color:#e2e8f0;}
+body.dark .fm-card-act{background:#334155;border-color:#475569;color:#94a3b8;}
+body.dark .fm-card-act:hover{background:#475569;color:#e2e8f0;}
+body.dark .fm-add-card{background:#1e293b;border-color:#334155;color:#64748b;}
+body.dark .fm-add-card:hover{border-color:#60a5fa;color:#60a5fa;background:#1e3a5f;}
+body.dark .fm-modal{background:#1e293b;}
+body.dark .fm-modal-head{border-color:#334155;}
+body.dark .fm-modal-head h3{color:#e2e8f0;}
+body.dark .fm-modal-body input,.body.dark .fm-modal-body select{background:#334155;color:#e2e8f0;border-color:#475569;}
+body.dark .fm-modal-foot{background:#1e293b;border-color:#334155;}
+body.dark .fm-modal-foot .fm-cancel{background:#334155;color:#94a3b8;}
+
+/* ====== UPLOAD STATUS BADGE (on card) ====== */
+.fm-upload-badge{position:absolute;top:10px;left:10px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px #fff;}
+.fm-upload-badge.pending{background:#f59e0b;}
+.fm-upload-badge.success{background:#22c55e;}
+.fm-upload-badge.failed{background:#ef4444;}
+body.dark .fm-upload-badge{box-shadow:0 0 0 2px #1e293b;}
+
+/* ====== UPLOAD RESULTS MODAL ====== */
+.fm-modal.wide{width:520px;}
+.fm-upload-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:#f8fafc;border:1px solid #e2e8f0;}
+.fm-upload-row .fm-ur-icon{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.fm-upload-row.ok .fm-ur-icon{color:#16a34a;}
+.fm-upload-row.err .fm-ur-icon{color:#dc2626;}
+.fm-upload-row .fm-ur-info{flex:1;min-width:0;}
+.fm-upload-row .fm-ur-name{font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fm-upload-row .fm-ur-detail{font-size:11px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fm-upload-row.err .fm-ur-detail{color:#dc2626;}
+.fm-upload-row .fm-ur-retry{padding:4px 9px;border-radius:5px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0;}
+.fm-upload-row .fm-ur-retry:hover{background:#fee2e2;}
+.fm-upload-summary{display:flex;gap:12px;font-size:12px;font-weight:600;padding:2px 2px 6px;}
+.fm-upload-summary .ok{color:#16a34a;}
+.fm-upload-summary .err{color:#dc2626;}
+body.dark .fm-upload-row{background:#0f172a;border-color:#334155;}
+body.dark .fm-upload-row .fm-ur-name{color:#e2e8f0;}
+
+/* ====== MOBILE ====== */
+@media(max-width:768px){
+  .fm-sidebar{width:180px;min-width:140px;}
+  .fm-json-panel.open{width:280px;}
+  .fm-cards{grid-template-columns:1fr;padding:10px;}
+  .fm-tb-search{max-width:160px;}
+}
+@media(max-width:560px){
+  .fm-sidebar{display:none;}
+  .fm-json-panel.open{position:fixed;right:0;top:0;bottom:0;width:90vw;z-index:9998;}
+}
+</style>
+</head>
+<body>
+
+<div style="display:flex;flex-direction:column;height:100vh;width:100vw;">
+
+  <!-- TITLE BAR -->
+  <div class="fm-titlebar">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+    <div class="fm-titlebar-text">Files Manager - Vault Studio</div>
+    <button class="fm-titlebar-btn" onclick="toggleDark()" title="Toggle dark mode"><i data-lucide="moon" style="width:16px;height:16px;"></i></button>
+    <button class="fm-titlebar-btn" onclick="toggleJsonPanel()" title="Toggle JSON preview"><i data-lucide="code" style="width:16px;height:16px;"></i></button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="fm-toolbar">
+    <div class="fm-tb-group">
+      <button class="fm-tb-btn primary" onclick="loadFromBucket()" title="Load from R2 bucket"><i data-lucide="download" style="width:13px;height:13px;"></i> Load</button>
+      <button class="fm-tb-btn success" id="deployBtn" onclick="deployToBucket()" title="Save to R2 bucket"><i data-lucide="upload" style="width:13px;height:13px;"></i> Deploy</button>
+      <button class="fm-tb-btn" onclick="runRecovery()" title="Scan and fix files encrypted with wrong key (the 3 failing files)" style="background:#fef3c7;border-color:#f59e0b;color:#92400e;"><i data-lucide="wrench" style="width:13px;height:13px;"></i> Recover</button>
+    </div>
+    <div class="fm-tb-sep"></div>
+    <div class="fm-tb-group">
+      <button class="fm-tb-btn" onclick="exportJSON()" title="Export as JSON file"><i data-lucide="file-down" style="width:13px;height:13px;"></i> Export</button>
+      <button class="fm-tb-btn" onclick="importJSON()" title="Import JSON file"><i data-lucide="file-up" style="width:13px;height:13px;"></i> Import</button>
+      <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="handleImportFile(event)">
+    </div>
+    <div class="fm-tb-sep"></div>
+    <div class="fm-tb-search">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="Search files, categories..." oninput="filterCards(this.value)">
+    </div>
+    <div class="fm-tb-right">
+      <span style="font-size:11px;color:#64748b;" id="statInfo">0 categories, 0 files</span>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="fm-layout">
+
+    <!-- SIDEBAR -->
+    <div class="fm-sidebar">
+      <div class="fm-sidebar-head">
+        <span>Categories</span>
+        <button onclick="addCategory()" title="Add category"><i data-lucide="plus" style="width:14px;height:14px;"></i></button>
+      </div>
+      <div class="fm-cat-list" id="catList"></div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="fm-main">
+      <div class="fm-cat-header" id="catHeader" style="display:none;">
+        <h2 id="catTitle">-</h2>
+        <span class="fm-cat-badge" id="catBadge">0 files</span>
+        <button class="fm-tb-btn" onclick="openSectionModal()" title="Create section"><i data-lucide="layout-grid" style="width:13px;height:13px;"></i> + Section</button>
+        <button class="fm-tb-btn" onclick="renameCategory()" title="Rename category"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>
+        <button class="fm-tb-btn danger" onclick="deleteCategory()" title="Delete category"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+      </div>
+      <div class="fm-cards" id="cardsGrid"></div>
+    </div>
+
+    <!-- JSON PANEL -->
+    <div class="fm-json-panel" id="jsonPanel">
+      <div class="fm-json-head">
+        <span>JSON Preview</span>
+        <button onclick="toggleJsonPanel()"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+      </div>
+      <div class="fm-json-body">
+        <pre id="jsonPre">{}
+</pre>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="fm-statusbar">
+    <span><i data-lucide="database" style="width:11px;height:11px;"></i> Vault Files Manager v1.0</span>
+    <span id="statusRight">Initializing...</span>
+  </div>
+
+</div>
+
+<!-- UPLOAD RESULTS / INDICATOR MODAL -->
+<div class="fm-modal-overlay" id="uploadResultsModal">
+  <div class="fm-modal wide">
+    <div class="fm-modal-head">
+      <h3>Deploy Results</h3>
+      <button onclick="closeUploadResultsModal()">&times;</button>
+    </div>
+    <div class="fm-modal-body">
+      <div class="fm-upload-summary" id="urSummary"></div>
+      <div id="urList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+    <div class="fm-modal-foot">
+      <button class="fm-cancel" onclick="closeUploadResultsModal()">Close</button>
+      <button class="fm-save" id="urRetryAllBtn" onclick="retryFailedUploads()" style="display:none;">Retry Failed</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECOVERY MODAL -->
+<div class="fm-modal-overlay" id="recoveryModal">
+  <div class="fm-modal wide">
+    <div class="fm-modal-head">
+      <h3>Recover Corrupted Files</h3>
+      <button onclick="closeRecoveryModal()">&times;</button>
+    </div>
+    <div class="fm-modal-body">
+      <div id="recSummary" style="font-size:12px;color:#64748b;margin-bottom:10px;">Scans every file in R2, tries to decrypt with the correct vault password, and re-encrypts any that were saved with the old PIN-hash fallback key.</div>
+      <div id="recProgress" style="font-size:12px;font-weight:600;color:#1a73e8;margin-bottom:8px;display:none;"></div>
+      <div id="recList" style="display:flex;flex-direction:column;gap:6px;max-height:40vh;overflow-y:auto;"></div>
+    </div>
+    <div class="fm-modal-foot">
+      <button class="fm-cancel" onclick="closeRecoveryModal()">Close</button>
+      <button class="fm-save" id="recFixBtn" onclick="fixRecoveredFiles()" style="display:none;background:#f59e0b;border-color:#d97706;">Fix & Re-deploy</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT FILE MODAL -->
+<div class="fm-modal-overlay" id="fileModal">
+  <div class="fm-modal">
+    <div class="fm-modal-head">
+      <h3 id="fileModalTitle">Add File Entry</h3>
+      <button onclick="closeFileModal()">&times;</button>
+    </div>
+    <div class="fm-modal-body">
+      <div>
+        <label>Display Name</label>
+        <input type="text" id="fmName" placeholder="e.g. Birth Certificate">
+      </div>
+      <div>
+        <label>File Path</label>
+        <div class="fm-field-row">
+          <div style="flex:0 0 110px;">
+            <select id="fmPrefix" title="Automatic: set by the file's category (PHOTOS category = photos/, everything else = docs/)">
+              <option value="docs/">docs/</option>
+              <option value="photos/">photos/</option>
+            </select>
+          </div>
+          <div style="flex:1;">
+            <input type="text" id="fmFile" placeholder="e.g. birth_cert.enc">
+          </div>
+        </div>
+      </div>
+      <div>
+        <label>Upload & Encrypt (Any File -> .enc)</label>
+        <div id="fmUploadArea" class="fm-upload-area" onclick="document.getElementById('fmFileInput').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleFileDrop(event)">
+          <i data-lucide="upload-cloud" style="width:28px;height:28px;color:#94a3b8;"></i>
+          <span>Drop PDF here or click to browse</span>
+        </div>
+        <input type="file" id="fmFileInput" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.heic,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.zip,.mp3,.mp4,.mov,.m4a,.json" style="display:none" onchange="handleFileSelect(event)">
+        <div id="fmFileInfo" style="display:none;" class="fm-upload-info">
+          <i data-lucide="file-check" style="width:14px;height:14px;color:#16a34a;"></i>
+          <span id="fmFileInfoText"></span>
+          <button onclick="clearFileUpload()" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;line-height:1;">&times;</button>
+        </div>
+      </div>
+      <div>
+        <label>Section</label>
+        <select id="fmSection">
+          <option value="">- No section -</option>
+        </select>
+      </div>
+      <div>
+        <label>Date</label>
+        <input type="date" id="fmDate">
+      </div>
+      <div>
+        <label>Visible To Members</label>
+        <div class="fm-modal-members" id="fmMembers">
+          <label class="fm-member-chip on" data-m="shineil"><input type="checkbox" checked style="display:none;"> shineil</label>
+          <label class="fm-member-chip on" data-m="brother"><input type="checkbox" checked style="display:none;"> brother</label>
+          <label class="fm-member-chip on" data-m="father"><input type="checkbox" checked style="display:none;"> father</label>
+          <label class="fm-member-chip on" data-m="mother"><input type="checkbox" checked style="display:none;"> mother</label>
+        </div>
+      </div>
+    </div>
+    <div class="fm-modal-foot">
+      <button class="fm-cancel" onclick="closeFileModal()">Cancel</button>
+      <button class="fm-save" onclick="saveFileEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SECTION MODAL -->
+<div class="fm-modal-overlay" id="sectionModal">
+  <div class="fm-modal" style="width:440px;">
+    <div class="fm-modal-head">
+      <h3 id="sectionModalTitle">Create Section</h3>
+      <button onclick="closeSectionModal()">&times;</button>
+    </div>
+    <div class="fm-modal-body">
+      <div>
+        <label>Section Name</label>
+        <input type="text" id="secName" placeholder="e.g. Google, Apple, Samsung...">
+      </div>
+      <div>
+        <label>Color</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="color" id="secColor" value="#1a73e8" style="width:40px;height:34px;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;padding:2px;">
+          <div id="secColorPresets" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+      <div>
+        <label>Select Files in This Category</label>
+        <div id="secFileList" style="max-height:200px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;padding:6px;"></div>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button class="fm-tb-btn" onclick="secSelectAll()" style="font-size:11px;">Select All</button>
+          <button class="fm-tb-btn" onclick="secSelectNone()" style="font-size:11px;">Clear All</button>
+        </div>
+      </div>
+    </div>
+    <div class="fm-modal-foot">
+      <button class="fm-cancel" onclick="closeSectionModal()">Cancel</button>
+      <button class="fm-save" onclick="saveSection()">Save Section</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN OVERLAY - 6-digit PIN (backend stored) -->
+<div class="fm-modal-overlay show" id="loginOverlay">
+  <div class="fm-modal" style="width:380px;">
+    <div class="fm-modal-head" style="background:linear-gradient(135deg,#1a73e8,#1557b0);">
+      <h3 style="color:#fff;">- Vault Files Manager</h3>
+    </div>
+    <div class="fm-modal-body" style="padding:24px 20px;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+          <i data-lucide="shield-check" style="width:28px;height:28px;color:#1a73e8;"></i>
+        </div>
+        <p id="pinSubtitle" style="font-size:12px;color:#64748b;">Enter your 6-digit PIN to access the file manager</p>
+      </div>
+      <div id="pinMainBlock">
+        <label id="pinMainLabel">6-Digit PIN</label>
+        <div id="pinRow" style="display:flex;gap:8px;justify-content:center;margin:10px 0 8px;"></div>
+      </div>
+      <div id="pinConfirmBlock" style="display:none;">
+        <label>Confirm PIN</label>
+        <div id="pinConfirmRow" style="display:flex;gap:8px;justify-content:center;margin:10px 0 8px;"></div>
+      </div>
+      <input type="password" id="loginPass" style="display:none;">
+      <div id="loginError" style="color:#dc2626;font-size:12px;text-align:center;display:none;margin-top:4px;"></div>
+      <div id="pinHint" style="font-size:11px;color:#94a3b8;text-align:center;margin-top:6px;display:none;">First time? Set a new 6-digit PIN</div>
+    </div>
+    <div class="fm-modal-foot" style="justify-content:center;flex-direction:column;gap:8px;">
+      <button class="fm-save" onclick="doPinLogin()" id="loginBtn" style="width:100%;padding:10px;">Unlock</button>
+      <button id="pinChangeBtn" onclick="openPinChange()" style="display:none;background:none;border:none;color:#64748b;font-size:11px;cursor:pointer;">Change PIN</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="fm-toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   FILES MANAGER - INNOVATIVE files.json EDITOR
+   ================================================================ */
+
+var _data = {};
+var _activeCat = '';
+var _editIdx = -1;
+var _searchQ = '';
+var _dragCat = '';
+var _apiBase = 'https://backend.shinumaths989.workers.dev';
+
+function _getToken(){
+  return sessionStorage.getItem('vaultSessionToken')
+      || sessionStorage.getItem('vaultSession')
+      || '';
+}
+
+/* ================================================================
+   SESSION RESUME - persist work-in-progress immediately so a stale
+   token (401 after leaving the tab open for a while) never costs
+   unsaved edits or queued uploads. _data already lived in
+   localStorage; this adds the pending-upload blobs (via IndexedDB,
+   since they can be large binary data) and a small session-meta
+   record so a reload/relaunch can offer to pick up where you left
+   off instead of silently starting fresh.
+   ================================================================ */
+function _dbOpen(){
+  return new Promise(function(resolve, reject){
+    var req = indexedDB.open('filesManagerDB', 1);
+    req.onupgradeneeded = function(){
+      if (!req.result.objectStoreNames.contains('pendingUploads')){
+        req.result.createObjectStore('pendingUploads', { keyPath: 'uid' });
+      }
+    };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror = function(){ reject(req.error); };
+  });
+}
+
+async function _persistPendingUploads(){
+  try {
+    var db = await _dbOpen();
+    var tx = db.transaction('pendingUploads', 'readwrite');
+    var store = tx.objectStore('pendingUploads');
+    store.clear();
+    _pendingUploads.forEach(function(u){ store.put(u); });
+    await new Promise(function(res, rej){ tx.oncomplete = res; tx.onerror = function(){ rej(tx.error); }; });
+  } catch(e){ console.warn('[files.html] persist pending uploads failed:', e); }
+}
+
+async function _loadPendingUploadsFromDb(){
+  try {
+    var db = await _dbOpen();
+    var tx = db.transaction('pendingUploads', 'readonly');
+    var store = tx.objectStore('pendingUploads');
+    return await new Promise(function(res, rej){
+      var req = store.getAll();
+      req.onsuccess = function(){ res(req.result || []); };
+      req.onerror = function(){ rej(req.error); };
+    });
+  } catch(e){ console.warn('[files.html] load pending uploads failed:', e); return []; }
+}
+
+/* Called immediately after any state change (data edit, upload queued,
+   category switch) so the saved session is always current - no debounce,
+   no "save button" to forget to click. */
+function _saveSession(){
+  _saveToStorage();
+  _persistPendingUploads();
+  try {
+    localStorage.setItem('filesManagerSessionMeta', JSON.stringify({
+      activeCat: _activeCat,
+      pendingCount: _pendingUploads.length,
+      savedAt: Date.now()
+    }));
+  } catch(e){}
+}
+
+function _clearSessionMeta(){
+  try { localStorage.removeItem('filesManagerSessionMeta'); } catch(e){}
+}
+
+async function _restoreSessionFromDisk(){
+  _loadFromStorage();
+  _pendingUploads = await _loadPendingUploadsFromDb();
+  _uploadStatus = {};
+  _pendingUploads.forEach(function(u){ _uploadStatus[u.uid] = { state:'pending' }; });
+  var meta = {};
+  try { meta = JSON.parse(localStorage.getItem('filesManagerSessionMeta') || '{}'); } catch(e){}
+  _renderSidebar();
+  var cats = Object.keys(_data);
+  var restoreCat = meta.activeCat && _data[meta.activeCat] ? meta.activeCat : (cats.length ? cats[0] : '');
+  if (restoreCat) _selectCat(restoreCat);
+  _updateDeployBadge();
+  _updateJson();
+  _updateStats();
+}
+
+/* ---- INIT ---- */
+(async function(){
+  _renderSidebar();
+  _updateStats();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  var onDomain = location.origin === 'https://72oe-v2sx.shine-ministry.com';
+
+  // If a previous visit left unsaved edits and/or queued (not-yet-deployed)
+  // uploads behind - e.g. the tab sat open overnight, the session token
+  // expired, and deploy failed with 401 - offer to resume exactly where
+  // things were left instead of silently discarding that work.
+  var resumed = false;
+  try {
+    var meta = JSON.parse(localStorage.getItem('filesManagerSessionMeta') || 'null');
+    if (meta && (meta.pendingCount > 0)){
+      var when = meta.savedAt ? new Date(meta.savedAt).toLocaleString() : 'earlier';
+      var doResume = confirm(
+        'Unsaved work found from ' + when + ' (' + meta.pendingCount + ' file(s) not yet deployed).\n\n' +
+        'Continue where you left off? Choose Cancel to discard it and load fresh from the vault.'
+      );
+      if (doResume){
+        await _restoreSessionFromDisk();
+        resumed = true;
+        toast('Resumed previous session - ' + meta.pendingCount + ' file(s) still queued for deploy');
+      } else {
+        _clearSessionMeta();
+        try { var db = await _dbOpen(); db.transaction('pendingUploads','readwrite').objectStore('pendingUploads').clear(); } catch(e){}
+      }
+    }
+  } catch(e){ console.warn('[files.html] resume check failed:', e); }
+
+  // A per-tab sessionStorage token (and in-memory window.masterPassword) is
+  // wiped on every reload/new tab, which made files.html show the login
+  // screen even though the device was still "remembered" (vaultTrustInfo in
+  // localStorage, same as index.html). Try to silently restore that trusted
+  // session before falling back to the login overlay.
+  if (onDomain && (!_getToken() || !window.masterPassword) &&
+      typeof _isTrustDevice === 'function' && _isTrustDevice() &&
+      typeof restoreTrustSession === 'function') {
+    try { await restoreTrustSession(); } catch(e){ console.warn('[files.html] restoreTrustSession failed:', e); }
+  }
+
+  var token = _getToken();
+  // In embed/window mode, PIN gate is primary - token is optional (offline allowed)
+  // Always show PIN UI when onDomain, even if token exists
+  if (onDomain){
+    document.getElementById('loginOverlay').classList.add('show');
+    // Initialize 6-digit PIN UI (backend stored)
+    if (typeof _fmInitPinUI === 'function') _fmInitPinUI();
+    else setTimeout(function(){ document.getElementById('loginPass')?.focus(); }, 100);
+  } else if (token && window.masterPassword && !resumed){
+    document.getElementById('loginOverlay').classList.remove('show');
+    _autoLoad();
+  } else if (resumed){
+    document.getElementById('statusRight').textContent = 'Resumed offline - enter PIN to deploy';
+    document.getElementById('loginOverlay').classList.add('show');
+    if (typeof _fmInitPinUI === 'function') _fmInitPinUI();
+  } else {
+    goOffline();
+  }
+})();
+
+/* ---- 6-DIGIT PIN (backend stored) ---- */
+const FM_PIN_KEY = 'files_manager';
+const FM_PIN_LEN = 6;
+let _fmPinMode = 'enter'; // 'enter' | 'set' | 'change'
+async function _fmHashPin(pin){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('fm-pin:'+FM_PIN_KEY+':'+pin));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function _fmSyncPinToServer(pinHash){
+  try{
+    const token=_getToken();
+    if(!token) return;
+    await fetch(_apiBase+'/save-pin-hash',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({memberKey:FM_PIN_KEY,pinHash})});
+  }catch(e){ console.warn('[FM-PIN] sync fail',e); }
+}
+async function _fmLoadPinFromServer(){
+  try{
+    const token=_getToken();
+    if(!token) return null;
+    const res=await fetch(_apiBase+'/get-pin-hashes',{headers:{'Authorization':'Bearer '+token}});
+    if(!res.ok) return null;
+    const data=await res.json();
+    if(data.success && data.hashes && data.hashes[FM_PIN_KEY]){
+      localStorage.setItem('fmPinHash_'+FM_PIN_KEY, data.hashes[FM_PIN_KEY]);
+      return data.hashes[FM_PIN_KEY];
+    }
+  }catch(e){ console.warn('[FM-PIN] load fail',e); }
+  return null;
+}
+function _fmBuildPinRow(containerId, count){
+  const row=document.getElementById(containerId);
+  if(!row) return;
+  row.innerHTML='';
+  for(let i=0;i<count;i++){
+    const inp=document.createElement('input');
+    inp.type='password'; inp.inputMode='numeric'; inp.maxLength=1; inp.autocomplete='off';
+    inp.style.cssText='width:42px;height:48px;border:1.5px solid #cbd5e1;border-radius:10px;text-align:center;font-size:18px;font-weight:700;background:#f8fafc;outline:none;';
+    inp.addEventListener('input',function(){ this.value=this.value.replace(/[^0-9]/g,''); if(this.value && this.nextElementSibling) this.nextElementSibling.focus(); if([...row.children].every(c=>c.value) && containerId==='pinRow' && _fmPinMode==='enter'){ /* auto submit */ } });
+    inp.addEventListener('keydown',function(e){ if(e.key==='Backspace' && !this.value && this.previousElementSibling) this.previousElementSibling.focus(); if(e.key==='Enter') doPinLogin(); });
+    inp.addEventListener('focus',function(){ this.select(); });
+    row.appendChild(inp);
+  }
+}
+function _fmRowValue(containerId){
+  const row=document.getElementById(containerId);
+  if(!row) return '';
+  return [...row.children].map(c=>c.value).join('');
+}
+function _fmShakeRow(containerId){
+  const row=document.getElementById(containerId);
+  if(!row) return;
+  [...row.children].forEach(c=>{ c.style.borderColor='#ef4444'; c.value=''; });
+  setTimeout(()=>[...row.children].forEach(c=>c.style.borderColor='#cbd5e1'),400);
+  if(row.firstChild) row.firstChild.focus();
+}
+function _fmShowPinUI(mode){
+  _fmPinMode=mode;
+  const subtitle=document.getElementById('pinSubtitle');
+  const mainLabel=document.getElementById('pinMainLabel');
+  const confirmBlock=document.getElementById('pinConfirmBlock');
+  const hint=document.getElementById('pinHint');
+  const changeBtn=document.getElementById('pinChangeBtn');
+  if(mode==='enter'){
+    subtitle.textContent='Enter your 6-digit PIN to access the file manager';
+    mainLabel.textContent='6-Digit PIN';
+    confirmBlock.style.display='none';
+    hint.style.display='none';
+    changeBtn.style.display='block';
+  } else if(mode==='set'){
+    subtitle.textContent='First time - set a 6-digit PIN for Files Manager';
+    mainLabel.textContent='New PIN';
+    confirmBlock.style.display='block';
+    hint.style.display='block';
+    hint.textContent='Choose a 6-digit PIN you will remember';
+    changeBtn.style.display='none';
+  } else if(mode==='change'){
+    subtitle.textContent='Change your Files Manager PIN';
+    mainLabel.textContent='Old PIN';
+    confirmBlock.style.display='block';
+    hint.style.display='none';
+    changeBtn.style.display='none';
+  }
+  _fmBuildPinRow('pinRow', FM_PIN_LEN);
+  _fmBuildPinRow('pinConfirmRow', FM_PIN_LEN);
+  setTimeout(()=>{ const f=document.querySelector('#pinRow input'); if(f) f.focus(); },80);
+}
+async function _fmInitPinUI(){
+  // Accept token via ?token= or ?embed=1 postMessage from opener
+  try{
+    const params=new URLSearchParams(location.search);
+    const urlToken=params.get('token');
+    if(urlToken){ sessionStorage.setItem('vaultSessionToken', urlToken); sessionStorage.setItem('vaultSession', urlToken); }
+    if(params.get('embed')==='1'){
+      // try to get token from opener
+      if(!_getToken() && window.opener){
+        try{ const t=window.opener.sessionStorage.getItem('vaultSessionToken')||window.opener.sessionStorage.getItem('vaultSession'); if(t){ sessionStorage.setItem('vaultSessionToken',t); sessionStorage.setItem('vaultSession',t);} }catch(e){}
+      }
+      // also listen for postMessage token
+      window.addEventListener('message', function(e){
+        if(e.data && e.data.type==='VAULT_TOKEN' && e.data.token){ sessionStorage.setItem('vaultSessionToken', e.data.token); sessionStorage.setItem('vaultSession', e.data.token); _fmLoadPinFromServer(); }
+      });
+      // ask opener for token
+      if(window.opener) window.opener.postMessage({type:'REQUEST_VAULT_TOKEN'}, '*');
+    }
+  }catch(e){}
+  // sync from backend first
+  await _fmLoadPinFromServer();
+  const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+  if(stored){ _fmShowPinUI('enter'); }
+  else { _fmShowPinUI('set'); }
+  // If opener has token, sync again after short delay
+  setTimeout(()=>_fmLoadPinFromServer().then(h=>{ if(h && _fmPinMode==='set'){ _fmShowPinUI('enter'); } }), 800);
+}
+function openPinChange(){
+  const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+  if(!stored){ _fmShowPinUI('set'); return; }
+  // For change, we need old PIN entry: reuse main as old, confirm as new
+  _fmShowPinUI('change');
+  // Swap labels for change flow: pinRow = old, pinConfirmRow = new+confirm? Simplify: ask old in pinRow, new in confirm? Instead show 3 steps via prompt
+  // Simpler: show old in pinRow, and after old verified, swap to new entry
+  document.getElementById('pinMainLabel').textContent='Current PIN';
+  document.getElementById('pinConfirmBlock').style.display='none';
+  document.getElementById('pinSubtitle').textContent='Enter current PIN to change it';
+  // store change step
+  window._fmChangeStep='old';
+}
+async function doPinLogin(){
+  const errEl=document.getElementById('loginError');
+  const btn=document.getElementById('loginBtn');
+  errEl.style.display='none';
+  // Handle change flow
+  if(_fmPinMode==='change' && window._fmChangeStep==='old'){
+    const oldPin=_fmRowValue('pinRow');
+    if(oldPin.length!==FM_PIN_LEN){ errEl.textContent='Enter all 6 digits of current PIN.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+    const oldHash=await _fmHashPin(oldPin);
+    const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+    if(oldHash!==stored){ errEl.textContent='Incorrect current PIN.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+    // verified old, now ask for new
+    window._fmChangeStep='new';
+    document.getElementById('pinSubtitle').textContent='Enter new 6-digit PIN';
+    document.getElementById('pinMainLabel').textContent='New PIN';
+    document.getElementById('pinConfirmBlock').style.display='block';
+    document.querySelector('#pinConfirmBlock label').textContent='Confirm New PIN';
+    _fmBuildPinRow('pinRow', FM_PIN_LEN);
+    _fmBuildPinRow('pinConfirmRow', FM_PIN_LEN);
+    setTimeout(()=>document.querySelector('#pinRow input')?.focus(),80);
+    return;
+  }
+  // Handle set mode (first time)
+  if(_fmPinMode==='set'){
+    const pin=_fmRowValue('pinRow');
+    const confirm=_fmRowValue('pinConfirmRow');
+    if(pin.length!==FM_PIN_LEN){ errEl.textContent='Enter all 6 digits.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+    if(confirm.length!==FM_PIN_LEN){ errEl.textContent='Confirm your PIN (6 digits).'; errEl.style.display='block'; _fmShakeRow('pinConfirmRow'); return; }
+    if(pin!==confirm){ errEl.textContent='PINs do not match.'; errEl.style.display='block'; _fmShakeRow('pinRow'); _fmShakeRow('pinConfirmRow'); return; }
+    btn.textContent='Saving...'; btn.disabled=true;
+    const hash=await _fmHashPin(pin);
+    localStorage.setItem('fmPinHash_'+FM_PIN_KEY, hash);
+    await _fmSyncPinToServer(hash);
+    sessionStorage.setItem('fmPinVerified','1');
+    document.getElementById('loginOverlay').classList.remove('show');
+    btn.textContent='Unlock'; btn.disabled=false;
+    window._fmChangeStep=null;
+    if(_pendingUploads.length){ toast('PIN set - '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('PIN set - loading files...'); await _autoLoad(); }
+    return;
+  }
+  if(_fmPinMode==='change' && window._fmChangeStep==='new'){
+    const newPin=_fmRowValue('pinRow');
+    const confirm=_fmRowValue('pinConfirmRow');
+    if(newPin.length!==FM_PIN_LEN){ errEl.textContent='Enter new 6-digit PIN.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+    if(confirm.length!==FM_PIN_LEN){ errEl.textContent='Confirm new PIN.'; errEl.style.display='block'; _fmShakeRow('pinConfirmRow'); return; }
+    if(newPin!==confirm){ errEl.textContent='PINs do not match.'; errEl.style.display='block'; _fmShakeRow('pinRow'); _fmShakeRow('pinConfirmRow'); return; }
+    btn.textContent='Saving...'; btn.disabled=true;
+    const hash=await _fmHashPin(newPin);
+    localStorage.setItem('fmPinHash_'+FM_PIN_KEY, hash);
+    await _fmSyncPinToServer(hash);
+    sessionStorage.setItem('fmPinVerified','1');
+    document.getElementById('loginOverlay').classList.remove('show');
+    btn.textContent='Unlock'; btn.disabled=false;
+    window._fmChangeStep=null; _fmShowPinUI('enter');
+    toast('PIN changed');
+    return;
+  }
+  // Normal enter mode
+  const pin=_fmRowValue('pinRow');
+  if(pin.length!==FM_PIN_LEN){ errEl.textContent='Enter all 6 digits.'; errEl.style.display='block'; _fmShakeRow('pinRow'); return; }
+  errEl.style.display='none'; btn.textContent='Verifying...'; btn.disabled=true;
+  // Ensure latest from server
+  const serverHash=await _fmLoadPinFromServer();
+  const stored=localStorage.getItem('fmPinHash_'+FM_PIN_KEY);
+  if(!stored){ // no PIN set yet, treat as set
+    errEl.textContent='No PIN set - please set a new PIN.'; errEl.style.display='block'; _fmShowPinUI('set'); btn.textContent='Unlock'; btn.disabled=false; return;
+  }
+  const hash=await _fmHashPin(pin);
+  if(hash!==stored){ errEl.textContent='Incorrect PIN. Try again.'; errEl.style.display='block'; _fmShakeRow('pinRow'); btn.textContent='Unlock'; btn.disabled=false; return; }
+  sessionStorage.setItem('fmPinVerified','1');
+  document.getElementById('loginOverlay').classList.remove('show');
+  btn.textContent='Unlock'; btn.disabled=false;
+  if(_pendingUploads.length){ toast('Unlocked - '+_pendingUploads.length+' file(s) queued, click Deploy'); _updateDeployBadge(); _renderCards(); } else { toast('Unlocked - loading files...'); await _autoLoad(); }
+}
+// Keep old doLogin for offline fallback (hidden input)
+async function doLogin(){ return doPinLogin(); }
+// Auto-init PIN UI if overlay still shows and PIN row empty (INIT ran before this function existed)
+(function(){
+  try{
+    const overlay=document.getElementById('loginOverlay');
+    const pinRow=document.getElementById('pinRow');
+    if(overlay && overlay.classList.contains('show') && pinRow && !pinRow.children.length){
+      if(typeof _fmInitPinUI==='function') _fmInitPinUI();
+    }
+  }catch(e){}
+})();
+
+function goOffline(){
+  _loadFromStorage();
+  document.getElementById('loginOverlay').classList.remove('show');
+  var cats = Object.keys(_data);
+  if (cats.length) _selectCat(cats[0]);
+  document.getElementById('statusRight').textContent = 'Offline mode - editing cached data only';
+  toast('Offline mode - changes saved locally only');
+}
+
+async function _autoLoad(){
+  var token = _getToken();
+  if (!token){
+    _loadFromStorage();
+    var cats = Object.keys(_data);
+    if (cats.length) _selectCat(cats[0]);
+    document.getElementById('statusRight').textContent = 'No session - using cached data';
+    return;
+  }
+  document.getElementById('statusRight').textContent = 'Loading from R2...';
+  try {
+    var res = await fetch(_apiBase + '/files.json?_t=' + Date.now(), {
+      headers:{'Authorization':'Bearer '+token},
+      cache:'no-store'
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    var raw = await res.json();
+    if (Array.isArray(raw)){
+      var obj = {};
+      raw.forEach(function(f){
+        var cat = f.category || f.type || 'Documents';
+        if (!obj[cat]) obj[cat] = [];
+        obj[cat].push(f);
+      });
+      _data = obj;
+    } else if (raw && typeof raw === 'object'){
+      _data = raw;
+    }
+    _saveToStorage();
+    _renderSidebar();
+    var cats = Object.keys(_data);
+    if (cats.length) _selectCat(cats[0]);
+    else { document.getElementById('catHeader').style.display = 'none'; document.getElementById('cardsGrid').innerHTML = ''; }
+    _updateJson();
+    _updateStats();
+    document.getElementById('statusRight').textContent = 'Loaded from R2 at '+new Date().toLocaleTimeString();
+    toast('Loaded '+cats.length+' categories from R2');
+  } catch(e){
+    _loadFromStorage();
+    var cats = Object.keys(_data);
+    if (cats.length) _selectCat(cats[0]);
+    document.getElementById('statusRight').textContent = 'Offline - using cached data';
+    toast('Offline - loaded cached data');
+  }
+}
+
+/* ---- MEMBER CHIPS TOGGLE ---- */
+document.getElementById('fmMembers').addEventListener('click', function(e){
+  var chip = e.target.closest('.fm-member-chip');
+  if (!chip) return;
+  var cb = chip.querySelector('input');
+  cb.checked = !cb.checked;
+  chip.classList.toggle('on', cb.checked);
+  chip.classList.toggle('off', !cb.checked);
+});
+
+/* ---- LOCAL STORAGE ---- */
+function _saveToStorage(){ try { localStorage.setItem('filesManagerData', JSON.stringify(_data)); } catch(e){} }
+function _loadFromStorage(){ try { _data = JSON.parse(localStorage.getItem('filesManagerData') || '{}'); } catch(e){ _data = {}; } }
+
+/* ---- SIDEBAR ---- */
+function _renderSidebar(){
+  var el = document.getElementById('catList');
+  var cats = Object.keys(_data);
+  el.innerHTML = cats.map(function(c){
+    var cnt = Array.isArray(_data[c]) ? _data[c].length : 0;
+    var active = c === _activeCat ? ' active' : '';
+    return '<div class="fm-cat-item'+active+'" data-cat="'+_esc(c)+'" onclick="_selectCat(\''+_esc(c).replace(/'/g,"\\'")+'\')" draggable="true" ondragstart="_catDragStart(event,\''+_esc(c).replace(/'/g,"\\'")+'\')" ondragover="event.preventDefault()" ondrop="_catDrop(event,\''+_esc(c).replace(/'/g,"\\'")+'\')">'
+      + _catIcon(c)
+      + '<span>'+_esc(c)+'</span>'
+      + '<span class="fm-cat-count">'+cnt+'</span>'
+      + '<button class="fm-cat-del" onclick="event.stopPropagation();deleteSingleCategory(\''+_esc(c).replace(/'/g,"\\'")+'\')" title="Delete"><i data-lucide="x" style="width:12px;height:12px;"></i></button>'
+      + '</div>';
+  }).join('');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/* ---- PHOTOS category auto-routing ----
+   The main vault app (features.js / vault-data.js) decides whether to fetch
+   a file from /photos/ or /docs/ purely by checking file.category === 'PHOTOS'
+   (exact, case-sensitive) - category being whatever the object key in
+   files.json is. If this category was ever created as "Photos" or "photos"
+   instead of exactly "PHOTOS", every file in it silently fell back to /docs/,
+   even though the Add/Edit File modal's prefix dropdown said "photos/".
+   That dropdown never actually forced anything - it was purely cosmetic.
+   These helpers make the prefix automatic and tied to the category name,
+   so it can't drift out of sync again. */
+function _isPhotosCategory(cat){
+  return String(cat || '').trim().toUpperCase() === 'PHOTOS';
+}
+function _prefixForActiveCat(){
+  return _isPhotosCategory(_activeCat) ? 'photos/' : 'docs/';
+}
+
+/* ---- SECTION HELPERS (stored in _data["_meta"]) ---- */
+function _getMeta(){ return (_data && _data['_meta']) ? _data['_meta'] : {}; }
+function _getSectionsForCat(cat){ var m = _getMeta(); return Array.isArray(m[cat]) ? m[cat] : []; }
+function _setSectionForCat(cat, secs){ if (!_data['_meta']) _data['_meta'] = {}; _data['_meta'][cat] = secs; }
+function _getSectionColor(cat, secName){
+  var secs = _getSectionsForCat(cat);
+  for (var i = 0; i < secs.length; i++){ if (secs[i].name === secName) return secs[i].color || '#1a73e8'; }
+  return '#1a73e8';
+}
+function _populateSectionDropdown(){
+  var sel = document.getElementById('fmSection');
+  if (!sel) return;
+  var prev = sel.value;
+  var secs = _getSectionsForCat(_activeCat);
+  sel.innerHTML = '<option value="">- No section -</option>' + secs.map(function(s){
+    return '<option value="'+_esc(s.name)+'">'+_esc(s.name)+'</option>';
+  }).join('');
+  if (prev) sel.value = prev;
+}
+
+/* ---- SECTION MODAL ---- */
+var _secColorPresets = ['#1a73e8','#dc2626','#059669','#d97706','#7c3aed','#db2777','#0891b2','#65a30d','#ea580c','#6366f1'];
+
+function openSectionModal(){
+  if (!_activeCat){ toast('Select a category first'); return; }
+  var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
+  if (!items.length){ toast('Add files to this category first'); return; }
+  document.getElementById('secName').value = '';
+  document.getElementById('secColor').value = '#1a73e8';
+  _renderSecColorPresets();
+  _renderSecFileList();
+  document.getElementById('sectionModal').classList.add('show');
+  setTimeout(function(){ document.getElementById('secName').focus(); }, 100);
+}
+
+function closeSectionModal(){
+  document.getElementById('sectionModal').classList.remove('show');
+}
+
+function _renderSecColorPresets(){
+  var el = document.getElementById('secColorPresets');
+  var current = document.getElementById('secColor').value;
+  el.innerHTML = _secColorPresets.map(function(c){
+    return '<span onclick="document.getElementById(\'secColor\').value=\''+c+'\'" style="width:22px;height:22px;border-radius:50%;background:'+c+';cursor:pointer;border:2px solid '+(c===current?'#1e293b':'transparent')+';display:inline-block;transition:border .1s;" onmouseenter="this.style.border=\'#1e293b\'" onmouseleave="this.style.border=\''+(c===current?'#1e293b':'transparent')+'\'"></span>';
+  }).join('');
+  document.getElementById('secColor').onchange = function(){ _renderSecColorPresets(); };
+}
+
+function _renderSecFileList(){
+  var el = document.getElementById('secFileList');
+  var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
+  el.innerHTML = items.map(function(it, i){
+    return '<label class="fm-sec-file">'
+      + '<input type="checkbox" data-idx="'+i+'" checked>'
+      + '<span class="fm-sec-file-name">'+_esc(it.name || 'Untitled')+'</span>'
+      + '<span class="fm-sec-file-path">'+_esc(it.file || '')+'</span>'
+      + '</label>';
+  }).join('');
+}
+
+function secSelectAll(){
+  document.querySelectorAll('#secFileList input[type="checkbox"]').forEach(function(cb){ cb.checked = true; });
+}
+function secSelectNone(){
+  document.querySelectorAll('#secFileList input[type="checkbox"]').forEach(function(cb){ cb.checked = false; });
+}
+
+function saveSection(){
+  var name = document.getElementById('secName').value.trim();
+  var color = document.getElementById('secColor').value;
+  if (!name){ toast('Section name is required'); return; }
+  var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
+  var selectedIdx = [];
+  document.querySelectorAll('#secFileList input[type="checkbox"]:checked').forEach(function(cb){
+    selectedIdx.push(parseInt(cb.dataset.idx));
+  });
+  if (!selectedIdx.length){ toast('Select at least one file'); return; }
+
+  /* Check for duplicate section name */
+  var existing = _getSectionsForCat(_activeCat);
+  var existingNames = existing.map(function(s){ return s.name.toLowerCase(); });
+  if (existingNames.indexOf(name.toLowerCase()) !== -1){
+    toast('Section "'+name+'" already exists');
+    return;
+  }
+
+  /* Assign selected files to this section */
+  selectedIdx.forEach(function(i){
+    if (items[i]) items[i].section = name;
+  });
+
+  /* Save section metadata */
+  existing.push({ name: name, color: color });
+  _setSectionForCat(_activeCat, existing);
+
+  _saveSession();
+  _renderCards();
+  _updateJson();
+  closeSectionModal();
+  toast('Section "'+name+'" created with '+selectedIdx.length+' file(s)');
+}
+
+function _deleteSection(sec){
+  if (!confirm('Delete section "'+sec+'" and remove files from it?')) return;
+  var items = _data[_activeCat];
+  if (Array.isArray(items)){
+    items.forEach(function(it){
+      if (it.section === sec) delete it.section;
+    });
+  }
+  var existing = _getSectionsForCat(_activeCat);
+  _setSectionForCat(_activeCat, existing.filter(function(s){ return s.name !== sec; }));
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  toast('Section "'+sec+'" deleted');
+}
+
+function _renameSection(oldName){
+  var newName = prompt('Rename section "'+oldName+'" to:', oldName);
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+  newName = newName.trim();
+  var items = _data[_activeCat];
+  if (Array.isArray(items)){
+    items.forEach(function(it){
+      if (it.section === oldName) it.section = newName;
+    });
+  }
+  var existing = _getSectionsForCat(_activeCat);
+  existing.forEach(function(s){
+    if (s.name === oldName) s.name = newName;
+  });
+  _setSectionForCat(_activeCat, existing);
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  toast('Section renamed to "'+newName+'"');
+}
+
+function _catIcon(c){
+  var icons = {passport:'plane',visa:'plane',finance:'wallet',school:'graduation-cap',personal:'user',residence:'home',church:'cross',education:'book-open',identity:'contact',legal:'scale','financial':'credit-card',ministry:'bird',medical:'stethoscope',insurance:'shield',tax:'clipboard-list',property:'home',vehicle:'car',travel:'globe',work:'briefcase',bank:'landmark',documents:'file-text',certificates:'award',photos:'camera',home:'home',profile:'user'};
+  var key = Object.keys(icons).find(function(k){ return c.toLowerCase().indexOf(k) !== -1; });
+  var icon = key ? icons[key] : 'folder';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>';
+}
+
+/* ---- SELECT CATEGORY ---- */
+function _selectCat(cat){
+  _activeCat = cat;
+  _renderSidebar();
+  document.getElementById('catHeader').style.display = 'flex';
+  document.getElementById('catTitle').textContent = cat;
+  var items = Array.isArray(_data[cat]) ? _data[cat] : [];
+  document.getElementById('catBadge').textContent = items.length + ' file' + (items.length !== 1 ? 's' : '');
+  _renderCards();
+  _updateJson();
+  _updateStats();
+}
+
+/* ---- RENDER CARDS ---- */
+function _renderCards(){
+  var grid = document.getElementById('cardsGrid');
+  var items = Array.isArray(_data[_activeCat]) ? _data[_activeCat] : [];
+  var q = _searchQ.toLowerCase();
+
+  var filtered = items.map(function(it,i){ return {it:it,idx:i}; }).filter(function(o){
+    if (!q) return true;
+    return (o.it.name||'').toLowerCase().indexOf(q)!==-1
+        || (o.it.file||'').toLowerCase().indexOf(q)!==-1
+        || (o.it.section||'').toLowerCase().indexOf(q)!==-1
+        || (o.it.member||'').toLowerCase().indexOf(q)!==-1
+        || _activeCat.toLowerCase().indexOf(q)!==-1;
+  });
+
+  if (!filtered.length){
+    grid.innerHTML = '<div class="fm-empty"><i data-lucide="folder-open" style="width:48px;height:48px;"></i><h3>'+(q?'No matching files':'No files yet')+'</h3><p>'+(q?'Try a different search':'Click "+ Add File" to create your first entry')+'</p></div>';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  }
+
+  /* Group by section */
+  var sectionOrder = [];
+  var sectionMap = {};
+  filtered.forEach(function(o){
+    var s = (o.it.section || '').trim() || '';
+    if (!sectionMap[s]){ sectionMap[s] = []; sectionOrder.push(s); }
+    sectionMap[s].push(o);
+  });
+
+  var hasSections = sectionOrder.length > 1 || (sectionOrder.length === 1 && sectionOrder[0] !== '');
+
+  function _renderCard(o){
+    var it = o.it;
+    var idx = o.idx;
+    var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : []);
+    var allM = ['shineil','brother','father','mother'];
+    var memberChips = allM.map(function(m){
+      var on = members.indexOf(m) !== -1;
+      return '<span class="fm-member-chip '+(on?'on':'off')+'" onclick="toggleFileMember('+idx+',\''+m+'\')">'+m+'</span>';
+    }).join('');
+
+    var dateStr = it.date || '';
+
+    var st = it._uid ? _uploadStatus[it._uid] : null;
+    var badgeHtml = '';
+    if (st && (st.state==='pending' || st.state==='failed')){
+      var badgeTitle = st.state==='pending' ? 'Not yet uploaded to R2 - click Deploy' : ('Upload failed: '+(st.detail||'unknown error'));
+      badgeHtml = '<span class="fm-upload-badge '+st.state+'" title="'+_esc(badgeTitle)+'"></span>';
+    } else if (st && st.state==='success'){
+      badgeHtml = '<span class="fm-upload-badge success" title="Uploaded to R2"></span>';
+    }
+
+    return '<div class="fm-card" draggable="true" ondragstart="_fileDragStart(event,'+idx+')" ondragover="event.preventDefault();this.classList.add(\'drag-over\')" ondragleave="this.classList.remove(\'drag-over\')" ondrop="_fileDrop(event,'+idx+');this.classList.remove(\'drag-over\')">'
+      + badgeHtml
+      + '<div class="fm-card-actions">'
+      + '  <button class="fm-card-act" onclick="moveFileEntry('+idx+',-1)" title="Move up"'+(idx===0?' disabled':'')+'><i data-lucide="arrow-up" style="width:13px;height:13px;"></i></button>'
+      + '  <button class="fm-card-act" onclick="moveFileEntry('+idx+',1)" title="Move down"'+(idx===filtered.length-1?' disabled':'')+'><i data-lucide="arrow-down" style="width:13px;height:13px;"></i></button>'
+      + '  <button class="fm-card-act" onclick="editFileEntry('+idx+')" title="Edit"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>'
+      + '  <button class="fm-card-act" onclick="duplicateFileEntry('+idx+')" title="Duplicate"><i data-lucide="copy" style="width:13px;height:13px;"></i></button>'
+      + '  <button class="fm-card-act del" onclick="deleteFileEntry('+idx+')" title="Delete"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>'
+      + '</div>'
+      + '<div class="fm-card-top">'
+      + '  <div class="fm-card-icon"><i data-lucide="file-text" style="width:20px;height:20px;"></i></div>'
+      + '  <div class="fm-card-info">'
+      + '    <div class="fm-card-name" title="'+_esc(it.name||'')+'">'+_esc(it.name||'Untitled')+'</div>'
+      + '    <div class="fm-card-file" title="'+_esc(it.file||'')+'">'+_esc(it.file||'-')+'</div>'
+      + '  </div>'
+      + '</div>'
+      + '<div class="fm-card-meta">'
+      + (dateStr ? '<span><i data-lucide="calendar" style="width:11px;height:11px;"></i> '+dateStr+'</span>' : '')
+      + '</div>'
+      + '<div class="fm-card-members">'+memberChips+'</div>'
+      + '</div>';
+  }
+
+  var html = '';
+
+  if (hasSections){
+    /* Render unsectioned files first */
+    if (sectionMap[''] && sectionMap[''].length){
+      sectionMap[''].forEach(function(o){ html += _renderCard(o); });
+    }
+    /* Then render each named section with colored header */
+    sectionOrder.forEach(function(sec){
+      if (!sec) return;
+      var color = _getSectionColor(_activeCat, sec);
+      var count = sectionMap[sec].length;
+      html += '<div class="fm-section" style="background:'+_esc(color)+'11;border-left-color:'+_esc(color)+';">'
+        + '<div class="fm-section-name" style="color:'+_esc(color)+';">'+_esc(sec)+'</div>'
+        + '<span class="fm-section-count">'+count+'</span>'
+        + '<button class="fm-section-del" onclick="event.stopPropagation();_renameSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" title="Rename section"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>'
+        + '<button class="fm-section-del" onclick="event.stopPropagation();_deleteSection(\''+_esc(sec).replace(/'/g,"\\'")+'\')" title="Delete section"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>'
+        + '</div>';
+      sectionMap[sec].forEach(function(o){ html += _renderCard(o); });
+    });
+  } else {
+    filtered.forEach(function(o){ html += _renderCard(o); });
+  }
+
+  html += '<div class="fm-add-card" onclick="addFileEntry()"><i data-lucide="plus" style="width:24px;height:24px;"></i><span>Add File</span></div>';
+  grid.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/* ---- FILTER ---- */
+function filterCards(q){
+  _searchQ = q;
+  _renderCards();
+}
+
+/* ---- SECTION MANAGEMENT ---- */
+function _toggleSection(sec){
+  var key = _activeCat + '::' + sec;
+  _collapsedSections[key] = !_collapsedSections[key];
+  _renderCards();
+}
+
+/* ---- ADD CATEGORY ---- */
+function addCategory(){
+  var name = prompt('Category name:');
+  if (!name || !name.trim()) return;
+  name = name.trim();
+  /* Force exact "PHOTOS" casing so the vault app's file.category === 'PHOTOS'
+     check (features.js / vault-data.js) always matches and routes to /photos/. */
+  if (_isPhotosCategory(name)) name = 'PHOTOS';
+  if (_data[name]){ toast('Category already exists'); return; }
+  _data[name] = [];
+  _saveToStorage();
+  _renderSidebar();
+  _selectCat(name);
+  toast('Category "'+name+'" created');
+}
+
+/* ---- RENAME CATEGORY ---- */
+function renameCategory(){
+  if (!_activeCat) return;
+  var name = prompt('Rename category:', _activeCat);
+  if (!name || !name.trim() || name.trim() === _activeCat) return;
+  name = name.trim();
+  if (_isPhotosCategory(name)) name = 'PHOTOS';
+  name = name.trim();
+  if (_data[name]){ toast('Category already exists'); return; }
+  _data[name] = _data[_activeCat];
+  delete _data[_activeCat];
+  _saveToStorage();
+  _renderSidebar();
+  _selectCat(name);
+  toast('Renamed to "'+name+'"');
+}
+
+/* ---- DELETE CATEGORY ---- */
+function deleteCategory(){
+  if (!_activeCat) return;
+  if (!confirm('Delete category "'+_activeCat+'" and all its files?')) return;
+  delete _data[_activeCat];
+  _activeCat = '';
+  _saveToStorage();
+  _renderSidebar();
+  document.getElementById('catHeader').style.display = 'none';
+  document.getElementById('cardsGrid').innerHTML = '';
+  _updateJson();
+  _updateStats();
+  var cats = Object.keys(_data);
+  if (cats.length) _selectCat(cats[0]);
+  toast('Category deleted');
+}
+
+function deleteSingleCategory(cat){
+  if (!confirm('Delete category "'+cat+'" and all its files?')) return;
+  delete _data[cat];
+  if (_activeCat === cat) _activeCat = '';
+  _saveToStorage();
+  _renderSidebar();
+  document.getElementById('catHeader').style.display = 'none';
+  document.getElementById('cardsGrid').innerHTML = '';
+  _updateJson();
+  _updateStats();
+  var cats = Object.keys(_data);
+  if (cats.length) _selectCat(cats[0]);
+  toast('Category deleted');
+}
+
+/* ---- ADD FILE ---- */
+function addFileEntry(){
+  _editIdx = -1;
+  document.getElementById('fileModalTitle').textContent = 'Add File Entry';
+  document.getElementById('fmName').value = '';
+  document.getElementById('fmPrefix').value = _prefixForActiveCat();
+  document.getElementById('fmPrefix').disabled = true;
+  document.getElementById('fmFile').value = '';
+  _populateSectionDropdown();
+  document.getElementById('fmSection').value = '';
+  document.getElementById('fmDate').value = new Date().toISOString().slice(0,10);
+  _resetMemberChips(['shineil','brother','father','mother']);
+  document.getElementById('fileModal').classList.add('show');
+}
+
+/* ---- EDIT FILE ---- */
+function editFileEntry(idx){
+  var items = _data[_activeCat];
+  if (!items || !items[idx]) return;
+  var it = items[idx];
+  _editIdx = idx;
+  document.getElementById('fileModalTitle').textContent = 'Edit File Entry';
+  document.getElementById('fmName').value = it.name || '';
+  var filePath = it.file || '';
+  var fileName = filePath;
+  ['photos/','docs/','file/'].forEach(function(p){
+    if (filePath.indexOf(p) === 0){ fileName = filePath.slice(p.length); }
+  });
+  document.getElementById('fmPrefix').value = _prefixForActiveCat();
+  document.getElementById('fmPrefix').disabled = true;
+  document.getElementById('fmFile').value = fileName;
+  _populateSectionDropdown();
+  document.getElementById('fmSection').value = it.section || '';
+  document.getElementById('fmDate').value = it.date || '';
+  var members = Array.isArray(it.members) ? it.members : (it.member ? [it.member] : ['shineil']);
+  _resetMemberChips(members);
+  document.getElementById('fileModal').classList.add('show');
+}
+
+/* ---- DUPLICATE FILE ---- */
+function duplicateFileEntry(idx){
+  var items = _data[_activeCat];
+  if (!items || !items[idx]) return;
+  var copy = JSON.parse(JSON.stringify(items[idx]));
+  copy.name = (copy.name || 'File') + ' (copy)';
+  items.splice(idx + 1, 0, copy);
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  _updateStats();
+  toast('File duplicated');
+}
+
+/* ---- DELETE FILE ---- */
+function deleteFileEntry(idx){
+  if (!confirm('Delete this file entry?')) return;
+  _data[_activeCat].splice(idx, 1);
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+  _updateStats();
+  document.getElementById('catBadge').textContent = _data[_activeCat].length + ' files';
+  toast('File deleted');
+}
+
+/* ---- SAVE FILE ---- */
+function saveFileEntry(){
+  var name = document.getElementById('fmName').value.trim();
+  var prefix = _prefixForActiveCat();
+  var fileName = document.getElementById('fmFile').value.trim();
+  var section = document.getElementById('fmSection').value.trim();
+  var date = document.getElementById('fmDate').value;
+  if (!name){ toast('Name is required'); return; }
+  if (!fileName){ toast('File name is required'); return; }
+
+  var members = _getSelectedMembers();
+  if (!members.length) members = ['shineil'];
+
+  var entry = { name:name, file:fileName, members:members };
+  if (section) entry.section = section;
+  if (date) entry.date = date;
+
+  /* preserve stable id across edits so upload status can be tracked per-entry */
+  var existingUid = (_editIdx >= 0 && _data[_activeCat] && _data[_activeCat][_editIdx]) ? _data[_activeCat][_editIdx]._uid : null;
+  entry._uid = existingUid || ('u_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8));
+
+  if (_pendingEncBlob){
+    var uploadPath = prefix.replace(/\/$/, '') + '/' + fileName;
+    uploadPath = uploadPath.replace(/^(docs|file)\//, '');
+    _pendingUploads.push({ uid: entry._uid, path: uploadPath, blob: _pendingEncBlob, origName: _pendingOrigName || fileName, cat: _activeCat, size: _pendingEncBlob.size, attempts: 0 });
+    _uploadStatus[entry._uid] = { state:'pending' };
+    _updateDeployBadge();
+    toast('Encrypted file queued for upload');
+  }
+
+  if (!_data[_activeCat]) _data[_activeCat] = [];
+
+  if (_editIdx >= 0){
+    _data[_activeCat][_editIdx] = entry;
+    toast('File updated');
+  } else {
+    _data[_activeCat].push(entry);
+    toast('File added');
+  }
+
+  _saveSession(); /* immediate save - survives a stale-token 401 or a day-later refresh */
+  _renderCards();
+  _updateJson();
+  _updateStats();
+  document.getElementById('catBadge').textContent = _data[_activeCat].length + ' files';
+  closeFileModal();
+}
+
+function closeFileModal(){
+  document.getElementById('fileModal').classList.remove('show');
+  _editIdx = -1;
+  clearFileUpload();
+}
+
+/* ---- FILE UPLOAD & ENCRYPT ---- */
+var _pendingEncBlob = null;
+var _pendingOrigName = '';
+var _IMAGE_EXTS = /\.(jpg|jpeg|png|gif|webp|bmp|heic|heif|tiff|tif|svg)$/i;
+var _IMAGE_MIMES = /^image\//;
+
+function handleFileSelect(e){
+  var file = e.target.files[0];
+  if (!file) return;
+  processUploadFile(file);
+  e.target.value = '';
+}
+
+function handleFileDrop(e){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  var file = e.dataTransfer.files[0];
+  if (!file) return;
+  processUploadFile(file);
+}
+
+async function processUploadFile(file){
+  var name = file.name;
+  var isImage = _IMAGE_EXTS.test(name) || _IMAGE_MIMES.test(file.type);
+  var baseName = name.replace(/\.[^.]+$/, '');
+  var pdfName = baseName + '.pdf';
+  var encName = baseName + '.enc';
+
+  document.getElementById('fmName').value = baseName;
+  document.getElementById('fmFile').value = encName;
+  document.getElementById('fmFileInfo').style.display = 'flex';
+  document.getElementById('fmUploadArea').style.display = 'none';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  var pass = window.masterPassword || '';
+  // Try to restore masterPassword from trusted device if available (files.html is often opened standalone)
+  if (!pass && typeof restoreTrustSession === 'function' && typeof _isTrustDevice === 'function' && _isTrustDevice()){
+    try { await restoreTrustSession(); pass = window.masterPassword || ''; } catch {}
+  }
+  if (!pass){
+    var pinVerified = sessionStorage.getItem('fmPinVerified') === '1';
+    if (pinVerified){
+      // PIN was already verified this session — don't show 6-digit PIN again (it cleared the pending blob and caused "did not add").
+      // Instead, ask for the actual vault master password once, or block with a clear message.
+      var entered = prompt('Vault master password needed to encrypt this file.\n\nEnter your vault password (the same you use to log into the main vault), or Cancel to keep the file queued and log in via main vault first:');
+      if (entered && entered.trim()){
+        pass = entered.trim();
+        window.masterPassword = pass; // cache for this tab so next upload doesn't prompt
+      } else {
+        toast('File kept selected — log in via main vault then re-select it to encrypt');
+        document.getElementById('fmFileInfo').style.display = 'none';
+        document.getElementById('fmUploadArea').style.display = 'flex';
+        // Don't clear pending — keep name/file so Save can still queue metadata (will prompt again on deploy)
+        return;
+      }
+    } else {
+      toast('Session not unlocked — enter PIN once, then vault password if asked');
+      return;
+    }
+  }
+
+  try {
+    var dataBuf;
+
+    if (isImage){
+      document.getElementById('fmFileInfoText').textContent = name + ' -> ' + pdfName + ' (converting to PDF...)';
+      dataBuf = await _imageToPdf(file);
+      document.getElementById('fmFileInfoText').textContent = name + ' -> ' + pdfName + ' -> ' + encName + ' (encrypting...)';
+    } else {
+      dataBuf = await file.arrayBuffer();
+      document.getElementById('fmFileInfoText').textContent = name + ' -> ' + encName + ' (encrypting...)';
+    }
+
+    _pendingEncBlob = await encryptVaultFile(dataBuf, pass);
+    _pendingOrigName = baseName + (isImage ? '.pdf' : name.replace(/.*\./, '.'));
+    document.getElementById('fmFileInfoText').textContent = name + ' -> ' + encName + ' (encrypted, ready to deploy)';
+    toast(isImage ? 'Image converted to PDF and encrypted' : 'File encrypted successfully');
+  } catch(e){
+    toast('Failed: ' + e.message);
+    clearFileUpload();
+  }
+}
+
+/**
+ * Convert an image file to a single-page PDF using pdf-lib.
+ * Returns an ArrayBuffer of the PDF.
+ */
+async function _imageToPdf(file){
+  var imgData = await file.arrayBuffer();
+  var pdfDoc = await PDFLib.PDFDocument.create();
+  var img;
+
+  var mimeLower = (file.type || '').toLowerCase();
+  var isJpeg = mimeLower.includes('jpeg') || mimeLower.includes('jpg');
+  var isPng  = mimeLower.includes('png');
+
+  if (isPng){
+    img = await pdfDoc.embedPng(new Uint8Array(imgData));
+  } else if (isJpeg){
+    img = await pdfDoc.embedJpg(new Uint8Array(imgData));
+  } else {
+    /* Canvas fallback for BMP, WebP, GIF, HEIC, TIFF, SVG, etc.
+       Draw the image onto an off-screen canvas, export as JPEG, then embed. */
+    var bitmap = await createImageBitmap(new Blob([imgData], { type: file.type || 'application/octet-stream' }));
+    var cvs = document.createElement('canvas');
+    cvs.width  = bitmap.width;
+    cvs.height = bitmap.height;
+    var ctx = cvs.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0);
+    var jpegBlob = await new Promise(function(resolve){
+      cvs.toBlob(function(b){ resolve(b); }, 'image/jpeg', 0.92);
+    });
+    var jpegBuf = await jpegBlob.arrayBuffer();
+    img = await pdfDoc.embedJpg(new Uint8Array(jpegBuf));
+  }
+
+  var ptsW = img.width;
+  var ptsH = img.height;
+
+  var page = pdfDoc.addPage([ptsW, ptsH]);
+  page.drawImage(img, { x: 0, y: 0, width: ptsW, height: ptsH });
+
+  var pdfBytes = await pdfDoc.save();
+  return pdfBytes.buffer;
+}
+
+async function encryptVaultFile(data, password){
+  var enc = new TextEncoder();
+  var passwordHash = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(password)));
+  var salt = crypto.getRandomValues(new Uint8Array(16));
+  var iv = crypto.getRandomValues(new Uint8Array(12));
+  var keyMaterial = await crypto.subtle.importKey('raw', passwordHash, 'PBKDF2', false, ['deriveKey']);
+  var key = await crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:300000,hash:'SHA-256'}, keyMaterial, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
+  var encrypted = await crypto.subtle.encrypt({name:'AES-GCM',iv:iv}, key, data);
+  var settings = {version:2,method:'HASH_DERIVED_KEY',algorithm:'AES-GCM',hash:'SHA-256',iterations:300000};
+  var settingsBytes = new TextEncoder().encode(JSON.stringify(settings));
+  var settingsLength = new Uint32Array([settingsBytes.length]);
+  return new Blob([settingsLength,settingsBytes,salt,iv,new Uint8Array(encrypted)],{type:'application/octet-stream'});
+}
+
+function clearFileUpload(){
+  _pendingEncBlob = null;
+  _pendingOrigName = '';
+  document.getElementById('fmFileInfo').style.display = 'none';
+  document.getElementById('fmUploadArea').style.display = 'flex';
+}
+
+function _updateDeployBadge(){
+  var btn = document.getElementById('deployBtn');
+  if (!btn) return;
+  var n = _pendingUploads.length;
+  btn.innerHTML = '<i data-lucide="upload" style="width:13px;height:13px;"></i> Deploy' + (n ? ' ('+n+')' : '');
+  if (typeof lucide !== 'undefined') lucide.createIcons({ node: btn });
+}
+
+/* ---- MEMBER CHIP HELPERS ---- */
+function _resetMemberChips(arr){
+  document.querySelectorAll('#fmMembers .fm-member-chip').forEach(function(el){
+    var m = el.dataset.m;
+    var on = arr.indexOf(m) !== -1;
+    el.classList.toggle('on', on);
+    el.classList.toggle('off', !on);
+    el.querySelector('input').checked = on;
+  });
+}
+
+function _getSelectedMembers(){
+  var r = [];
+  document.querySelectorAll('#fmMembers .fm-member-chip.on').forEach(function(el){ r.push(el.dataset.m); });
+  return r;
+}
+
+/* ---- TOGGLE MEMBER ON CARD ---- */
+function toggleFileMember(idx, member){
+  var it = _data[_activeCat][idx];
+  if (!it) return;
+  if (!it.members) it.members = it.member ? [it.member] : [];
+  var i = it.members.indexOf(member);
+  if (i !== -1) it.members.splice(i, 1);
+  else it.members.push(member);
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+}
+
+/* ---- EXPORT ---- */
+function _stripInternalFields(data){
+  var out = {};
+  Object.keys(data).forEach(function(cat){
+    if (cat === '_meta'){ out[cat] = data[cat]; return; }
+    out[cat] = (data[cat]||[]).map(function(it){ var c = Object.assign({}, it); delete c._uid; return c; });
+  });
+  return out;
+}
+function exportJSON(){
+  var blob = new Blob([JSON.stringify(_stripInternalFields(_data), null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'files.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Exported files.json');
+}
+
+/* ---- IMPORT ---- */
+function importJSON(){
+  document.getElementById('importFileInput').click();
+}
+
+function handleImportFile(e){
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      var obj = JSON.parse(ev.target.result);
+      if (typeof obj !== 'object' || obj === null || Array.isArray(obj)){
+        toast('Invalid files.json format');
+        return;
+      }
+      _data = obj;
+      _saveToStorage();
+      _renderSidebar();
+      var cats = Object.keys(_data);
+      if (cats.length) _selectCat(cats[0]);
+      else { document.getElementById('catHeader').style.display = 'none'; document.getElementById('cardsGrid').innerHTML = ''; }
+      _updateJson();
+      _updateStats();
+      toast('Imported '+cats.length+' categories');
+    } catch(err){
+      toast('Parse error: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+/* ---- BUCKET LOAD/DEPLOY ---- */
+async function loadFromBucket(){
+  var token = _getToken();
+  if (!token){ toast('No active session - log in first'); return; }
+  toast('Loading from bucket...');
+  try {
+    var res = await fetch(_apiBase + '/files.json?_t='+Date.now(), {
+      headers:{'Authorization':'Bearer '+token},
+      cache:'no-store'
+    });
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    var raw = await res.json();
+    if (Array.isArray(raw)){
+      var obj = {};
+      raw.forEach(function(f){
+        var cat = f.category || f.type || 'Documents';
+        if (!obj[cat]) obj[cat] = [];
+        obj[cat].push(f);
+      });
+      _data = obj;
+    } else if (raw && typeof raw === 'object'){
+      _data = raw;
+    }
+    _saveToStorage();
+    _renderSidebar();
+    var cats = Object.keys(_data);
+    if (cats.length) _selectCat(cats[0]);
+    else { document.getElementById('catHeader').style.display = 'none'; document.getElementById('cardsGrid').innerHTML = ''; }
+    _updateJson();
+    _updateStats();
+    document.getElementById('statusRight').textContent = 'Loaded from bucket at '+new Date().toLocaleTimeString();
+    toast('Loaded '+cats.length+' categories from bucket');
+  } catch(e){
+    toast('Load failed: '+e.message);
+  }
+}
+
+/* ---- PENDING FILE UPLOADS ---- */
+var _pendingUploads = [];
+var _uploadStatus = {}; /* uid -> {state:'pending'|'success'|'failed', detail:string} */
+
+function _sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+/* Upload a single file with retries + exponential backoff.
+   This is the fix for R2 uploads failing intermittently: a single fetch()
+   with no retry meant any transient network blip, R2 5xx, or an
+   auth token that expired partway through a long batch (uploads ran
+   sequentially with no refresh) permanently dropped that file - while the
+   file's metadata entry still got written into files.json, leaving
+   index.html pointing at an object that was never actually written to R2
+   (which is what caused "failed to decrypt and open" on those files). */
+async function _uploadOne(u, token){
+  var maxAttempts = 3;
+  var lastErr = '';
+  for (var attempt = 1; attempt <= maxAttempts; attempt++){
+    u.attempts = attempt;
+    try {
+      var uploadPath = u.path.replace(/^(docs|file)\//, '');
+      var res = await fetch(_apiBase + '/upload/' + uploadPath, {
+        method:'PUT',
+        headers:{'Authorization':'Bearer '+token,'Content-Type':'application/octet-stream'},
+        body: u.blob
+      });
+      if (res.ok) return { ok:true };
+      if (res.status === 401 || res.status === 403){
+        /* token expired/invalid mid-batch - retrying won't help, surface immediately */
+        lastErr = 'HTTP '+res.status+' - session expired, please log in again';
+        break;
+      }
+      lastErr = 'HTTP '+res.status;
+    } catch(e){
+      lastErr = e && e.message ? e.message : 'network error';
+    }
+    if (attempt < maxAttempts) await _sleep(400 * Math.pow(2, attempt - 1)); /* 400ms, 800ms backoff */
+  }
+  return { ok:false, error:lastErr };
+}
+
+async function deployToBucket(){
+  var token = _getToken();
+  if (!token){ toast('No active session - log in first'); return; }
+  var uploadCount = _pendingUploads.length;
+  var msg = uploadCount
+    ? 'Upload '+uploadCount+' file(s) and deploy files.json to R2?'
+    : 'Deploy files.json to R2? This overwrites the remote version.';
+  if (!confirm(msg)) return;
+  toast('Deploying...');
+  try {
+    var results = [];
+    var stillPending = [];
+    for (var i = 0; i < _pendingUploads.length; i++){
+      var u = _pendingUploads[i];
+      var r = await _uploadOne(u, token);
+      if (r.ok){
+        _uploadStatus[u.uid] = { state:'success' };
+        results.push({ name:u.origName, path:u.path, ok:true, uid:u.uid });
+      } else {
+        _uploadStatus[u.uid] = { state:'failed', detail:r.error };
+        results.push({ name:u.origName, path:u.path, ok:false, uid:u.uid, error:r.error });
+        stillPending.push(u); /* keep failed uploads queued so they can be retried, don't silently drop them */
+      }
+    }
+    _pendingUploads = stillPending;
+    _updateDeployBadge();
+    _renderCards();
+    _saveSession(); /* persist immediately - a failed/expired token below must not lose queued work */
+
+    /* Build the payload to send to R2: strip out any entry whose file upload
+       just failed, so files.json on the server never references an object
+       that doesn't actually exist in the bucket. Failed entries stay in the
+       local editor (flagged red) until the upload is retried and succeeds. */
+    var failedUids = {};
+    results.forEach(function(r){ if (!r.ok) failedUids[r.uid] = true; });
+    var payload = JSON.parse(JSON.stringify(_data));
+    Object.keys(payload).forEach(function(cat){
+      if (cat === '_meta') return;
+      payload[cat] = payload[cat].filter(function(it){ return !(it._uid && failedUids[it._uid]); })
+        .map(function(it){ var c = Object.assign({}, it); delete c._uid; return c; });
+    });
+
+    var res2 = await fetch(_apiBase + '/upload/files.json', {
+      method:'PUT',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify(payload, null, 2)
+    });
+    if (res2.status === 401 || res2.status === 403){
+      /* Token went stale (e.g. tab left open for a day). Nothing is lost -
+         _data and _pendingUploads were already persisted above - but the
+         person needs to log back in and hit Deploy again. */
+      document.getElementById('statusRight').textContent = 'Session expired - please log in again';
+      toast('Session expired (401) - your edits are saved, log in again and re-deploy');
+      sessionStorage.removeItem('vaultSessionToken');
+      sessionStorage.removeItem('vaultSession');
+      if (results.length) _showUploadResults(results);
+      document.getElementById('loginOverlay').classList.add('show');
+      setTimeout(function(){ document.getElementById('loginPass').focus(); }, 100);
+      return;
+    }
+    if (!res2.ok) throw new Error('files.json upload failed: HTTP '+res2.status);
+
+    var okCount = results.filter(function(r){ return r.ok; }).length;
+    var failCount = results.length - okCount;
+    document.getElementById('statusRight').textContent = 'Deployed at '+new Date().toLocaleTimeString();
+    toast(failCount ? (okCount+' uploaded, '+failCount+' failed - see details') : (results.length ? 'files.json deployed, all files uploaded!' : 'files.json deployed!'));
+
+    /* Fully deployed with nothing pending - clear the saved session so the
+       next launch doesn't ask to "resume" work that's already live. */
+    if (!_pendingUploads.length){ _clearSessionMeta(); _persistPendingUploads(); }
+    else _saveSession();
+
+    if (results.length) _showUploadResults(results);
+  } catch(e){
+    toast('Deploy failed: '+e.message+' - your edits remain saved locally, safe to retry');
+  }
+}
+
+/* ---- UPLOAD RESULTS INDICATOR ---- */
+function _showUploadResults(results){
+  var okCount = results.filter(function(r){ return r.ok; }).length;
+  var failCount = results.length - okCount;
+  document.getElementById('urSummary').innerHTML =
+    '<span class="ok"><i data-lucide="check-circle" style="width:13px;height:13px;vertical-align:middle;"></i> '+okCount+' succeeded</span>'
+    + (failCount ? '<span class="err"><i data-lucide="x-circle" style="width:13px;height:13px;vertical-align:middle;"></i> '+failCount+' failed</span>' : '');
+
+  var list = results.map(function(r){
+    var icon = r.ok
+      ? '<i data-lucide="check-circle" style="width:16px;height:16px;"></i>'
+      : '<i data-lucide="x-circle" style="width:16px;height:16px;"></i>';
+    var detail = r.ok ? r.path : (r.path + ' - ' + (r.error||'upload failed'));
+    return '<div class="fm-upload-row '+(r.ok?'ok':'err')+'">'
+      + '<span class="fm-ur-icon">'+icon+'</span>'
+      + '<div class="fm-ur-info"><div class="fm-ur-name" title="'+_esc(r.name)+'">'+_esc(r.name)+'</div><div class="fm-ur-detail" title="'+_esc(detail)+'">'+_esc(detail)+'</div></div>'
+      + (r.ok ? '' : '')
+      + '</div>';
+  }).join('');
+  document.getElementById('urList').innerHTML = list;
+  document.getElementById('urRetryAllBtn').style.display = failCount ? 'inline-block' : 'none';
+  document.getElementById('uploadResultsModal').classList.add('show');
+  if (typeof lucide !== 'undefined') lucide.createIcons({ node: document.getElementById('uploadResultsModal') });
+}
+
+function closeUploadResultsModal(){
+  document.getElementById('uploadResultsModal').classList.remove('show');
+}
+
+function retryFailedUploads(){
+  closeUploadResultsModal();
+  if (!_pendingUploads.length){ toast('Nothing to retry'); return; }
+  deployToBucket();
+}
+
+/* ---- RECOVERY: find files that were encrypted with wrong PIN-hash key and re-encrypt with correct masterPassword ---- */
+function closeRecoveryModal(){ document.getElementById('recoveryModal').classList.remove('show'); }
+var _recToFix = []; // [{cat, idx, path, name, decrypted: ArrayBuffer}]
+async function _tryDecryptWithCandidates(buffer, candidates){
+  var enc = new TextEncoder();
+  for (var c = 0; c < candidates.length; c++){
+    var pw = candidates[c];
+    if (!pw) continue;
+    try{
+      var pwHash = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(pw)));
+      var saltLen = new Uint32Array(buffer.slice(0,4))[0];
+      if (saltLen === 0 || saltLen > buffer.byteLength - 32) throw new Error('bad header');
+      var settings = JSON.parse(new TextDecoder().decode(buffer.slice(4,4+saltLen)));
+      var salt = buffer.slice(4+saltLen, 4+saltLen+16);
+      var iv = buffer.slice(4+saltLen+16, 4+saltLen+16+12);
+      var data = buffer.slice(4+saltLen+16+12);
+      var km = await crypto.subtle.importKey('raw', pwHash, 'PBKDF2', false, ['deriveKey']);
+      var key = await crypto.subtle.deriveKey({name:'PBKDF2', salt:new Uint8Array(salt), iterations: settings.iterations, hash: settings.hash}, km, {name:'AES-GCM', length:256}, false, ['decrypt']);
+      var dec = await crypto.subtle.decrypt({name:'AES-GCM', iv:new Uint8Array(iv)}, key, data);
+      return { ok:true, decrypted: dec, pw: pw };
+    }catch(e){ /* try next candidate */ }
+  }
+  return { ok:false };
+}
+async function runRecovery(){
+  var token = _getToken();
+  var masterPass = window.masterPassword || '';
+  // Try restore from trusted device if vault not directly unlocked in this tab
+  if (!masterPass && typeof restoreTrustSession === 'function' && typeof _isTrustDevice === 'function' && _isTrustDevice()){
+    try{ await restoreTrustSession(); masterPass = window.masterPassword || ''; }catch{}
+  }
+  if (!masterPass){
+    var entered = prompt('Enter your vault master password (the same you use to log into the main vault) to scan for corrupted files:');
+    if (!entered || !entered.trim()){ toast('Recovery cancelled — vault password needed'); return; }
+    masterPass = entered.trim();
+    window.masterPassword = masterPass;
+  }
+  if (!token){ toast('No session token — log in via main vault or enter PIN first'); return; }
+  document.getElementById('recoveryModal').classList.add('show');
+  document.getElementById('recProgress').style.display = 'block';
+  document.getElementById('recProgress').textContent = 'Scanning 0/...';
+  document.getElementById('recList').innerHTML = '<div style="text-align:center;padding:20px;color:#64748b;"><i data-lucide="loader" style="width:20px;height:20px;"></i> Scanning files...</div>';
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  _recToFix = [];
+  var pinHash = localStorage.getItem('fmPinHash_'+FM_PIN_KEY) || '';
+  var tokenFallback = token || '';
+  // All keys that could have been used during the buggy window: masterPassword, PIN hash, fm fallbacks, raw token, empty string
+  var fallbacks = [pinHash, 'fm-pin-fallback', 'fm-pin-fallback-default', tokenFallback, sessionStorage.getItem('vaultSession')||'', ''].filter(function(v){ return v && String(v).length; });
+  var allFiles = [];
+  Object.keys(_data).forEach(function(cat){
+    if (cat === '_meta') return;
+    (_data[cat]||[]).forEach(function(it, idx){ allFiles.push({cat:cat, idx:idx, it:it}); });
+  });
+  var total = allFiles.length;
+  var checked = 0, needFix = 0, okCount = 0, errCount = 0;
+  var _unreadable = [];
+  for (var f = 0; f < allFiles.length; f++){
+    var entry = allFiles[f];
+    var cleanPathRaw = (entry.it.file||'').replace(/^(docs\/|file\/|photos\/)/,'');
+    try{ cleanPathRaw = decodeURIComponent(cleanPathRaw); }catch{}
+    var isPhoto = _isPhotosCategory(entry.cat);
+    var fetchPaths = [(isPhoto ? 'photos/' : 'docs/') + cleanPathRaw, 'docs/' + cleanPathRaw, 'photos/' + cleanPathRaw, cleanPathRaw];
+    // deduplicate
+    fetchPaths = fetchPaths.filter(function(p,i,a){ return a.indexOf(p)===i; });
+    checked++;
+    document.getElementById('recProgress').textContent = 'Scanning '+checked+'/'+total+' — '+entry.it.name;
+    var buf = null, usedPath = fetchPaths[0], r = null;
+    for (var pi = 0; pi < fetchPaths.length; pi++){
+      try{
+        r = await fetch(_apiBase + '/' + encodeURIComponent(fetchPaths[pi]).replace(/%2F/g,'/'), { headers:{'Authorization':'Bearer '+token}, cache:'no-store' });
+        if (r.ok){ buf = await r.arrayBuffer(); usedPath = fetchPaths[pi]; break; }
+        if (r.status === 401){ throw new Error('HTTP 401 - session expired'); }
+      }catch(e){
+        if (String(e).indexOf('401') !== -1){
+          errCount++; _unreadable.push({name: entry.it.name, cat: entry.cat, path: cleanPathRaw, reason: '401 session expired — re-login via main vault and retry'});
+          buf = null; break;
+        }
+      }
+    }
+    if (!buf){
+      if (!r || r.ok === false){
+        // if not already counted as 401, count as unreadable with status
+        var reason = r ? ('HTTP '+r.status) : 'fetch failed / CORS';
+        if (_unreadable.length === 0 || _unreadable[_unreadable.length-1].name !== entry.it.name){
+          _unreadable.push({name: entry.it.name, cat: entry.cat, path: cleanPathRaw, reason: reason});
+        }
+        errCount++;
+        continue;
+      }
+    }
+    try{
+      var primary = await _tryDecryptWithCandidates(buf, [masterPass]);
+      if (primary.ok){ okCount++; continue; }
+      var fb = await _tryDecryptWithCandidates(buf, fallbacks);
+      if (fb.ok){
+        needFix++;
+        _recToFix.push({cat: entry.cat, idx: entry.idx, path: cleanPathRaw, name: entry.it.name, decrypted: fb.decrypted, fetchPath: usedPath, fallbackPw: fb.pw});
+      } else {
+        errCount++; _unreadable.push({name: entry.it.name, cat: entry.cat, path: cleanPathRaw, reason: 'decrypt failed with all keys'});
+      }
+    }catch(e){ errCount++; _unreadable.push({name: entry.it.name, cat: entry.cat, path: cleanPathRaw, reason: String(e.message||e).slice(0,120)}); }
+  }
+  // expose for console debugging
+  window._recUnreadable = _unreadable;
+  document.getElementById('recProgress').textContent = 'Scan complete — '+okCount+' OK, '+needFix+' need fix, '+errCount+' unreadable';
+  if (!needFix && !errCount){
+    document.getElementById('recList').innerHTML = '<div style="text-align:center;padding:20px;color:#16a34a;font-weight:600;"><i data-lucide="check-circle" style="width:20px;height:20px;vertical-align:middle;"></i> No corrupted files found — all files decrypt with the correct vault password.</div>';
+    document.getElementById('recFixBtn').style.display = 'none';
+  } else if (!needFix && errCount){
+    document.getElementById('recList').innerHTML = '<div style="text-align:left;padding:10px;"><div style="font-weight:700;color:#dc2626;margin-bottom:8px;"><i data-lucide="alert-triangle" style="width:14px;height:14px;"></i> '+errCount+' unreadable (not wrong-key) — check token/CORS or re-upload:</div>'
+      + _unreadable.map(function(x){ return '<div class="fm-upload-row err"><span class="fm-ur-icon"><i data-lucide="x-circle" style="width:16px;height:16px;"></i></span><div class="fm-ur-info"><div class="fm-ur-name">'+_esc(x.name)+'</div><div class="fm-ur-detail">'+_esc(x.cat)+' — '+_esc(x.path)+' — '+_esc(x.reason)+'</div></div></div>'; }).join('')
+      + '<div style="font-size:11px;color:#64748b;margin-top:8px;">If these are the 3 failing Viewer files, they likely returned 401/404 — re-login via main vault and run Recover again, or delete and re-upload them in Files Manager.</div></div>';
+    document.getElementById('recFixBtn').style.display = 'none';
+    console.warn('[Recovery] unreadable files:', _unreadable);
+  } else {
+    document.getElementById('recList').innerHTML = _recToFix.map(function(x){
+      return '<div class="fm-upload-row err"><span class="fm-ur-icon"><i data-lucide="alert-triangle" style="width:16px;height:16px;"></i></span><div class="fm-ur-info"><div class="fm-ur-name">'+_esc(x.name)+'</div><div class="fm-ur-detail">'+_esc(x.cat)+' — '+_esc(x.path)+' — will be re-encrypted with correct password</div></div></div>';
+    }).join('');
+    document.getElementById('recFixBtn').style.display = 'inline-block';
+    document.getElementById('recFixBtn').textContent = 'Fix '+needFix+' file(s) & Re-deploy';
+  }
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+async function fixRecoveredFiles(){
+  if (!_recToFix.length){ toast('Nothing to fix'); return; }
+  var masterPass = window.masterPassword || '';
+  if (!masterPass){ toast('Vault password missing — cannot re-encrypt'); return; }
+  document.getElementById('recFixBtn').disabled = true;
+  document.getElementById('recFixBtn').textContent = 'Fixing...';
+  var fixed = 0;
+  for (var i = 0; i < _recToFix.length; i++){
+    var x = _recToFix[i];
+    try{
+      var encBlob = await encryptVaultFile(x.decrypted, masterPass);
+      var uploadPath = x.fetchPath;
+      // queue for upload with same uid so status badges update
+      var it = _data[x.cat] && _data[x.cat][x.idx];
+      var uid = (it && it._uid) ? it._uid : ('u_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+      if (it) it._uid = uid;
+      _pendingUploads.push({ uid: uid, path: uploadPath.replace(/^(docs\/|photos\/)/,''), blob: encBlob, origName: x.name, cat: x.cat, size: encBlob.size, attempts:0 });
+      _uploadStatus[uid] = { state:'pending' };
+      fixed++;
+    }catch(e){ console.warn('[Recovery] re-encrypt failed for', x.name, e); }
+  }
+  _updateDeployBadge();
+  _renderCards();
+  _saveSession();
+  closeRecoveryModal();
+  toast('Queued '+fixed+' file(s) with correct encryption — click Deploy to upload');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  document.getElementById('recFixBtn').disabled = false;
+}
+
+/* ---- JSON PANEL ---- */
+function toggleJsonPanel(){
+  document.getElementById('jsonPanel').classList.toggle('open');
+  _updateJson();
+}
+
+function _updateJson(){
+  var panel = document.getElementById('jsonPanel');
+  if (!panel.classList.contains('open')) return;
+  var str = JSON.stringify(_stripInternalFields(_data), null, 2);
+  document.getElementById('jsonPre').innerHTML = _syntaxHighlight(str);
+}
+
+function _syntaxHighlight(json){
+  return json.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"([^"]+)"(?=\s*:)/g, '<span class="jk">"$1"</span>')
+    .replace(/"([^"]*)"/g, '<span class="js">"$1"</span>')
+    .replace(/\b(\d+)\b/g, '<span class="jn">$1</span>')
+    .replace(/\b(true|false|null)\b/g, '<span class="jb">$1</span>');
+}
+
+/* ---- DARK MODE ---- */
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  localStorage.setItem('filesManagerDark', document.body.classList.contains('dark') ? '1' : '0');
+}
+(function(){
+  if (localStorage.getItem('filesManagerDark') === '1') document.body.classList.add('dark');
+})();
+
+/* ---- MOVE FILE UP/DOWN (mobile-friendly reorder, no drag needed) ---- */
+function moveFileEntry(idx, dir){
+  var items = _data[_activeCat];
+  if (!Array.isArray(items)) return;
+  var target = idx + dir;
+  if (target < 0 || target >= items.length) return;
+  var tmp = items[idx];
+  items[idx] = items[target];
+  items[target] = tmp;
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+}
+
+/* ---- DRAG & DROP FILES ---- */
+var _dragIdx = -1;
+function _fileDragStart(e, idx){ _dragIdx = idx; e.dataTransfer.effectAllowed = 'move'; }
+function _fileDrop(e, targetIdx){
+  e.preventDefault();
+  if (_dragIdx < 0 || _dragIdx === targetIdx) return;
+  var items = _data[_activeCat];
+  var moved = items.splice(_dragIdx, 1)[0];
+  items.splice(targetIdx, 0, moved);
+  _dragIdx = -1;
+  _saveToStorage();
+  _renderCards();
+  _updateJson();
+}
+
+/* ---- DRAG & DROP CATEGORIES ---- */
+function _catDragStart(e, cat){ _dragCat = cat; e.dataTransfer.effectAllowed = 'move'; }
+function _catDrop(e, targetCat){
+  e.preventDefault();
+  if (!_dragCat || _dragCat === targetCat) return;
+  var keys = Object.keys(_data);
+  var fromIdx = keys.indexOf(_dragCat);
+  var toIdx = keys.indexOf(targetCat);
+  if (fromIdx < 0 || toIdx < 0) return;
+  var newObj = {};
+  keys.forEach(function(k,i){
+    if (i === fromIdx) return;
+    if (i < toIdx || (i > fromIdx && i <= toIdx)) newObj[k] = _data[k];
+  });
+  newObj[_dragCat] = _data[_dragCat];
+  keys.forEach(function(k,i){
+    if (newObj[k]) return;
+    if (i > toIdx || i < fromIdx) newObj[k] = _data[k];
+  });
+  _data = newObj;
+  _dragCat = '';
+  _saveToStorage();
+  _renderSidebar();
+  _updateJson();
+}
+
+/* ---- HELPERS ---- */
+function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function _updateStats(){
+  var cats = Object.keys(_data).length;
+  var files = 0;
+  Object.values(_data).forEach(function(arr){ if (Array.isArray(arr)) files += arr.length; });
+  document.getElementById('statInfo').textContent = cats+' categories, '+files+' files';
+}
+
+function toast(msg){
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 2200);
+}
+
+/* ---- KEYBOARD ---- */
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeFileModal();
+  if (e.key === 'n' && (e.ctrlKey || e.metaKey)){
+    e.preventDefault();
+    if (_activeCat) addFileEntry();
+  }
+});
+</script>
+</body>
+</html>

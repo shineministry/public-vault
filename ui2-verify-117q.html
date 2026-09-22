@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://backend.shinumaths989.workers.dev; font-src 'self'; form-action 'self';">
+    <title>Secure Information Portal</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #333333;
+            --primary-color: #5a67d8;
+            --primary-hover: #4c51bf;
+            --border-color: #e2e8f0;
+            --error-color: #e53e3e;
+            --success-bg: #f0fff4;
+            --success-border: #38a169;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            transition: all 0.5s ease;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        select {
+            background: #fff;
+            cursor: pointer;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.15);
+        }
+
+        input.invalid {
+            border-color: var(--error-color);
+            box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .section-divider {
+            border: 0;
+            height: 1px;
+            background: #e2e8f0;
+            margin: 24px 0;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #4a5568;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(90, 103, 216, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .fade-out-target {
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .hide-animation {
+            opacity: 0 !important;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+
+        .password-display {
+            display: none;
+            padding: 24px;
+            background-color: var(--success-bg);
+            border: 2px dashed var(--success-border);
+            border-radius: 8px;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        .password-display.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .password-entry {
+            margin: 12px 0;
+        }
+
+        .password-entry .password-label {
+            font-size: 13px;
+            color: #276749;
+            font-weight: 600;
+        }
+
+        .password-value {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 20px;
+            font-weight: bold;
+            color: #22543d;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="formContent" class="fade-out-target">
+            <h2>Profile Verification</h2>
+            <p class="subtitle">Shineil Mathias - Internal Record Check</p>
+
+            <form id="profileForm" onsubmit="handleSubmit(event)" novalidate>
+
+                <div class="form-group">
+                    <label for="verifyType">Select Verification Type</label>
+                    <select id="verifyType" onchange="onTypeChange()">
+                        <option value="school">School</option>
+                        <option value="embassy">Embassy</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="name" id="nameLabel">Full Name</label>
+                    <input type="text" id="name" placeholder="Enter full name" autocomplete="off" required>
+                    <div class="error-message" id="nameError">Verification failed.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="text" id="email" placeholder="Enter email" autocomplete="off" required>
+                    <div class="error-message" id="emailError">Verification failed.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" placeholder="Enter city" autocomplete="off" required>
+                    <div class="error-message" id="cityError">Verification failed.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="country">Country</label>
+                    <input type="text" id="country" placeholder="Enter country" autocomplete="off" required>
+                    <div class="error-message" id="countryError">Verification failed.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="dob">Date of Birth of Shineil Keith Mathias</label>
+                    <input type="date" id="dob" required>
+                    <div class="error-message" id="dobError">Verification failed.</div>
+                </div>
+
+                <hr class="section-divider">
+                <div class="section-title">Internal Security Verification</div>
+
+                <div class="form-group">
+                    <label for="loaDate" id="dateLabel">Date Letter of Accommodation was Emailed</label>
+                    <input type="date" id="loaDate" required>
+                    <div class="error-message" id="loaDateError">Verification failed.</div>
+                </div>
+
+                <button type="submit" id="submitBtn">Verify Identity</button>
+            </form>
+        </div>
+
+        <div class="password-display" id="passwordBox">
+            <div style="font-size: 12px; color: #276749; font-weight: bold; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">Access Granted</div>
+            <div id="passwordEntries"></div>
+        </div>
+    </div>
+
+    <script>
+        const VERIFY_API = 'https://backend.shinumaths989.workers.dev/verify-identity';
+
+        function sanitize(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function onTypeChange() {
+            const type = document.getElementById('verifyType').value;
+            const nameLabel = document.getElementById('nameLabel');
+            const dateLabel = document.getElementById('dateLabel');
+            const nameInput = document.getElementById('name');
+            const dateInput = document.getElementById('loaDate');
+            const emailLabel = document.querySelector('label[for="email"]');
+
+            if (type === 'embassy') {
+                nameLabel.textContent = 'Name of Embassy';
+                nameInput.placeholder = 'Enter embassy name';
+                dateLabel.textContent = 'Date of Appointment at Embassy';
+                dateInput.placeholder = '';
+                emailLabel.textContent = 'Embassy Email Address';
+            } else {
+                nameLabel.textContent = 'Full Name';
+                nameInput.placeholder = 'Enter full name';
+                dateLabel.textContent = 'Date Letter of Accommodation was Emailed';
+                dateInput.placeholder = '';
+                emailLabel.textContent = 'Email Address';
+            }
+
+            // Clear errors on type switch
+            document.querySelectorAll('.error-message').forEach(e => e.style.display = 'none');
+            document.querySelectorAll('input').forEach(i => i.classList.remove('invalid'));
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+
+            const fields = ['name', 'email', 'city', 'country', 'dob', 'loaDate'];
+            const data = { type: document.getElementById('verifyType').value };
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                data[f] = el.value.trim();
+            });
+
+            fetch(VERIFY_API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(res => {
+                if (!res.success) {
+                    alert('Verification service error. Please try again.');
+                    return;
+                }
+                const { checks } = res;
+                let isValid = true;
+                fields.forEach(f => {
+                    const el = document.getElementById(f);
+                    const err = document.getElementById(f + 'Error');
+                    if (!checks[f]) {
+                        el.classList.add('invalid');
+                        err.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        el.classList.remove('invalid');
+                        err.style.display = 'none';
+                    }
+                });
+                if (isValid) {
+                    const formContent = document.getElementById('formContent');
+                    const passwordBox = document.getElementById('passwordBox');
+                    const passwordEntries = document.getElementById('passwordEntries');
+
+                    if (res.passwords) {
+                        passwordEntries.innerHTML = '';
+                        if (Array.isArray(res.passwords)) {
+                            res.passwords.forEach(function(pw) {
+                                const div = document.createElement('div');
+                                div.className = 'password-entry';
+                                div.innerHTML = '<div class="password-label">' + sanitize(pw.label) + '</div><div class="password-value">' + sanitize(pw.value) + '</div>';
+                                passwordEntries.appendChild(div);
+                            });
+                        }
+                    }
+
+                    formContent.classList.add('hide-animation');
+                    setTimeout(() => {
+                        formContent.style.display = 'none';
+                        passwordBox.classList.add('show');
+                    }, 500);
+                }
+            })
+            .catch(function() { alert('Could not reach verification service.'); });
+        }
+
+        // Auto-remove error states on input
+        ['name', 'email', 'city', 'country', 'dob', 'loaDate'].forEach(function(id) {
+            document.getElementById(id).addEventListener('input', function() {
+                this.classList.remove('invalid');
+                document.getElementById(id + 'Error').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

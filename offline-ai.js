@@ -50,7 +50,7 @@ window.OfflineAI = (function () {
     TOP_P: 0.9,
 
     // Backend
-    BACKEND_URL: 'https://__PUBLIC_WORKER_URL__',
+    BACKEND_URL: 'https://backend.shinumaths989.workers.dev',
 
     // Timeouts
     SYNC_TIMEOUT: 30000,

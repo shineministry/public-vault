@@ -81,7 +81,7 @@ async function logout(message="") {
  notifyBackendLogout(message || "Logged out.");
  try {
  await fetch(
- "https://__PUBLIC_WORKER_URL__/save-visitor-log",
+ "https://backend.shinumaths989.workers.dev/save-visitor-log",
  {
  method: "POST",
  headers: { "Content-Type": "application/json" },
@@ -98,7 +98,7 @@ async function logout(message="") {
  sessionStorage.clear(); 
 
 // On logout, call:
-await fetch('https://__PUBLIC_WORKER_URL__/logout', {
+await fetch('https://backend.shinumaths989.workers.dev/logout', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ sessionId: window.currentSessionId }) // must be stored at login

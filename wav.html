@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WAV Shrink — True lossless compression</title>
+<style>
+  :root{
+    --ink:#0e1512; --tape:#f2ede1; --phosphor:#7cff9e; --phosphor-dim:#3a7a4f;
+    --amber:#e8a23a; --line:#233229; --panel:#131b16;
+    --mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+    --disp:'Space Grotesk','Arial Narrow',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--ink);color:var(--tape);font-family:var(--mono);}
+  body{background:radial-gradient(ellipse at top left, rgba(124,255,158,0.06), transparent 60%), var(--ink); padding:48px 20px 80px;}
+  .wrap{max-width:760px;margin:0 auto;}
+  header{margin-bottom:38px;}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--phosphor-dim);display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--phosphor);box-shadow:0 0 8px var(--phosphor);}
+  h1{font-family:var(--disp);font-weight:600;font-size:clamp(30px,5vw,44px);line-height:1.05;margin:0 0 12px;letter-spacing:-0.01em;}
+  h1 em{font-style:normal;color:var(--phosphor);}
+  .sub{color:#9fb3a6;font-size:14.5px;line-height:1.6;max-width:58ch;}
+  .sub b{color:var(--tape);font-weight:600;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:2px;overflow:hidden;}
+  .drop{position:relative;padding:46px 24px;text-align:center;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s ease;}
+  .drop:hover,.drop.drag{background:rgba(124,255,158,0.04);}
+  .drop input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .drop .icon{width:34px;height:34px;margin:0 auto 16px;}
+  .drop .prompt{font-family:var(--disp);font-size:17px;margin-bottom:6px;}
+  .drop .hint{font-size:12px;color:#6d8577;letter-spacing:.03em;}
+  .scope{height:64px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;
+    background:repeating-linear-gradient(90deg, rgba(124,255,158,0.05) 0 1px, transparent 1px 24px);}
+  .scope svg{width:100%;height:40px;display:block;}
+  .meta{display:none;padding:18px 24px;border-bottom:1px solid var(--line);font-size:12.5px;color:#9fb3a6;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .meta.show{display:flex;}
+  .meta span b{color:var(--tape);}
+  .stage{padding:24px;}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .figures{display:flex;border:1px solid var(--line);}
+  .fig{padding:14px 20px;min-width:130px;}
+  .fig + .fig{border-left:1px solid var(--line);}
+  .fig .label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#5d7568;margin-bottom:6px;}
+  .fig .val{font-family:var(--disp);font-size:22px;}
+  .fig.after .val{color:var(--phosphor);}
+  .fig .delta{font-size:11px;color:var(--amber);margin-top:4px;}
+  button.go{appearance:none;border:1px solid var(--phosphor-dim);background:transparent;color:var(--phosphor);
+    font-family:var(--mono);font-size:13px;letter-spacing:.06em;padding:13px 22px;cursor:pointer;text-transform:uppercase;
+    transition:all .15s ease;display:inline-flex;align-items:center;gap:10px;}
+  button.go:hover:not(:disabled){background:var(--phosphor);color:var(--ink);border-color:var(--phosphor);}
+  button.go:disabled{opacity:.35;cursor:not-allowed;}
+  .bar{height:3px;background:var(--line);margin-top:22px;overflow:hidden;display:none;}
+  .bar.show{display:block;}
+  .bar i{display:block;height:100%;width:0%;background:var(--phosphor);transition:width .2s ease;}
+  .barlabel{font-size:11px;color:#6d8577;margin-top:8px;display:none;}
+  .barlabel.show{display:block;}
+  .download{display:none;margin-top:22px;padding:18px 20px;border:1px solid var(--phosphor-dim);background:rgba(124,255,158,0.05);align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;}
+  .download.show{display:flex;}
+  .download .txt{font-size:13px;}
+  .download .txt b{color:var(--phosphor);}
+  .download a{color:var(--ink);background:var(--phosphor);text-decoration:none;padding:10px 18px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);border:1px solid var(--phosphor);}
+  .download a:hover{background:transparent;color:var(--phosphor);}
+  .note{margin-top:26px;font-size:12px;color:#5d7568;line-height:1.7;border-left:2px solid var(--line);padding-left:14px;}
+  .note b{color:#9fb3a6;}
+  .warn{margin-top:26px;font-size:12px;color:var(--amber);line-height:1.7;border-left:2px solid var(--amber);padding-left:14px;display:none;}
+  .warn.show{display:block;}
+  footer{margin-top:40px;font-size:11px;color:#405349;letter-spacing:.04em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Lossless · Linear prediction + Rice coding</div>
+    <h1>Shrink the file.<br>Not the <em>sound</em>.</h1>
+    <p class="sub">This predicts each sample from the ones before it and stores only the (small) error — the same principle FLAC uses — then entropy-codes the errors. On decode, every sample is reconstructed <b>exactly</b>. Real reductions, zero quality loss.</p>
+  </header>
+
+  <div class="panel">
+    <div class="drop" id="drop">
+      <input type="file" id="file" accept=".wav,.wavc,audio/wav,audio/x-wav" />
+      <svg class="icon" viewBox="0 0 34 34" fill="none">
+        <path d="M17 4v18M17 22l-6-6M17 22l6-6" stroke="#7cff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 26v2a2 2 0 002 2h18a2 2 0 002-2v-2" stroke="#3a7a4f" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="prompt" id="dropPrompt">Drop a .wav file, or click to browse</div>
+      <div class="hint">16-bit or 24-bit PCM works best · drop a .wavc to restore</div>
+    </div>
+    <div class="scope"><svg id="scopeSvg" viewBox="0 0 600 40" preserveAspectRatio="none"></svg></div>
+    <div class="meta" id="meta">
+      <span>Sample rate <b id="mSr">—</b></span>
+      <span>Bit depth <b id="mBd">—</b></span>
+      <span>Channels <b id="mCh">—</b></span>
+      <span>Duration <b id="mDur">—</b></span>
+    </div>
+    <div class="stage">
+      <div class="row">
+        <div class="figures">
+          <div class="fig before"><div class="label">Original</div><div class="val" id="sizeBefore">—</div></div>
+          <div class="fig after"><div class="label">Compressed</div><div class="val" id="sizeAfter">—</div><div class="delta" id="sizeDelta"></div></div>
+        </div>
+        <button class="go" id="go" disabled>Compress ▸</button>
+      </div>
+      <div class="bar" id="bar"><i id="barFill"></i></div>
+      <div class="barlabel" id="barLabel">Processing…</div>
+      <div class="download" id="download">
+        <div class="txt">Ready — <b id="dlName"></b></div>
+        <a id="dlLink" download>Download</a>
+      </div>
+      <div class="warn" id="warn"></div>
+      <div class="note">
+        <b>How it works:</b> for each block of samples, the tool tests a few fixed predictors (flat, linear, quadratic — same family FLAC uses) and keeps whichever leaves the smallest errors. Those errors are then packed with Rice coding, a form of entropy coding tuned for small numbers clustered near zero. Nothing about the actual sample values is altered — decoding replays the exact same math in reverse to rebuild the original waveform bit-for-bit. Output is a <b>.wavc</b> file; drop it back in here to restore the original .wav.
+      </div>
+    </div>
+  </div>
+  <footer>Runs entirely in your browser. Nothing is uploaded anywhere.</footer>
+</div>
+
+<script>
+const dropEl=document.getElementById('drop'), fileEl=document.getElementById('file'), dropPrompt=document.getElementById('dropPrompt');
+const meta=document.getElementById('meta'), goBtn=document.getElementById('go'), bar=document.getElementById('bar'), barFill=document.getElementById('barFill');
+const barLabel=document.getElementById('barLabel');
+const dl=document.getElementById('download'), dlLink=document.getElementById('dlLink'), dlName=document.getElementById('dlName');
+const scopeSvg=document.getElementById('scopeSvg'), warnEl=document.getElementById('warn');
+
+let currentFile=null, currentBuf=null, mode='compress';
+const MAGIC = 0x57464C31; // 'WFL1'
+const BLOCK = 4096;
+
+function fmtBytes(n){ if(n<1024) return n+' B'; if(n<1024*1024) return (n/1024).toFixed(1)+' KB'; return (n/1024/1024).toFixed(2)+' MB'; }
+
+function drawScope(bytes){
+  const n=140, step=Math.max(1,Math.floor(bytes.length/n)); let pts=[];
+  for(let i=0;i<n;i++) pts.push(bytes[i*step]||128);
+  const w=600,h=40,mid=h/2; let d=`M 0 ${mid}`;
+  pts.forEach((v,i)=>{ const x=(i/(n-1))*w, y=mid+((v-128)/128)*mid*0.85; d+=` L ${x.toFixed(1)} ${y.toFixed(1)}`; });
+  scopeSvg.innerHTML=`<path d="${d}" fill="none" stroke="#7cff9e" stroke-width="1.4" opacity="0.85"/>`;
+}
+
+function parseWav(buf){
+  const dv=new DataView(buf);
+  if(dv.getUint32(0,false)!==0x52494646) return null; // RIFF
+  if(dv.getUint32(8,false)!==0x57415645) return null; // WAVE
+  let offset=12, fmt=null, dataOffset=-1, dataSize=0;
+  while(offset < dv.byteLength-8){
+    const id=dv.getUint32(offset,false), size=dv.getUint32(offset+4,true);
+    if(id===0x666d7420){ // 'fmt '
+      fmt={
+        audioFormat: dv.getUint16(offset+8,true),
+        numChannels: dv.getUint16(offset+10,true),
+        sampleRate: dv.getUint32(offset+12,true),
+        bitsPerSample: dv.getUint16(offset+22,true)
+      };
+    } else if(id===0x64617461){ // 'data'
+      dataOffset=offset+8; dataSize=size;
+    }
+    offset += 8 + size + (size%2);
+  }
+  if(!fmt || dataOffset<0) return null;
+  return {...fmt, dataOffset, dataSize};
+}
+
+// ---------- Bit I/O ----------
+class BitWriter{
+  constructor(){ this.buf=new Uint8Array(1<<20); this.len=0; this.acc=0; this.accBits=0; }
+  ensure(extra){ if(this.len+extra>this.buf.length){ let sz=this.buf.length*2; while(sz<this.len+extra) sz*=2; const nb=new Uint8Array(sz); nb.set(this.buf.subarray(0,this.len)); this.buf=nb; } }
+  writeBits(value,n){ // n <= 24, value unsigned fits in n bits
+    this.acc=((this.acc<<n)|(value&((1<<n)-1)))>>>0; this.accBits+=n;
+    while(this.accBits>=8){ this.accBits-=8; this.ensure(1); this.buf[this.len++]=(this.acc>>>this.accBits)&0xFF; }
+  }
+  writeUnary(q){ while(q>=8){ this.writeBits(0,8); q-=8; } if(q>0) this.writeBits(0,q); this.writeBits(1,1); }
+  finish(){ if(this.accBits>0){ this.ensure(1); this.buf[this.len++]=(this.acc<<(8-this.accBits))&0xFF; this.acc=0; this.accBits=0; } return this.buf.subarray(0,this.len); }
+}
+class BitReader{
+  constructor(buf){ this.buf=buf; this.pos=0; this.acc=0; this.accBits=0; }
+  readBits(n){ while(this.accBits<n){ this.acc=((this.acc<<8)|(this.buf[this.pos++]||0))>>>0; this.accBits+=8; } this.accBits-=n; return (this.acc>>>this.accBits)&((1<<n)-1); }
+  readUnary(){ let q=0; while(this.readBits(1)===0) q++; return q; }
+}
+
+function zigzag(v){ return v>=0 ? (v<<1) : ((-v<<1)-1); }
+function unzigzag(v){ return (v&1) ? -((v+1)>>1) : (v>>1); }
+
+function bestRiceK(vals,start,end){
+  let sum=0; for(let i=start;i<end;i++) sum+=vals[i];
+  const n=end-start; if(n===0) return 0;
+  const mean=sum/n; let k=0; while((1<<k)<mean && k<28) k++;
+  let bestK=k, bestCost=Infinity;
+  for(let kk=Math.max(0,k-1); kk<=k+1; kk++){
+    let cost=0; for(let i=start;i<end;i++) cost += (vals[i]>>>kk) + 1 + kk;
+    if(cost<bestCost){ bestCost=cost; bestK=kk; }
+  }
+  return bestK;
+}
+
+function encodeChannel(samples, bw, sampleBits){
+  const n=samples.length;
+  const res=new Int32Array(BLOCK);
+  const zz=new Uint32Array(BLOCK);
+  for(let start=0; start<n; start+=BLOCK){
+    const end=Math.min(n,start+BLOCK), len=end-start;
+    // try orders 0,1,2
+    let bestOrder=0, bestSum=Infinity, bestRes=null;
+    for(let order=0; order<=2; order++){
+      if(len<=order) continue;
+      let sum=0;
+      for(let i=start+order; i<end; i++){
+        let pred;
+        if(order===0) pred=0;
+        else if(order===1) pred=samples[i-1];
+        else pred=2*samples[i-1]-samples[i-2];
+        const r=samples[i]-pred;
+        res[i-start]=r; sum += r<0?-r:r;
+      }
+      if(sum<bestSum){ bestSum=sum; bestOrder=order; bestRes=res.slice(0,end-start); }
+    }
+    bw.writeBits(bestOrder,2);
+    // warmup samples raw
+    for(let i=0;i<bestOrder && start+i<end;i++){
+      const v=samples[start+i];
+      const uv = v + (1<<(sampleBits-1)); // offset to unsigned
+      bw.writeBits((uv>>>16)&0xFF,8); // safe split for up to 24-bit
+      bw.writeBits(uv&0xFFFF,16);
+    }
+    // residuals from bestOrder..len-1
+    const rcount=len-bestOrder;
+    for(let i=0;i<rcount;i++) zz[i]=zigzag(bestRes[bestOrder+i]);
+    const k=bestRiceK(zz,0,rcount);
+    bw.writeBits(k,5);
+    for(let i=0;i<rcount;i++){
+      const v=zz[i]; const q=v>>>k;
+      bw.writeUnary(q);
+      if(k>0) bw.writeBits(v&((1<<k)-1),k);
+    }
+  }
+}
+
+function decodeChannel(br, n, sampleBits){
+  const samples=new Int32Array(n);
+  for(let start=0; start<n; start+=BLOCK){
+    const end=Math.min(n,start+BLOCK), len=end-start;
+    const order=br.readBits(2);
+    for(let i=0;i<order && start+i<end;i++){
+      const hi=br.readBits(8), lo=br.readBits(16);
+      const uv=(hi<<16)|lo;
+      samples[start+i]=uv-(1<<(sampleBits-1));
+    }
+    const k=br.readBits(5);
+    const rcount=len-order;
+    for(let i=0;i<rcount;i++){
+      const q=br.readUnary();
+      const rem = k>0 ? br.readBits(k) : 0;
+      const zz=(q<<k)|rem;
+      const r=unzigzag(zz);
+      const idx=start+order+i;
+      let pred;
+      if(order===0) pred=0;
+      else if(order===1) pred=samples[idx-1];
+      else pred=2*samples[idx-1]-samples[idx-2];
+      samples[idx]=pred+r;
+    }
+  }
+  return samples;
+}
+
+function readSampleReader(dv, dataOffset, bitsPerSample){
+  const bytesPerSample=bitsPerSample/8;
+  if(bitsPerSample===8){
+    return (i)=> dv.getUint8(dataOffset+i) - 128;
+  } else if(bitsPerSample===16){
+    return (i)=> dv.getInt16(dataOffset+i*2,true);
+  } else if(bitsPerSample===24){
+    return (i)=>{
+      const o=dataOffset+i*3;
+      let v = dv.getUint8(o) | (dv.getUint8(o+1)<<8) | (dv.getUint8(o+2)<<16);
+      if(v & 0x800000) v -= 0x1000000;
+      return v;
+    };
+  }
+  return null;
+}
+function writeSample(dv, offset, bitsPerSample, v){
+  if(bitsPerSample===8) dv.setUint8(offset, v+128);
+  else if(bitsPerSample===16) dv.setInt16(offset, v, true);
+  else if(bitsPerSample===24){
+    const uv = v<0 ? v+0x1000000 : v;
+    dv.setUint8(offset, uv&0xFF); dv.setUint8(offset+1,(uv>>8)&0xFF); dv.setUint8(offset+2,(uv>>16)&0xFF);
+  }
+}
+
+async function compressWav(buf, onProgress){
+  const dv=new DataView(buf);
+  const info=parseWav(buf);
+  if(!info) throw new Error('Not a valid PCM WAV file.');
+  const {numChannels, sampleRate, bitsPerSample, dataOffset, dataSize, audioFormat}=info;
+  if(audioFormat!==1 || ![8,16,24].includes(bitsPerSample)){
+    throw new Error('UNSUPPORTED');
+  }
+  const bytesPerSample=bitsPerSample/8;
+  const totalSamples=Math.floor(dataSize/bytesPerSample);
+  const numFrames=Math.floor(totalSamples/numChannels);
+  const readSample=readSampleReader(dv,dataOffset,bitsPerSample);
+
+  // de-interleave
+  const channels=[];
+  for(let c=0;c<numChannels;c++) channels.push(new Int32Array(numFrames));
+  for(let f=0; f<numFrames; f++){
+    for(let c=0;c<numChannels;c++){
+      channels[c][f]=readSample((f*numChannels)+c);
+    }
+    if(f % 500000===0) await new Promise(r=>setTimeout(r,0));
+  }
+  onProgress(30);
+
+  const bw=new BitWriter();
+  for(let c=0;c<numChannels;c++){
+    encodeChannel(channels[c], bw, bitsPerSample);
+    onProgress(30 + Math.round(50*(c+1)/numChannels));
+    await new Promise(r=>setTimeout(r,0));
+  }
+  const payload=bw.finish();
+
+  // header: magic(4) bitsPerSample(1) numChannels(1) sampleRate(4) numFrames(4) blockSize(4)
+  const header=new ArrayBuffer(18);
+  const hdv=new DataView(header);
+  hdv.setUint32(0,MAGIC,false);
+  hdv.setUint8(4,bitsPerSample);
+  hdv.setUint8(5,numChannels);
+  hdv.setUint32(6,sampleRate,true);
+  hdv.setUint32(10,numFrames,true);
+  hdv.setUint32(14,BLOCK,true);
+
+  onProgress(90);
+  return new Blob([header, payload], {type:'application/octet-stream'});
+}
+
+async function decompressWavc(buf, onProgress){
+  const dv=new DataView(buf);
+  if(dv.getUint32(0,false)!==MAGIC) throw new Error('Not a valid .wavc file.');
+  const bitsPerSample=dv.getUint8(4), numChannels=dv.getUint8(5);
+  const sampleRate=dv.getUint32(6,true), numFrames=dv.getUint32(10,true);
+  const payload=new Uint8Array(buf, 18);
+  const br=new BitReader(payload);
+
+  const channels=[];
+  for(let c=0;c<numChannels;c++){
+    channels.push(decodeChannel(br, numFrames, bitsPerSample));
+    onProgress(20 + Math.round(50*(c+1)/numChannels));
+    await new Promise(r=>setTimeout(r,0));
+  }
+
+  const bytesPerSample=bitsPerSample/8;
+  const dataSize=numFrames*numChannels*bytesPerSample;
+  const wavBuf=new ArrayBuffer(44+dataSize);
+  const wdv=new DataView(wavBuf);
+  const writeStr=(o,s)=>{ for(let i=0;i<s.length;i++) wdv.setUint8(o+i,s.charCodeAt(i)); };
+  writeStr(0,'RIFF'); wdv.setUint32(4,36+dataSize,true); writeStr(8,'WAVE');
+  writeStr(12,'fmt '); wdv.setUint32(16,16,true); wdv.setUint16(20,1,true);
+  wdv.setUint16(22,numChannels,true); wdv.setUint32(24,sampleRate,true);
+  const blockAlign=numChannels*bytesPerSample;
+  wdv.setUint32(28, sampleRate*blockAlign, true); wdv.setUint16(32, blockAlign, true);
+  wdv.setUint16(34, bitsPerSample, true);
+  writeStr(36,'data'); wdv.setUint32(40,dataSize,true);
+
+  let offset=44;
+  for(let f=0; f<numFrames; f++){
+    for(let c=0;c<numChannels;c++){
+      writeSample(wdv, offset, bitsPerSample, channels[c][f]);
+      offset += bytesPerSample;
+    }
+    if(f % 500000===0) await new Promise(r=>setTimeout(r,0));
+  }
+  onProgress(95);
+  return new Blob([wavBuf], {type:'audio/wav'});
+}
+
+function resetUI(){
+  goBtn.disabled=true; dl.classList.remove('show'); bar.classList.remove('show'); barLabel.classList.remove('show');
+  barFill.style.width='0%'; document.getElementById('sizeAfter').textContent='—'; document.getElementById('sizeDelta').textContent='';
+  warnEl.classList.remove('show'); warnEl.textContent='';
+}
+
+async function handleFile(file){
+  currentFile=file; resetUI();
+  const buf=await file.arrayBuffer(); currentBuf=buf;
+  const bytes=new Uint8Array(buf.slice(0, Math.min(buf.byteLength,200000)));
+  drawScope(bytes);
+  const isWavc = file.name.toLowerCase().endsWith('.wavc');
+  mode = isWavc ? 'decompress' : 'compress';
+  dropPrompt.textContent=file.name;
+  document.getElementById('sizeBefore').textContent=fmtBytes(file.size);
+
+  if(!isWavc){
+    const info=parseWav(buf);
+    if(info){
+      document.getElementById('mSr').textContent=info.sampleRate.toLocaleString()+' Hz';
+      document.getElementById('mBd').textContent=info.bitsPerSample+'-bit';
+      document.getElementById('mCh').textContent = info.numChannels===1?'Mono':(info.numChannels===2?'Stereo':info.numChannels);
+      const bytesPerSample=info.bitsPerSample/8;
+      const dur = info.dataSize/(info.sampleRate*info.numChannels*bytesPerSample);
+      document.getElementById('mDur').textContent=dur.toFixed(1)+'s';
+      meta.classList.add('show');
+      if(info.audioFormat!==1 || ![8,16,24].includes(info.bitsPerSample)){
+        warnEl.textContent='This file is '+(info.audioFormat!==1?'not integer PCM':'in '+info.bitsPerSample+'-bit format')+'. This tool currently supports 8/16/24-bit PCM WAV. Try converting the file to 16-bit PCM first.';
+        warnEl.classList.add('show');
+      }
+    } else {
+      meta.classList.remove('show');
+      warnEl.textContent='Could not read this as a standard PCM WAV file.';
+      warnEl.classList.add('show');
+    }
+    goBtn.textContent='Compress ▸';
+  } else {
+    meta.classList.remove('show');
+    goBtn.textContent='Restore original .wav ▸';
+  }
+  goBtn.disabled=false;
+}
+
+dropEl.addEventListener('click', ()=>fileEl.click());
+fileEl.addEventListener('change', e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); });
+['dragover','dragenter'].forEach(ev=>dropEl.addEventListener(ev,e=>{e.preventDefault();dropEl.classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>dropEl.addEventListener(ev,e=>{e.preventDefault();dropEl.classList.remove('drag');}));
+dropEl.addEventListener('drop', e=>{ const f=e.dataTransfer.files[0]; if(f) handleFile(f); });
+
+async function run(){
+  bar.classList.add('show'); barLabel.classList.add('show'); barFill.style.width='5%';
+  const setP = (p)=>{ barFill.style.width=p+'%'; barLabel.textContent = mode==='compress' ? `Predicting & encoding… ${p}%` : `Reconstructing samples… ${p}%`; };
+  try{
+    let outBlob;
+    if(mode==='compress'){
+      outBlob = await compressWav(currentBuf, setP);
+    } else {
+      outBlob = await decompressWavc(currentBuf, setP);
+    }
+    setP(100);
+    const baseName = currentFile.name.replace(/\.(wav|wavc)$/i,'');
+    const outName = mode==='compress' ? baseName+'.wavc' : baseName+'.wav';
+    document.getElementById('sizeAfter').textContent=fmtBytes(outBlob.size);
+    if(mode==='compress'){
+      const pct=(100*(1-outBlob.size/currentFile.size)).toFixed(1);
+      document.getElementById('sizeDelta').textContent = `−${pct}% · lossless`;
+    } else {
+      document.getElementById('sizeDelta').textContent='restored exactly';
+    }
+    const url=URL.createObjectURL(outBlob);
+    dlLink.href=url; dlLink.download=outName; dlName.textContent=outName;
+    dl.classList.add('show');
+  } catch(err){
+    warnEl.textContent = err.message==='UNSUPPORTED'
+      ? 'This WAV is not 8/16/24-bit integer PCM, which is what this encoder supports. Convert it to 16-bit PCM and try again.'
+      : ('Something went wrong: '+err.message);
+    warnEl.classList.add('show');
+  }
+  setTimeout(()=>{ bar.classList.remove('show'); barLabel.classList.remove('show'); }, 500);
+}
+
+goBtn.addEventListener('click', ()=>{ goBtn.disabled=true; run().finally(()=>goBtn.disabled=false); });
+</script>
+</body>
+</html>

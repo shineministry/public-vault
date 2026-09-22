@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHINE VAULT ADMIN</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ==========================================================================
+           1. CORE STABLE BACKGROUND & STRUCTURAL LOCKS (ALL ANIMATIONS REMOVED)
+           ========================================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg1: #020617;
+            --bg2: #0f172a;
+            --glass: rgba(255, 255, 255, .08);
+            --border: rgba(255, 255, 255, .12);
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --green: #22c55e;
+            --red: #ef4444;
+            --blue: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: radial-gradient(circle at top left,#1e3a8a 0%,transparent 30%),
+                        radial-gradient(circle at bottom right,#0f766e 0%,transparent 30%),
+                        linear-gradient(135deg,var(--bg1),var(--bg2));
+            color: var(--text);
+            overflow-x: hidden;
+            padding: 30px;
+        }
+
+        /* ==========================================================================
+           2. LOGIN PANEL DESIGN (STATIC / NO FLOATING EFFECTS)
+           ========================================================================== */
+        #login-screen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg,#020617,#0f172a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.45);
+        }
+
+        .logo {
+            width: 85px;
+            height: 85px;
+            border-radius: 24px;
+            background: linear-gradient(135deg,#2563eb,#06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            margin: auto;
+            margin-bottom: 25px;
+        }
+
+        .login-title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .login-sub {
+            text-align: center;
+            color: var(--muted);
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        .input {
+            width: 100%;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.08);
+            outline: none;
+            padding: 16px;
+            border-radius: 18px;
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .input::placeholder {
+            color: #94a3b8;
+        }
+
+        .input:focus {
+            border-color: rgba(59,130,246,.8);
+            box-shadow: 0 0 25px rgba(59,130,246,.25);
+        }
+
+        .login-btn {
+            width: 100%;
+            border: none;
+            background: linear-gradient(135deg,#2563eb,#06b6d4);
+            color: white;
+            padding: 16px;
+            border-radius: 18px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* ==========================================================================
+           3. MAIN LAYOUT COMPONENTS (STATIC SYSTEMS ONLY)
+           ========================================================================== */
+        .dashboard {
+            max-width: 1300px;
+            margin: auto;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .title-wrap h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .title-wrap p {
+            color: var(--muted);
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 15px;
+        }
+
+        .stats {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            padding: 20px 26px;
+            border-radius: 24px;
+            min-width: 200px;
+        }
+
+        .stats-label {
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .section-divider {
+            margin: 40px 0 20px 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .requests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 28px;
+            box-shadow: 0 10px 40px rgba(0,0,0,.25);
+        }
+
+        .user-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .avatar {
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
+            background: linear-gradient(135deg,#2563eb,#06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        .user-info h2 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .user-info span {
+            color: var(--muted);
+            font-size: .92rem;
+        }
+
+        .info-box {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.06);
+            padding: 16px;
+            border-radius: 18px;
+            margin-bottom: 16px;
+        }
+
+        .info-title {
+            color: var(--muted);
+            margin-bottom: 8px;
+            font-size: .9rem;
+        }
+
+        .info-value {
+            line-height: 1.7;
+            word-break: break-word;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 14px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
+            padding: 15px;
+            border-radius: 18px;
+            color: white;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .approve {
+            background: linear-gradient(135deg,#16a34a,#22c55e);
+        }
+
+        .deny {
+            background: linear-gradient(135deg,#dc2626,#ef4444);
+        }
+
+        .empty {
+            text-align: center;
+            padding: 70px 20px;
+            color: var(--muted);
+            grid-column: 1 / -1;
+        }
+
+        @media(max-width:768px){
+            body { padding: 18px; }
+            .topbar { flex-direction: column; align-items: flex-start; }
+            .title-wrap h1 { font-size: 1.8rem; }
+            .stats-container { width: 100%; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <div class="logo">SV</div>
+            <div class="login-title">SHINE VAULT ADMIN</div>
+            <div class="login-sub">
+                Secure administrator approval panel.<br>
+                Authorized access only.
+            </div>
+            <input type="password" id="admin-pass" class="input" placeholder="Enter Admin Password">
+            <button class="login-btn" onclick="unlockAdmin()">ACCESS ADMIN PANEL</button>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="topbar">
+            <div class="title-wrap">
+                <h1>Access Approval Center</h1>
+                <p>Real-time passkey approval management system</p>
+            </div>
+            <div class="stats-container">
+                <div class="stats">
+                    <div class="stats-label">Pending Requests</div>
+                    <div class="stats-number" id="request-count">0</div>
+                </div>
+                <div class="stats">
+                    <div class="stats-label">Active Users Online</div>
+                    <div class="stats-number" id="active-count">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-divider">Incoming Passkey Requests</div>
+        <div class="requests-grid" id="requests">
+            <div class="empty">Waiting for incoming requests...</div>
+        </div>
+
+        <div class="section-divider" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <span>Active Sessions Tracking</span>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="clearStaleSessions()" class="btn deny" style="width: auto; padding: 10px 18px; font-size: 0.82rem; margin: 0; border-radius: 12px; display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 14px; height: 14px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                    Clear Stale Sessions
+                </button>
+                <button onclick="wipeAllSessions()" class="btn deny" style="width: auto; padding: 10px 18px; font-size: 0.82rem; margin: 0; border-radius: 12px; display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #dc2626, #ef4444);">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 14px; height: 14px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                    Wipe All Sessions
+                </button>
+            </div>
+        </div>
+
+        <div class="requests-grid" id="active-sessions-grid">
+            <div class="empty">No active administrative sessions found.</div>
+        </div>
+    </div>
+
+    <audio id="approveSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=correct-2-46134.mp3"></audio>
+
+    <script>
+        const WORKER_URL = "https://backend.shinumaths989.workers.dev";
+        window.currentAdminSessionId = null; 
+
+        async function unlockAdmin(){
+            const pass = document.getElementById('admin-pass').value.trim();
+            if (!pass) { alert("Please enter the administrator password."); return; }
+            try {
+                const res = await fetch(WORKER_URL + "/verify-portal", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ portal: "admin", password: pass })
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    alert("Incorrect administrator password.");
+                    return;
+                }
+            } catch (e) {
+                alert("Verification failed. Check your connection.");
+                return;
+            }
+            document.getElementById('login-screen').style.display = 'none';
+            if(window.initializeAdminSession) {
+                window.initializeAdminSession();
+            }
+        }
+
+        async function forceLogout(id){
+            if (window.firebaseActions && window.firebaseActions.forceLogout) {
+                await window.firebaseActions.forceLogout(id);
+            } else {
+                console.error("Firebase engine core not ready yet.");
+            }
+        }
+
+        async function approveRequest(id) {
+            if (window.firebaseActions && window.firebaseActions.approveRequest) {
+                await window.firebaseActions.approveRequest(id);
+            }
+        }
+
+        async function denyRequest(id) {
+            if (window.firebaseActions && window.firebaseActions.denyRequest) {
+                await window.firebaseActions.denyRequest(id);
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+        function escHtml(s) { if (typeof s !== 'string') return String(s || ''); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "online-vault-shine-26.firebaseapp.com",
+            projectId: "online-vault-shine-26",
+            storageBucket: "online-vault-shine-26.firebasestorage.app",
+            messagingSenderId: "79788612818",
+            appId: "1:79788612818:web:41cfb16a4b36b1d5bfe10b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const requestsDiv = document.getElementById('requests');
+        const activeSessionsDiv = document.getElementById('active-sessions-grid');
+
+        // Registers this browser session into firestore when successfully logged in
+        window.initializeAdminSession = async () => {
+            try {
+                const docRef = await addDoc(collection(db, "activeSessions"), {
+                    visitor: "System Administrator",
+                    active: true,
+                    forceLogout: false,
+                    createdAt: Date.now(),
+                    ipAddress: "Secure Dashboard Session Node",
+                    userAgent: navigator.userAgent
+                });
+                window.currentAdminSessionId = docRef.id;
+            } catch (e) {
+                console.error("Error creating active registration context token:", e);
+            }
+        };
+
+        window.firebaseActions = {
+            forceLogout: async (id) => {
+                try {
+                    await updateDoc(doc(db, "activeSessions", id), { forceLogout: true });
+                    alert("Force logout signal transmitted successfully!");
+                } catch(err) {
+                    console.error("LOGOUT ERROR:", err);
+                }
+            },
+            approveRequest: async (id) => {
+                try {
+                    await updateDoc(doc(db, "accessRequests", id), { status: "approved" });
+                    const sound = document.getElementById('approveSound');
+                    if (sound) sound.play().catch(()=>{});
+                } catch(err) {
+                    console.error("APPROVE ERROR:", err);
+                }
+            },
+            denyRequest: async (id) => {
+                try {
+                    await updateDoc(doc(db, "accessRequests", id), { status: "denied" });
+                } catch(err) {
+                    console.error("DENY ERROR:", err);
+                }
+            }
+        };
+
+        // ==========================================================================
+        // REAL-TIME EVENT STREAM MONITORING (ONSNAPSHOT)
+        // ==========================================================================
+
+        // 1. Live Requests Watcher
+        onSnapshot(collection(db, "accessRequests"), (snapshot) => {
+            let pendingCount = 0;
+            let htmlContent = "";
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data.status !== "pending") return;
+
+                pendingCount++;
+                const initial = data.visitorName ? data.visitorName.charAt(0).toUpperCase() : "V";
+
+                htmlContent += `
+                <div class="card">
+                    <div class="user-row">
+                        <div class="avatar">${initial}</div>
+                        <div class="user-info">
+                            <h2>${escHtml(data.visitorName || 'Unknown Requestor')}</h2>
+                            <span>${escHtml(data.location || 'Austria/Global Location')}</span>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-title">Purpose of Entry</div>
+                        <div class="info-value">${escHtml(data.purpose || 'Not stated')}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-title">Device Fingerprint</div>
+                        <div class="info-value">${escHtml(data.device || 'Unknown Hardware Target')}</div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn approve" onclick="approveRequest('${docSnap.id}')">APPROVE</button>
+                        <button class="btn deny" onclick="denyRequest('${docSnap.id}')">DENY</button>
+                    </div>
+                </div>
+                `;
+            });
+
+            document.getElementById('request-count').innerText = pendingCount;
+            if (htmlContent === "") {
+                requestsDiv.innerHTML = `<div class="empty">Waiting for incoming requests...</div>`;
+            } else {
+                requestsDiv.innerHTML = htmlContent;
+            }
+        }, (err) => {
+            console.error("LIVE REQUESTS MONITOR ERROR:", err);
+        });
+
+        // 2. Live Active System Context Watcher
+        onSnapshot(collection(db, "activeSessions"), (snapshot) => {
+            let activeCount = 0;
+            let activeHtml = "";
+            const strictThreshold = Date.now() - (2 * 60 * 60 * 1000); 
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+
+                if (data.active !== true) return;
+                if (data.forceLogout === true) return;
+                if (!data.createdAt) return;
+
+                const createdMs = typeof data.createdAt === 'number'
+                    ? data.createdAt
+                    : new Date(data.createdAt).getTime();
+                
+                if (isNaN(createdMs) || createdMs < strictThreshold) return;
+
+                activeCount++;
+                const userInitial = data.visitor ? data.visitor.charAt(0).toUpperCase() : "A";
+
+                activeHtml += `
+                <div class="card">
+                    <div class="user-row">
+                        <div class="avatar" style="background: linear-gradient(135deg, #ec4899, #8b5cf6);">${userInitial}</div>
+                        <div class="user-info">
+                            <h2>${escHtml(data.visitor || 'Active User')}</h2>
+                            <span>Session: ${escHtml(docSnap.id.substring(0,8))}...</span>
+                        </div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-title">Last Check-in / IP Environment</div>
+                        <div class="info-value">${escHtml(data.ipAddress || 'Protected System Node')}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-title">Platform OS Info</div>
+                        <div class="info-value">${escHtml(data.userAgent || 'Web Browser Interface')}</div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn deny" onclick="forceLogout('${docSnap.id}')">FORCE LOGOUT</button>
+                    </div>
+                </div>
+                `;
+            });
+
+            document.getElementById('active-count').innerText = activeCount;
+            if (activeHtml === "") {
+                activeSessionsDiv.innerHTML = `<div class="empty">No active administrative sessions found.</div>`;
+            } else {
+                activeSessionsDiv.innerHTML = activeHtml;
+            }
+        }, (err) => {
+            console.error("LIVE SESSIONS MONITOR ERROR:", err);
+        });
+
+        async function clearStaleSessions() {
+            if (!confirm("This will physically delete all inactive, stale (older than 2 hours), or force-logged-out sessions from Firestore. Continue?")) return;
+            try {
+                const snapshot = await getDocs(collection(db, "activeSessions"));
+                let count = 0;
+                const strictThreshold = Date.now() - (2 * 60 * 60 * 1000);
+
+                for (const docSnap of snapshot.docs) {
+                    const data = docSnap.data();
+                    let isStale = false;
+                    
+                    if (data.createdAt) {
+                        const createdMs = typeof data.createdAt === 'number'
+                            ? data.createdAt
+                            : new Date(data.createdAt).getTime();
+                        if (isNaN(createdMs) || createdMs < strictThreshold) {
+                            isStale = true;
+                        }
+                    } else {
+                        isStale = true;
+                    }
+
+                    if (data.active !== true || data.forceLogout === true || isStale) {
+                        await deleteDoc(doc(db, "activeSessions", docSnap.id));
+                        count++;
+                    }
+                }
+                alert(`Successfully purged ${count} legacy/stale sessions from the database.`);
+            } catch (err) {
+                console.error("Purge Error:", err);
+                alert("Failed to purge sessions: " + err.message);
+            }
+        }
+
+        async function wipeAllSessions() {
+            if (!confirm("⚠️ WARNING: This will physically delete EVERY SINGLE session (including active ones) from the database, resetting the active count to 0. Are you absolutely sure?")) return;
+            try {
+                const snapshot = await getDocs(collection(db, "activeSessions"));
+                let count = 0;
+                for (const docSnap of snapshot.docs) {
+                    await deleteDoc(doc(db, "activeSessions", docSnap.id));
+                    count++;
+                }
+                alert(`Successfully wiped all ${count} sessions from the database.`);
+            } catch (err) {
+                console.error("Wipe Error:", err);
+                alert("Failed to wipe sessions: " + err.message);
+            }
+        }
+
+        window.clearStaleSessions = clearStaleSessions;
+        window.wipeAllSessions = wipeAllSessions;
+
+        // ==========================================================================
+        // WINDOW CLOSE DISCONNECT HANDLING LOCK (KEEPALIVE TRICK)
+        // ==========================================================================
+        window.addEventListener("pagehide", () => {
+            if (!window.currentAdminSessionId) return;
+
+            // Target the raw Firebase Firestore REST API Endpoint directly
+            const restUrl = `https://firestore.googleapis.com/v1/projects/online-vault-shine-26/databases/(default)/documents/activeSessions/${window.currentAdminSessionId}?updateMask.fieldPaths=active`;
+            
+            const rawData = JSON.stringify({
+                fields: {
+                    active: { booleanValue: false }
+                }
+            });
+
+            // keepalive tells the browser: "Keep this packet alive even if the tab is completely closed right now"
+            fetch(restUrl, {
+                method: 'PATCH',
+                body: rawData,
+                headers: { 'Content-Type': 'application/json' },
+                keepalive: true 
+            });
+        });
+    </script>
+
+    <script>
+        /* DISABLE DIAGNOSTICS & VIEW-SOURCE HOTKEYS */
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12') { e.preventDefault(); }
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') { e.preventDefault(); }
+            if (e.ctrlKey && e.shiftKey && e.key === 'J') { e.preventDefault(); }
+            if (e.ctrlKey && e.key === 'u') { e.preventDefault(); }
+        });
+    </script>
+</body>
+</html>

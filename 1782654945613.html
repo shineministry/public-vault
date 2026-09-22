@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA Verification Explanation | Online Vault</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-glow: #38bdf8;
+            --captcha-blue: #4285f4;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            overflow-y: auto;
+            position: relative;
+            padding: 2rem 1rem;
+        }
+
+        /* Animated Background Particles */
+        .background-animate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+        }
+
+        .background-animate::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: transparent cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            background-image: 
+                radial-gradient(rgba(66, 133, 244, 0.04) 2px, transparent 0),
+                radial-gradient(rgba(56, 189, 248, 0.04) 2px, transparent 0);
+            background-size: 50px 50px;
+            background-position: 0 0, 25px 25px;
+            animation: moveBackground 45s linear infinite;
+        }
+
+        @keyframes moveBackground {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Main Glassmorphism Card Wrapper */
+        .container {
+            position: relative;
+            z-index: 2;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
+            border-radius: 24px;
+            width: 95%;
+            max-width: 680px;
+            text-align: left;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5),
+                        0 0 50px rgba(66, 133, 244, 0.08);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            margin: auto;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Top Icon Styling */
+        .captcha-icon-box {
+            width: 80px;
+            height: 80px;
+            background: rgba(66, 133, 244, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1.5rem;
+            border: 1px solid rgba(66, 133, 244, 0.3);
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.4); }
+            50% { box-shadow: 0 0 20px 10px rgba(66, 133, 244, 0.1); }
+        }
+
+        .captcha-icon {
+            font-size: 2rem;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Q&A Content Accordion Sections */
+        .qa-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .qa-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .qa-card:hover {
+            border-color: rgba(66, 133, 244, 0.3);
+            background: rgba(15, 23, 42, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .question {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-glow);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .answer {
+            color: var(--text-main);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .answer strong {
+            color: #fff;
+        }
+
+        .highlight-box {
+            background: rgba(66, 133, 244, 0.08);
+            border-left: 4px solid var(--captcha-blue);
+            padding: 1rem;
+            border-radius: 0 12px 12px 0;
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+        }
+
+        /* Action Buttons */
+        .action-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-return {
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-return:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+        }
+
+        .footer-note {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: rgba(148, 163, 184, 0.4);
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 640px) {
+            .container {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+            .question {
+                font-size: 1rem;
+            }
+            .answer {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-animate"></div>
+
+    <div class="container">
+        <div class="captcha-icon-box">
+            <span class="captcha-icon">🤖</span>
+        </div>
+        
+        <div class="header-section">
+            <h1>Identity Verification Insights</h1>
+            <p class="subtitle">Understand why reCAPTCHA validation is strictly mandated before gaining access to the infrastructure layer.</p>
+        </div>
+        
+        <div class="qa-section">
+            <!-- Question 1 -->
+            <div class="qa-card">
+                <div class="question">
+                    <span>🛡️</span> Why do I need to solve a reCAPTCHA challenge?
+                </div>
+                <div class="answer">
+                    The portal guards highly sensitive assets. Automated scripts, brute-force algorithms, and malicious scraping bots constantly probe network endpoints. Completing this checkpoint proves you are an actual human operator, neutralizing automated data extraction vectors.
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="qa-card">
+                <div class="question">
+                    <span>⚡</span> What does this step protect against?
+                </div>
+                <div class="answer">
+                    Without reCAPTCHA filtering, the server remains vulnerable to targeted security and resource strains, including:
+                    <div class="highlight-box">
+                        • <strong>Denial of Service (DoS):</strong> Bots flooding the system to disrupt server stability.<br>
+                        • <strong>Credential Stuffing:</strong> Automated guessing tools attempting to breach layers.<br>
+                        • <strong>System Scraping:</strong> Malicious miners attempting to copy layout configurations or system metrics.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="qa-card">
+                <div class="question">
+                    <span>🧩</span> How does the system evaluate my verification?
+                </div>
+                <div class="answer">
+                    The protocol dynamically evaluates interaction telemetry, such as standard browser patterns, mouse behaviors, and navigation speed. If the background assessment is inconclusive, a quick puzzle is served to safely verify human intent without compromising user privacy.
+                </div>
+            </div>
+        </div>
+
+        <div class="action-group">
+            <button class="btn btn-return" onclick="window.close();">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(180deg); margin-right: 4px;">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+                Return to Verification Portal
+            </button>
+        </div>
+
+        <div class="footer-note">
+            FORTRESS ONLINE VAULT • ANTI-BOT MITIGATION PROTOCOL v2026
+        </div>
+    </div>
+
+</body>
+</html>

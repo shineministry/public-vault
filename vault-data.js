@@ -20,7 +20,7 @@ try {
     let data = {};
     try {
         const res = await fetch(
-            "https://__PUBLIC_WORKER_URL__/files.json?_t=" + Date.now(),
+            "https://backend.shinumaths989.workers.dev/files.json?_t=" + Date.now(),
             { headers: { "Authorization": "Bearer " + sessionToken }, cache: "no-store" }
         );
 
@@ -158,25 +158,194 @@ else if (list.querySelector('li')) list.querySelector('li').click();
    PROFILES DATA (module scope)
 ========================= */
 const profiles = {
-  // Public SaaS: per-user profile loaded from /public/me - no hard-coded family data
-  // Keep one example shape for UI; real data comes from tenant API
-  me: {
-    image: "favicon.png",
-    name: "Your Name",
-    role: "Vault Member",
-    personal: "<b>Full Name:</b> Your Name<br><b>Member:</b> Primary",
-    contact: "<b>Contact via profile settings</b>",
-    education: "Add education",
-    skills: "Add skills",
-    languages: "Add languages",
-    achievements: "Add achievements",
-    experience: "Add experience",
-    projects: "Secure Vault",
-    goals: "Add goals",
-    faith: "Add",
-    about: "Private vault member.",
-    hobbies: "Add hobbies"
-  }
+
+shineil:{
+image:"profile.png",
+name:"SHINEIL KEITH MATHIAS",
+role:"Founder of SHINE MINISTRY - Student - Public Speaker - Digital Creator",
+
+personal:`
+<b>Full Name:</b> Shineil Keith Mathias<br>
+<b>Date of Birth:</b> 7 March 2010<br>
+<b>Gender:</b> Male<br>
+<b>Nationality:</b> Indian<br>
+<b>Location:</b> Khandala, Pune
+`,
+
+contact:`
+<b>Contact via vault support portal</b>
+`,
+
+education:`
+Don Bosco High School<br>
+2020-2026<br>
+Secondary Education
+`,
+
+skills:`
+- Public Speaking<br>
+- Leadership<br>
+- Mathematics<br>
+- Web Editing
+`,
+
+languages:`
+English - Fluent<br>
+Hindi - Fluent<br>
+German - Basic
+`,
+
+achievements:`
+- Green House Captain<br>
+- Debate Awards<br>
+- Student Recognition
+`,
+
+experience:`
+Founder - SHINE MINISTRY<br>
+Digital Projects<br>
+Leadership Activities
+`,
+
+projects:`
+Secure Vault<br>
+SHINE MINISTRY<br>
+PDF Systems
+`,
+
+goals:`
+Technology<br>
+Education<br>
+Leadership
+`,
+
+faith:`
+Founder of SHINE MINISTRY<br>
+Christian Service
+`,
+
+about:`
+Student with strong communication,
+leadership and ministry interests.
+`,
+
+hobbies:`
+Debating, technology,
+public speaking, reading
+`
+},
+
+
+
+brother:{
+
+image:"ProfileK.png",
+name:"KEVIN SHREESH MATHIAS",
+role:"Bartender - Hospitality",
+
+personal:`
+<b>Name:</b> Kevin Shreesh Mathias<br>
+<b>Location:</b> Pune<br>
+<b>Industry:</b> Hospitality
+`,
+
+contact:`
+Add Number<br>
+Add Email
+`,
+
+education:`
+Guardian School - SSC<br>
+IHM Mumbai<br>
+Flair Mania Bartending Academy
+`,
+
+skills:`
+- Bartending<br>
+- Customer Service<br>
+- POS<br>
+- Inventory
+`,
+
+languages:`
+English<br>
+Hindi
+`,
+
+achievements:`
+Assistant Bartender - Bombay Cartel<br>
+Assistant Bartender - Janwani
+`,
+
+experience:`
+2023-2025 Bombay Cartel<br>
+Present - Janwani
+`,
+
+projects:`
+Hospitality Training<br>
+Service Experience
+`,
+
+goals:`
+Career Growth<br>
+Hospitality Industry
+`,
+
+faith:`-`,
+
+about:`
+Hospitality professional with
+bartending and customer service experience.
+`,
+
+hobbies:`
+Service industry,
+teamwork,
+food & beverage
+`
+},
+
+
+
+father:{
+image:"ProfileSt.png",
+name:"STEPHEN CONDRAD MATHIAS",
+role:"Father",
+personal:`Add`,
+contact:`+91 99216 68744, +91 93707 50143`,
+education:`Add`,
+skills:`Add`,
+languages:`English, Hindi, Konkani, Tulu, Kannada`,
+achievements:`Add`,
+experience:`Add`,
+projects:`Add`,
+goals:`Add`,
+faith:`Roman Catholic`,
+about:`Add`,
+hobbies:`Add`
+},
+
+
+
+mother:{
+image:"ProfileKa.png",
+name:"KANCHAN MATHIAS",
+role:"Mother",
+personal:`Add`,
+contact:`Add`,
+education:`Add`,
+skills:`Add`,
+languages:`Add`,
+achievements:`Add`,
+experience:`Add`,
+projects:`Add`,
+goals:`Add`,
+faith:`Add`,
+about:`Add`,
+hobbies:`Add`
+}
+
 };
 
 // -- Category summaries (item 2): short blurb shown above each category's

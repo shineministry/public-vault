@@ -1,0 +1,1 @@
+﻿'Frontend Integrity', check:async()=>{try{var f=await fetch('https://backend.shinumaths989.workers.dev/frontend-errors-today',{headers:{'Authorization':'Bearer '+(sessionStorage.getItem('vaultSessionToken')||sessionStorage.getItem('vaultSession')||'')}}

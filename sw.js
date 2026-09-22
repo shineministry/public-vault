@@ -1,14 +1,14 @@
-/**
- * sw.js — Online Vault Service Worker
+﻿/**
+ * sw.js â€” Online Vault Service Worker
  *
  * Routing strategy:
- *  • Backend API calls        → Always network-only (auth-bearing, never cached)
- *  • AI / chat endpoints      → Network-only (never cachede)
- *  • Vault /docs/* blobs      → Network-only; offline fallback via page IndexedDB
- *                               (features.js → fetchVaultDocWithOfflineFallback)
- *  • Navigation (HTML pages)  → Network-first, fall back to cached /index.html
- *  • Same-origin shell assets → Cache-first, populate on first fetch
- *  • External CDN assets      → Network-first, cache fallback
+ *  â€¢ Backend API calls        â†’ Always network-only (auth-bearing, never cached)
+ *  â€¢ AI / chat endpoints      â†’ Network-only (never cachede)
+ *  â€¢ Vault /docs/* blobs      â†’ Network-only; offline fallback via page IndexedDB
+ *                               (features.js â†’ fetchVaultDocWithOfflineFallback)
+ *  â€¢ Navigation (HTML pages)  â†’ Network-first, fall back to cached /index.html
+ *  â€¢ Same-origin shell assets â†’ Cache-first, populate on first fetch
+ *  â€¢ External CDN assets      â†’ Network-first, cache fallback
  *
  * Encrypted vault blobs are cached in IndexedDB by features.js.
  * The SW never tries to cache them to avoid auth/CORS complexity.
@@ -16,14 +16,14 @@
  * Login-after-logout fix:
  *  The page sends CLEAR_SESSION via postMessage on logout.
  *  The SW purges the entire cache so the next page load is a clean
- *  network fetch — no stale authenticated shell is served.
+ *  network fetch â€” no stale authenticated shell is served.
  */
 
 const CACHE = "online-vault-v33";   // bump this string to force a full cache refresh
 
 const BACKEND_HOST = "backend.shinumaths989.workers.dev";
 
-// Assets pre-cached at install time (app shell) — only files that exist on origin
+// Assets pre-cached at install time (app shell) â€” only files that exist on origin
 const PRECACHE_URLS = [
   "/",
   "/index.html",
@@ -48,9 +48,9 @@ const NEVER_CACHE_PATTERNS = [
   "/stream"
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Install — pre-cache app shell assets
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Install â€” pre-cache app shell assets
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 self.addEventListener("install", function(event) {
   event.waitUntil(
     caches.open(CACHE).then(function(cache) {
@@ -68,9 +68,9 @@ self.addEventListener("install", function(event) {
   self.skipWaiting();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Activate — purge any old caches, claim clients immediately
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Activate â€” purge any old caches, claim clients immediately
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 self.addEventListener("activate", function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
@@ -88,9 +88,9 @@ self.addEventListener("activate", function(event) {
   );
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Fetch — routing
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Fetch â€” routing
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 self.addEventListener("fetch", function(event) {
   var request = event.request;
   var url     = new URL(request.url);
@@ -101,7 +101,7 @@ self.addEventListener("fetch", function(event) {
   // Only handle GET (POST/PUT/DELETE go straight to network)
   if (request.method !== "GET") return;
 
-  // 1. Backend API — always network-only (auth tokens, never cache)
+  // 1. Backend API â€” always network-only (auth tokens, never cache)
   if (url.hostname === BACKEND_HOST) {
     // /docs/* offline fallback: return a detectable 503 so the page's
     // fetchVaultDocWithOfflineFallback() can read from IndexedDB instead.
@@ -110,13 +110,13 @@ self.addEventListener("fetch", function(event) {
       // viewer.js catches the TypeError and reads from IndexedDB.
       // The old 503 JSON response was being thrown as an Error by
       // viewer.js, bypassing the IndexedDB fallback entirely.
-      return; // passthrough — no SW interception
+      return; // passthrough â€” no SW interception
     }
     // All other backend calls: pure network passthrough
     return;
   }
 
-  // 2. AI / chat endpoints — network-only, no cache at all
+  // 2. AI / chat endpoints â€” network-only, no cache at all
   var neverCache = NEVER_CACHE_PATTERNS.some(function(p) {
     return url.pathname.includes(p);
   });
@@ -125,25 +125,25 @@ self.addEventListener("fetch", function(event) {
     return;
   }
 
-  // 3. Non-same-origin requests (CDN fonts, scripts, etc.) — network-first, cache fallback
+  // 3. Non-same-origin requests (CDN fonts, scripts, etc.) â€” network-first, cache fallback
   if (url.origin !== self.location.origin) {
     event.respondWith(networkFirst(request));
     return;
   }
 
-  // 4. Navigation (HTML pages) — network-first so a fresh login page is always served
+  // 4. Navigation (HTML pages) â€” network-first so a fresh login page is always served
   if (request.mode === "navigate") {
     event.respondWith(networkFirst(request));
     return;
   }
 
-  // SW script — always network-first for updates
+  // SW script â€” always network-first for updates
   if (url.pathname === "/sw.js") {
     event.respondWith(networkFirst(request));
     return;
   }
 
-  // 5. Same-origin shell assets (JS, CSS, images) — stale-while-revalidate.
+  // 5. Same-origin shell assets (JS, CSS, images) â€” stale-while-revalidate.
   // Serves the cached copy instantly, but always re-fetches in the background
   // and updates the cache, so a stale vault-data.js/auth.js/etc. only ever
   // lasts one page load instead of persisting indefinitely until someone
@@ -151,9 +151,9 @@ self.addEventListener("fetch", function(event) {
   event.respondWith(staleWhileRevalidate(request));
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Strategies
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE);
@@ -165,7 +165,7 @@ async function staleWhileRevalidate(request) {
     }
     return response;
   }).catch(function() {
-    return null; // network failed — caller falls back to cached version below
+    return null; // network failed â€” caller falls back to cached version below
   });
 
   if (cached) {
@@ -174,7 +174,7 @@ async function staleWhileRevalidate(request) {
     return cached;
   }
 
-  // Nothing cached yet — must wait for network.
+  // Nothing cached yet â€” must wait for network.
   const fresh = await networkFetch;
   if (fresh) return fresh;
 
@@ -215,9 +215,9 @@ function isCacheable(response) {
   return type === "basic" || type === "default";
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Message handler
-// ─────────────────────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 self.addEventListener("message", function(event) {
   if (!event.data) return;
 
@@ -234,7 +234,7 @@ self.addEventListener("message", function(event) {
       self.skipWaiting();
       break;
 
-    // Called by the page on logout — wipes the entire cache so the next
+    // Called by the page on logout â€” wipes the entire cache so the next
     // page load fetches a fresh unauthenticated shell from the network.
     // This is the fix for "login doesn't work after logout".
     case "CLEAR_SESSION":

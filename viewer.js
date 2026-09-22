@@ -164,7 +164,7 @@ async function _decryptPhotoOnce(file, docKey, attempt) {
             // legitimately queue behind others for a few seconds.
             const timeoutId = setTimeout(() => controller.abort(), 20000);
             try {
-                const res = await fetch('https://__PUBLIC_WORKER_URL__/photos/' + docKey, {
+                const res = await fetch('https://backend.shinumaths989.workers.dev/photos/' + docKey, {
                     headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
                     signal: controller.signal
                 });
@@ -313,7 +313,7 @@ displayName){
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             let res;
             try {
-                res = await fetch("https://__PUBLIC_WORKER_URL__/" + fetchPath, {
+                res = await fetch("https://backend.shinumaths989.workers.dev/" + fetchPath, {
                     headers: { "Authorization": "Bearer " + vaultSessionToken },
                     signal: controller.signal
                 });
@@ -944,7 +944,7 @@ await window.sha256(
 
 const passkeyRes =
 await fetch(
- "https://__PUBLIC_WORKER_URL__/get-secret",
+ "https://backend.shinumaths989.workers.dev/get-secret",
   {
    method:"POST",
    headers:{

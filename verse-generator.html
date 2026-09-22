@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shine Ministry — Daily Verse Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0b1329;
+    --navy:#141c3a;
+    --navy-2:#1f2a52;
+    --gold:#e8b64d;
+    --gold-2:#c88a2e;
+    --paper:#f6f3ea;
+    --line:#2a335a;
+    --accent:#5b7fd6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Manrope',sans-serif;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #1e2a56 0%, transparent 60%),
+      radial-gradient(1000px 500px at 110% 10%, #2b1b4a 0%, transparent 55%),
+      var(--ink);
+    color:var(--paper);
+    min-height:100vh;
+    padding:32px 20px 60px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{margin-bottom:28px;}
+  .eyebrow{
+    font-family:'Manrope';font-weight:700;font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--gold);margin:0 0 8px;
+  }
+  h1{
+    font-family:'Fraunces',serif;font-weight:600;font-size:clamp(28px,4vw,42px);
+    margin:0 0 6px;letter-spacing:-.01em;
+  }
+  .sub{color:#aeb6d9;font-size:15px;max-width:560px;line-height:1.5;}
+
+  .layout{
+    display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start;
+  }
+  @media (max-width:920px){.layout{grid-template-columns:1fr;}}
+
+  .panel{
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;padding:22px;backdrop-filter:blur(6px);
+  }
+  .panel + .panel{margin-top:18px;}
+  .field{margin-bottom:14px;}
+  label{
+    display:block;font-size:11px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:#9aa4cc;margin-bottom:6px;
+  }
+  input[type=text], input[type=date], textarea, select{
+    width:100%;background:#0e1530;border:1px solid var(--line);color:var(--paper);
+    padding:10px 12px;border-radius:10px;font-family:'Manrope';font-size:14px;
+    resize:vertical;
+  }
+  textarea{min-height:64px;line-height:1.4;}
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;
+    background:#0e1530;border:1px solid var(--line);border-radius:10px;padding:10px 12px;}
+  .toggle-row label{margin:0;}
+  .switch{position:relative;width:42px;height:24px;flex:none;}
+  .switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;}
+  .switch .track{position:absolute;inset:0;background:#33396b;border-radius:999px;transition:.2s;}
+  .switch .track::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;
+    background:#fff;border-radius:50%;transition:.2s;}
+  .switch input:checked + .track{background:var(--gold-2);}
+  .switch input:checked + .track::after{transform:translateX(18px);}
+
+  .btn{
+    appearance:none;border:none;cursor:pointer;font-family:'Manrope';font-weight:700;
+    font-size:14px;padding:12px 18px;border-radius:11px;letter-spacing:.01em;
+    display:inline-flex;align-items:center;gap:8px;justify-content:center;width:100%;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#241705;}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--paper);margin-top:10px;}
+  .btn-ghost:hover{border-color:var(--gold);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .hint{font-size:12px;color:#8b93b8;margin-top:6px;line-height:1.5;}
+
+  .datebar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .chip{
+    font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);
+    background:#0e1530;color:#c7cdec;cursor:pointer;
+  }
+  .chip.active{background:var(--gold);color:#241705;border-color:var(--gold);font-weight:700;}
+
+  .stage{
+    background:#0a0f24;border:1px solid rgba(255,255,255,.08);border-radius:18px;
+    padding:20px;display:flex;flex-direction:column;align-items:center;gap:16px;
+  }
+  #canvasWrap{
+    position:relative;width:100%;max-width:520px;aspect-ratio:9/10.5;
+    border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.45);
+    background:#111a3a;
+  }
+  canvas{width:100%;height:100%;display:block;}
+  .status{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(10,14,36,.72);color:#e9ecff;font-size:13px;font-weight:600;
+    text-align:center;padding:20px;gap:10px;flex-direction:column;
+  }
+  .spinner{width:26px;height:26px;border-radius:50%;border:3px solid rgba(255,255,255,.25);
+    border-top-color:var(--gold);animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .stage-actions{display:flex;gap:10px;width:100%;max-width:520px;}
+  .stage-actions .btn{width:auto;flex:1;}
+
+  .promptBox{
+    font-size:12px;color:#9aa4cc;background:#0e1530;border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;line-height:1.5;max-width:520px;width:100%;
+    white-space:pre-wrap;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Shine Ministry · Automated</p>
+    <h1>Daily Verse Image Generator</h1>
+    <p class="sub">Reads <code>verses.json</code> for the selected date, builds an AI background prompt (Jesus included or not, per that day's setting), and composites the same layout as your template — verse reference, quote, day ribbon, date/greeting bar, and logo.</p>
+  </header>
+
+  <div class="layout">
+    <div>
+      <div class="panel">
+        <div class="field">
+          <label>Pick a date from verses.json</label>
+          <div class="datebar" id="dateChips"></div>
+          <input type="date" id="datePicker">
+        </div>
+
+        <div class="field" id="manualLoadField" style="display:none;">
+          <label>Load verses.json manually (needed when opening this file directly, i.e. file://)</label>
+          <input type="file" id="versesUpload" accept="application/json">
+        </div>
+
+        <div class="field">
+          <label>Reference</label>
+          <input type="text" id="reference" placeholder="Matthew 11:30">
+        </div>
+
+        <div class="field">
+          <label>Quote (use \n for line breaks, **word** for gold accent)</label>
+          <textarea id="quote" placeholder="'Yes, my **yoke** is easy...'"></textarea>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Day label</label>
+            <input type="text" id="day" placeholder="Thursday">
+          </div>
+          <div class="field">
+            <label>Greeting</label>
+            <input type="text" id="greeting" placeholder="Good Morning, God Bless You">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Layout style</label>
+            <select id="layoutStyle">
+              <option value="bottom-bar">Bottom bar (date + greeting together)</option>
+              <option value="top-banner">Top banner (greeting on top, date as pill)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Verse style</label>
+            <select id="verseStyle">
+              <option value="bold-caps">Bold caps + highlight stroke</option>
+              <option value="editorial">Editorial serif + script accent</option>
+              <option value="quote-italic">Italic quote, plain serif</option>
+              <option value="icon-word">Icon sprinkle + big script word (ref tag bottom-left)</option>
+              <option value="blessed-list">Quote mark + icon list (ref tag bottom, banner style)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Accent theme</label>
+            <select id="accentTheme">
+              <option value="gold">Gold / navy</option>
+              <option value="green">Gold / olive</option>
+              <option value="rose">Gold / maroon</option>
+            </select>
+          </div>
+          <div></div>
+        </div>
+
+        <div class="field" id="feastField" style="display:none;">
+          <label>Feast / occasion banner (optional — leave blank to hide)</label>
+          <input type="text" id="feastBanner" placeholder="Happy Feast of St Mary Magdalene">
+        </div>
+
+        <div class="field">
+          <label>Background scene</label>
+          <textarea id="scene" placeholder="a young man sitting on a rooftop at sunrise..."></textarea>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Mood / lighting</label>
+            <input type="text" id="mood" placeholder="golden hour, warm, peaceful">
+          </div>
+          <div class="field">
+            <label>Style</label>
+            <select id="style">
+              <option value="cinematic photo, shallow depth of field, high detail">Cinematic photo</option>
+              <option value="soft painterly illustration, warm brush strokes">Soft painterly</option>
+              <option value="minimal flat illustration, clean shapes">Minimal flat</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field toggle-row">
+          <label style="margin:0;">Include Jesus in the image</label>
+          <div class="switch">
+            <input type="checkbox" id="includeJesus">
+            <div class="track"></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Logo (optional upload — square works best)</label>
+          <input type="file" id="logoUpload" accept="image/*">
+        </div>
+      </div>
+
+      <div class="panel">
+        <button class="btn btn-primary" id="generateBtn">✦ Generate today's image</button>
+        <button class="btn btn-ghost" id="downloadBtn" disabled>Download PNG</button>
+        <p class="hint">Backgrounds are generated free via Pollinations' image API (no key needed). Swap the URL in <code>buildImageUrl()</code> for a paid provider anytime — <code>imagePromptOverride</code> in verses.json is passed straight through.</p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div id="canvasWrap">
+        <canvas id="canvas" width="1080" height="1260"></canvas>
+        <div class="status" id="statusOverlay">
+          <div class="spinner"></div>
+          <div>Loading verses.json…</div>
+        </div>
+      </div>
+      <div class="promptBox" id="promptPreview">Image prompt will appear here.</div>
+      <div class="stage-actions">
+        <button class="btn btn-ghost" id="regenBg">↻ Regenerate background only</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const W = 1080, H = 1260;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const statusOverlay = document.getElementById('statusOverlay');
+let versesData = [];
+let logoImg = null;
+let bgImg = null;
+
+const els = {
+  reference: document.getElementById('reference'),
+  quote: document.getElementById('quote'),
+  day: document.getElementById('day'),
+  greeting: document.getElementById('greeting'),
+  scene: document.getElementById('scene'),
+  mood: document.getElementById('mood'),
+  style: document.getElementById('style'),
+  includeJesus: document.getElementById('includeJesus'),
+  layoutStyle: document.getElementById('layoutStyle'),
+  verseStyle: document.getElementById('verseStyle'),
+  accentTheme: document.getElementById('accentTheme'),
+  feastBanner: document.getElementById('feastBanner'),
+  datePicker: document.getElementById('datePicker'),
+  dateChips: document.getElementById('dateChips'),
+  promptPreview: document.getElementById('promptPreview'),
+};
+
+function setStatus(msg, show=true){
+  statusOverlay.style.display = show ? 'flex' : 'none';
+  statusOverlay.querySelector('div:last-child').textContent = msg;
+}
+
+function autoVerseStyle(dateStr){
+  const styles = ['bold-caps','editorial','quote-italic','icon-word','blessed-list'];
+  if(!dateStr) return styles[0];
+  const n = new Date(dateStr+'T00:00:00').getTime() / 86400000;
+  return styles[Math.abs(Math.round(n)) % styles.length];
+}
+
+function applyVersesJson(json){
+  versesData = json.verses || [];
+  buildDateChips();
+  const todayStr = new Date().toISOString().slice(0,10);
+  const match = versesData.find(v => v.date === todayStr) || versesData[0];
+  if(match) selectEntry(match);
+  setStatus('', false);
+  document.getElementById('manualLoadField').style.display = 'none';
+  drawStaticLayer();
+}
+
+async function loadVerses(){
+  // Works when served over http(s). Fails when opened directly as file:// —
+  // browsers block fetch() of local files for security, even from the same folder.
+  try{
+    const res = await fetch('verses.json');
+    if(!res.ok) throw new Error('not ok');
+    const json = await res.json();
+    applyVersesJson(json);
+  }catch(e){
+    setStatus('Auto-load blocked (file:// mode). Use "Load verses.json manually" on the left, or run a local server — see hint below.');
+    document.getElementById('manualLoadField').style.display = 'block';
+  }
+}
+
+document.getElementById('versesUpload').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  try{
+    const text = await file.text();
+    const json = JSON.parse(text);
+    applyVersesJson(json);
+  }catch(err){
+    setStatus('That file could not be parsed as valid JSON.');
+  }
+});
+
+function buildDateChips(){
+  els.dateChips.innerHTML = '';
+  versesData.forEach(v=>{
+    const c = document.createElement('button');
+    c.type='button'; c.className='chip'; c.textContent = v.date;
+    c.onclick = ()=>{ selectEntry(v); highlightChip(v.date); };
+    els.dateChips.appendChild(c);
+  });
+}
+function highlightChip(date){
+  [...els.dateChips.children].forEach(c=>c.classList.toggle('active', c.textContent===date));
+}
+
+function selectEntry(v){
+  els.datePicker.value = v.date;
+  els.reference.value = v.reference || '';
+  els.quote.value = v.quote || '';
+  els.day.value = v.day || '';
+  els.greeting.value = v.greeting || '';
+  els.scene.value = v.scene || '';
+  els.mood.value = v.mood || '';
+  els.includeJesus.checked = !!v.includeJesus;
+  els.layoutStyle.value = v.layout || 'bottom-bar';
+  els.verseStyle.value = v.verseStyle || autoVerseStyle(v.date);
+  els.accentTheme.value = v.accentTheme || 'gold';
+  els.feastBanner.value = v.feastBanner || '';
+  document.getElementById('feastField').style.display = els.layoutStyle.value === 'top-banner' ? 'block' : 'none';
+  els._override = v.imagePromptOverride || null;
+  highlightChip(v.date);
+  updatePromptPreview();
+  render();
+}
+
+els.datePicker.addEventListener('change', ()=>{
+  const v = versesData.find(x=>x.date===els.datePicker.value);
+  if(v) selectEntry(v);
+});
+
+['scene','mood','style','includeJesus'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updatePromptPreview);
+  document.getElementById(id).addEventListener('change', updatePromptPreview);
+});
+
+function buildPrompt(){
+  if(els._override) return els._override;
+  const jesus = els.includeJesus.checked
+    ? 'include a reverent, tasteful robed figure representing Jesus Christ, soft warm halo of light, gentle expression, modest and respectful depiction, no text, no words'
+    : 'no people\'s faces shown or a person shown from behind only, no depiction of Jesus, focus on scenery and light';
+  const subject = els.scene.value.trim();
+  return [
+    subject ? `A detailed scene showing ${subject}` : '',
+    els.mood.value.trim(),
+    document.getElementById('style').value,
+    jesus,
+    'vertical portrait composition, clear open sky area in the upper third for text overlay, sharp focus, no text, no watermark, high quality, professional'
+  ].filter(Boolean).join(', ');
+}
+
+function updatePromptPreview(){
+  els.promptPreview.textContent = buildPrompt();
+}
+
+function buildImageUrl(prompt){
+  const seed = Math.floor(Math.random()*100000);
+  const encoded = encodeURIComponent(prompt);
+  // Free, no-key AI image generation. model=flux gives much more reliable, on-subject
+  // scenes than the default model, which sometimes falls back to abstract blurs on
+  // vague or oddly-ordered prompts. Swap this whole function for a paid provider anytime.
+  return `https://image.pollinations.ai/prompt/${encoded}?width=1080&height=1260&seed=${seed}&nologo=true&model=flux&enhance=true`;
+}
+
+function loadImage(src, crossOrigin=true){
+  return new Promise((resolve,reject)=>{
+    const img = new Image();
+    if(crossOrigin) img.crossOrigin = 'anonymous';
+    img.onload = ()=>resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function fetchImageAsBlobUrl(url){
+  const res = await fetch(url, {mode:'cors'});
+  if(!res.ok) throw new Error('bad response');
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+document.getElementById('logoUpload').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  logoImg = await loadImage(url, false);
+  render();
+});
+
+async function generateBackground(){
+  updatePromptPreview();
+  setStatus('Generating background image…');
+  document.getElementById('generateBtn').disabled = true;
+  try{
+    const url = buildImageUrl(buildPrompt());
+    bgImg = await loadImage(url);
+  }catch(e){
+    setStatus('Image generation failed — check your network settings / domain access.');
+    document.getElementById('generateBtn').disabled = false;
+    return;
+  }
+  setStatus('', false);
+  document.getElementById('generateBtn').disabled = false;
+  document.getElementById('downloadBtn').disabled = false;
+  render();
+}
+
+document.getElementById('generateBtn').addEventListener('click', generateBackground);
+document.getElementById('regenBg').addEventListener('click', generateBackground);
+
+function drawStaticLayer(){ render(); }
+
+// ---- Rendering ----
+function wrapQuoteLines(raw){
+  // supports \n and **accent**
+  return raw.split('\\n').map(line=>{
+    const parts = [];
+    const re = /\*\*(.+?)\*\*/g;
+    let last = 0, m;
+    while((m = re.exec(line))){
+      if(m.index > last) parts.push({t:line.slice(last,m.index), accent:false});
+      parts.push({t:m[1], accent:true});
+      last = re.lastIndex;
+    }
+    if(last < line.length) parts.push({t:line.slice(last), accent:false});
+    return parts;
+  });
+}
+
+const THEMES = {
+  gold:  {ribbonFrom:'#e8b64d', ribbonTo:'#c88a2e', ribbonText:'#241705', accentText:'#3f5fc4'},
+  green: {ribbonFrom:'#c9d18a', ribbonTo:'#7c8f3e', ribbonText:'#1c2408', accentText:'#3f6b3f'},
+  rose:  {ribbonFrom:'#e8b64d', ribbonTo:'#c88a2e', ribbonText:'#241705', accentText:'#7a2b2b'},
+};
+
+function drawVerseBlock(theme, style){
+  const x0 = 56, maxWidth = 640;
+  ctx.textBaseline = 'alphabetic';
+  let refY;
+
+  if(style === 'icon-word'){ drawIconWordStyle(theme, x0, maxWidth); return; }
+  if(style === 'blessed-list'){ drawBlessedListStyle(theme, x0, maxWidth); return; }
+
+  if(style === 'editorial'){
+    // Navy label pill behind the reference, like "MATTHEW 13:37"
+    ctx.font = "800 28px Manrope, sans-serif";
+    const label = els.reference.value.toUpperCase();
+    const pad = 20;
+    const boxW = ctx.measureText(label).width + pad*2, boxH = 50, boxY = 56;
+    roundRect(ctx, x0-6, boxY, boxW, boxH, 8);
+    ctx.fillStyle = '#141c3a'; ctx.fill();
+    ctx.fillStyle = '#f6f3ea'; ctx.textBaseline = 'middle';
+    ctx.fillText(label, x0-6+pad, boxY+boxH/2);
+    ctx.textBaseline = 'alphabetic';
+    refY = boxY + boxH + 74;
+  } else if(style === 'quote-italic'){
+    ctx.font = "italic 600 34px Fraunces, serif";
+    ctx.fillStyle = '#131b3a';
+    ctx.fillText(els.reference.value.toUpperCase(), x0, 100);
+    const w = ctx.measureText(els.reference.value.toUpperCase()).width;
+    ctx.strokeStyle = theme.ribbonFrom; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x0,114); ctx.lineTo(x0+Math.min(w,220),114); ctx.stroke();
+    refY = 194;
+  } else { // bold-caps
+    ctx.font = "italic 600 32px Fraunces, serif";
+    ctx.fillStyle = '#f6f3ea';
+    ctx.fillText(els.reference.value.toUpperCase(), x0, 96);
+    const w = ctx.measureText(els.reference.value.toUpperCase()).width;
+    ctx.strokeStyle = theme.ribbonFrom; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x0,110); ctx.lineTo(x0+Math.min(w,220),110); ctx.stroke();
+    refY = 176;
+  }
+
+  const lines = wrapQuoteLines(els.quote.value);
+  if(style === 'editorial') drawEditorialQuote(lines, x0, refY, maxWidth, theme);
+  else if(style === 'quote-italic') drawItalicQuote(lines, x0, refY, maxWidth, theme);
+  else drawBoldCapsQuote(lines, x0, refY, maxWidth, theme);
+}
+
+// Bold uppercase sans, with a hand-drawn mustard highlight stroke behind **accent** phrases
+function drawBoldCapsQuote(lines, x0, startY, maxWidth, theme){
+  const lineHeight = 62;
+  const font = "800 46px Manrope, sans-serif";
+  let y = startY;
+  lines.forEach(parts=>{
+    let x = x0;
+    const rowWords = [];
+    parts.forEach(seg=>{
+      ctx.font = font;
+      seg.t.toUpperCase().split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; }
+        rowWords.push({text:piece, x, y, w:pw, accent:seg.accent});
+        x += pw;
+      });
+    });
+    let i = 0;
+    while(i < rowWords.length){
+      if(rowWords[i].accent){
+        let j = i;
+        while(j < rowWords.length && rowWords[j].accent && rowWords[j].y === rowWords[i].y) j++;
+        const first = rowWords[i], last = rowWords[j-1];
+        ctx.save();
+        ctx.strokeStyle = theme.ribbonFrom; ctx.lineWidth = 16;
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        roundRect(ctx, first.x-10, first.y-38, (last.x+last.w)-first.x+4, 52, 18);
+        ctx.stroke();
+        ctx.restore();
+        i = j;
+      } else i++;
+    }
+    rowWords.forEach(rw=>{
+      ctx.font = font;
+      ctx.fillStyle = rw.accent ? '#161c34' : '#f6f3ea';
+      ctx.fillText(rw.text, rw.x, rw.y);
+    });
+    y += lineHeight;
+  });
+}
+
+// Regular serif body copy with a large italic script accent word, like "Son of man"
+function drawEditorialQuote(lines, x0, startY, maxWidth, theme){
+  const lineHeight = 68;
+  let y = startY;
+  lines.forEach(parts=>{
+    let x = x0;
+    parts.forEach(seg=>{
+      ctx.font = seg.accent ? "italic 700 58px Fraunces, serif" : "600 42px Fraunces, serif";
+      ctx.fillStyle = seg.accent ? theme.accentText : '#131b3a';
+      seg.t.split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; }
+        ctx.fillText(piece, x, y);
+        x += pw;
+      });
+    });
+    y += lineHeight;
+  });
+}
+
+// Plain italic serif quote with bold colored + underlined accent words, like "Father" / "God"
+function drawItalicQuote(lines, x0, startY, maxWidth, theme){
+  const lineHeight = 60;
+  let y = startY;
+  lines.forEach(parts=>{
+    let x = x0;
+    const rowWords = [];
+    parts.forEach(seg=>{
+      ctx.font = seg.accent ? "800 46px Fraunces, serif" : "italic 500 42px Fraunces, serif";
+      seg.t.split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; }
+        rowWords.push({text:piece, x, y, w:pw, accent:seg.accent});
+        x += pw;
+      });
+    });
+    rowWords.forEach(rw=>{
+      ctx.font = rw.accent ? "800 46px Fraunces, serif" : "italic 500 42px Fraunces, serif";
+      ctx.fillStyle = rw.accent ? theme.accentText : '#1a1f38';
+      ctx.fillText(rw.text, rw.x, rw.y);
+      if(rw.accent){
+        ctx.strokeStyle = theme.ribbonFrom; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(rw.x, rw.y+8); ctx.lineTo(rw.x+rw.w-8, rw.y+8); ctx.stroke();
+      }
+    });
+    y += lineHeight;
+  });
+}
+
+// Style modeled on the "sower" reference: small line-icon top-left, big mixed-weight
+// headline stacked mid-canvas (one word in a large script accent), reference shown as
+// a small colored tag UNDER the quote instead of a fixed banner above it.
+function drawIconWordStyle(theme, x0, maxWidth){
+  // simple hand-drawn sprinkle icon
+  ctx.save();
+  ctx.strokeStyle = theme.accentText; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x0+10,70); ctx.lineTo(x0+70,20); ctx.stroke();
+  for(let i=0;i<5;i++){
+    const dx = x0+40-i*10, dy = 90+i*14;
+    ctx.beginPath(); ctx.arc(dx,dy,3,0,Math.PI*2); ctx.stroke();
+  }
+  ctx.restore();
+
+  const lines = wrapQuoteLines(els.quote.value);
+  const startY = 210;
+  const lineHeight = 66;
+  let y = startY;
+  lines.forEach(parts=>{
+    let x = x0;
+    parts.forEach(seg=>{
+      ctx.font = seg.accent ? "italic 800 72px Fraunces, serif" : "700 40px Manrope, sans-serif";
+      ctx.fillStyle = seg.accent ? theme.accentText : '#1a1f38';
+      seg.t.split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; }
+        ctx.fillText(piece, x, y);
+        x += pw;
+      });
+    });
+    y += lineHeight;
+  });
+
+  // reference tag sits just below the quote, small pill, not a fixed top banner
+  const label = els.reference.value.toUpperCase();
+  ctx.font = "700 24px Manrope, sans-serif";
+  const pad = 18;
+  const tagW = ctx.measureText(label).width + pad*2, tagH = 42, tagY = y + 18;
+  roundRect(ctx, x0-4, tagY, tagW, tagH, 6);
+  ctx.fillStyle = theme.ribbonTo; ctx.fill();
+  ctx.fillStyle = '#f6f3ea'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x0-4+pad, tagY+tagH/2);
+  ctx.textBaseline = 'alphabetic';
+}
+
+// Style modeled on the "blessed are your eyes/ears" reference: giant quote mark,
+// one bold hero word, then a short 2-line list with round icon bullets, reference
+// tag placed at the very bottom as a dark banner.
+function drawBlessedListStyle(theme, x0, maxWidth){
+  ctx.save();
+  ctx.font = "800 90px Georgia, serif";
+  ctx.fillStyle = theme.accentText;
+  ctx.fillText('\u201C', x0-6, 130);
+  ctx.restore();
+
+  const lines = wrapQuoteLines(els.quote.value);
+  let y = 210;
+  const lineHeight = 60;
+  const bulletLines = [];
+  lines.forEach(parts=>{
+    let x = x0;
+    parts.forEach((seg, idx)=>{
+      const isHero = seg.accent;
+      ctx.font = isHero ? "800 64px Fraunces, serif" : "700 34px Manrope, sans-serif";
+      ctx.fillStyle = isHero ? theme.ribbonFrom : '#1a1f38';
+      seg.t.split(' ').filter(Boolean).forEach(w=>{
+        const piece = w + ' ';
+        const pw = ctx.measureText(piece).width;
+        if(x + pw > x0+maxWidth){ x = x0; y += lineHeight; bulletLines.push(y-lineHeight); }
+        ctx.fillText(piece, x, y);
+        x += pw;
+      });
+    });
+    y += lineHeight;
+    bulletLines.push(y-lineHeight);
+  });
+
+  // small icon-bullet row beneath, echoing "eyes / ears" style callouts
+  const bulletY = y + 30;
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x0+16, bulletY, 16, 0, Math.PI*2);
+  ctx.fillStyle = theme.ribbonFrom; ctx.fill();
+  ctx.font = "600 20px Manrope, sans-serif";
+  ctx.fillStyle = '#1a1f38'; ctx.textBaseline='middle';
+  ctx.fillText('Reflect · Believe · Live it', x0+44, bulletY);
+  ctx.textBaseline = 'alphabetic';
+  ctx.restore();
+
+  // reference as a dark banner tag beneath everything, not pinned to the top
+  const label = els.reference.value.toUpperCase();
+  ctx.font = "700 24px Manrope, sans-serif";
+  const pad = 18;
+  const tagW = ctx.measureText(label).width + pad*2, tagH = 42, tagY = bulletY + 34;
+  roundRect(ctx, x0-4, tagY, tagW, tagH, 6);
+  ctx.fillStyle = '#141c3a'; ctx.fill();
+  ctx.fillStyle = '#f6f3ea'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x0-4+pad, tagY+tagH/2);
+  ctx.textBaseline = 'alphabetic';
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+  const theme = THEMES[els.accentTheme ? els.accentTheme.value : 'gold'] || THEMES.gold;
+  const isTopBanner = els.layoutStyle && els.layoutStyle.value === 'top-banner';
+
+  // Background
+  if(bgImg){
+    const scale = Math.max(W/bgImg.width, H/bgImg.height);
+    const iw = bgImg.width*scale, ih = bgImg.height*scale;
+    ctx.drawImage(bgImg, (W-iw)/2, (H-ih)/2, iw, ih);
+  } else {
+    const g = ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,'#f6efe0'); g.addColorStop(.55,'#e9dcc3'); g.addColorStop(1,'#1a2140');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  }
+
+  // gentle top-to-bottom readability gradient
+  const overlay = ctx.createLinearGradient(0,0,0,H);
+  overlay.addColorStop(0,'rgba(8,12,28,.15)');
+  overlay.addColorStop(.45,'rgba(8,12,28,0)');
+  overlay.addColorStop(.82,'rgba(8,12,28,.55)');
+  overlay.addColorStop(1,'rgba(8,12,28,.75)');
+  ctx.fillStyle = overlay; ctx.fillRect(0,0,W,H);
+
+  drawVerseBlock(theme, els.verseStyle ? els.verseStyle.value : 'bold-caps');
+
+  const currentStyle = els.verseStyle ? els.verseStyle.value : 'bold-caps';
+  const isMinimalTemplate = currentStyle === 'icon-word' || currentStyle === 'blessed-list';
+
+  if(!isMinimalTemplate){
+  // Side ribbon (day) — box sizes itself to the text so words never spill out
+  const ribbonLabel = 'Have A Blessed ' + (els.day.value||'');
+  const ribbonFont = "700 24px Manrope, sans-serif";
+  ctx.font = ribbonFont;
+  const ribbonPad = 34; // padding at each end, along the text's running direction
+  const ribbonTextW = ctx.measureText(ribbonLabel).width;
+  const ribbonW = 64;
+  const ribbonH = Math.max(180, ribbonTextW + ribbonPad*2);
+  const ribbonX = 20, ribbonY = (H - ribbonH)/2; // vertically centered, stays on-canvas at any length
+  ctx.save();
+  const rg = ctx.createLinearGradient(ribbonX,ribbonY,ribbonX+ribbonW,ribbonY+ribbonH);
+  rg.addColorStop(0, theme.ribbonFrom); rg.addColorStop(1, theme.ribbonTo);
+  roundRect(ctx, ribbonX, ribbonY, ribbonW, ribbonH, 18);
+  ctx.fillStyle = rg; ctx.fill();
+  ctx.translate(ribbonX+ribbonW/2, ribbonY+ribbonH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillStyle = theme.ribbonText;
+  ctx.font = ribbonFont;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(ribbonLabel, 0, 0);
+  ctx.restore();
+  ctx.textAlign = 'left';
+  }
+
+  // Logo box top-right
+  if(!isMinimalTemplate){
+  const logoSize = 120, logoX = W-logoSize-40, logoY = 30;
+  ctx.save();
+  roundRect(ctx, logoX, logoY, logoSize, logoSize, 14);
+  ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fill();
+  ctx.strokeStyle = '#141b39'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.clip();
+  if(logoImg){
+    ctx.drawImage(logoImg, logoX+8, logoY+8, logoSize-16, logoSize-16);
+  } else {
+    ctx.fillStyle = '#141b39';
+    ctx.font = "700 15px Manrope, sans-serif";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('SHINE', logoX+logoSize/2, logoY+logoSize/2-8);
+    ctx.font = "600 11px Manrope, sans-serif";
+    ctx.fillText('MINISTRY', logoX+logoSize/2, logoY+logoSize/2+12);
+    ctx.textAlign='left';
+  }
+  ctx.restore();
+  }
+
+  const feastText = els.feastBanner ? els.feastBanner.value.trim() : '';
+
+  if(isTopBanner){
+    // Greeting pill, top-left
+    ctx.save();
+    ctx.font = "italic 700 26px Fraunces, serif";
+    const gPad = 26;
+    const gW = ctx.measureText(els.greeting.value).width + gPad*2;
+    const gX = 24, gY = 24, gH = 56;
+    roundRect(ctx, gX, gY, gW, gH, 16);
+    const gg = ctx.createLinearGradient(gX,gY,gX+gW,gY);
+    gg.addColorStop(0,'#5b3fc4'); gg.addColorStop(1,'#3f5fc4');
+    ctx.fillStyle = gg; ctx.fill();
+    ctx.strokeStyle = 'rgba(232,182,77,.7)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#f6f3ea';
+    ctx.textBaseline='middle';
+    ctx.fillText(els.greeting.value, gX+gPad, gY+gH/2);
+    ctx.restore();
+
+    // Date pill, lower-left (over the scene)
+    ctx.save();
+    ctx.font = "700 26px Manrope, sans-serif";
+    const dPad = 24;
+    const dW = ctx.measureText(formatDate(els.datePicker.value)).width + dPad*2;
+    const dX = 24, dY = H-230, dH = 56;
+    roundRect(ctx, dX, dY, dW, dH, 16);
+    ctx.fillStyle = '#2a1f6e'; ctx.fill();
+    ctx.strokeStyle = 'rgba(232,182,77,.7)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#f6f3ea';
+    ctx.textBaseline='middle';
+    ctx.fillText(formatDate(els.datePicker.value), dX+dPad, dY+dH/2);
+    ctx.restore();
+
+    // Feast / occasion banner at the bottom, only if provided
+    if(feastText){
+      const fX = 20, fW = W-40, fH = 130, fY = H-fH-20;
+      ctx.save();
+      roundRect(ctx, fX, fY, fW, fH, 14);
+      ctx.fillStyle = '#f6f0dc'; ctx.fill();
+      ctx.strokeStyle = '#c88a2e'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = '#5a4420';
+      ctx.font = "700 20px Manrope, sans-serif";
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('HAPPY FEAST OF', fX+fW/2, fY+40);
+      ctx.fillStyle = '#7a2b2b';
+      ctx.font = "800 40px Fraunces, serif";
+      ctx.fillText(feastText.toUpperCase(), fX+fW/2, fY+86);
+      ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    }
+  } else {
+    // Bottom glass bar (default layout)
+    const barY = H-110, barH = 84, barX = 20, barW = W-40;
+    ctx.save();
+    roundRect(ctx, barX, barY, barW, barH, 20);
+    ctx.fillStyle = 'rgba(20,26,58,.72)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(232,182,77,.55)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = '#f6f3ea';
+    ctx.font = "700 30px Manrope, sans-serif";
+    ctx.textBaseline='middle';
+    ctx.fillText(formatDate(els.datePicker.value), barX+28, barY+barH/2);
+
+    ctx.font = "italic 500 27px Fraunces, serif";
+    ctx.textAlign='right';
+    ctx.fillText(els.greeting.value, barX+barW-28, barY+barH/2);
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  }
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function formatDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso+'T00:00:00');
+  const day = d.getDate();
+  const suffix = (day%10===1&&day!==11)?'st':(day%10===2&&day!==12)?'nd':(day%10===3&&day!==13)?'rd':'th';
+  const month = d.toLocaleString('en-US',{month:'long'});
+  return `${day}${suffix} ${month} ${d.getFullYear()}`;
+}
+
+document.getElementById('downloadBtn').addEventListener('click', ()=>{
+  render();
+  const link = document.createElement('a');
+  link.download = `verse-${els.datePicker.value||'today'}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+
+['reference','quote','day','greeting','feastBanner'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', render);
+});
+['layoutStyle','verseStyle','accentTheme'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', render);
+});
+els.layoutStyle.addEventListener('change', ()=>{
+  document.getElementById('feastField').style.display = els.layoutStyle.value === 'top-banner' ? 'block' : 'none';
+});
+els.datePicker.addEventListener('change', render);
+
+loadVerses();
+</script>
+</body>
+</html>
