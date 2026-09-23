@@ -10,9 +10,9 @@
   "background_color": "#ffffff",
   "theme_color": "#1a73e8",
   "orientation": "any",
-  "scope": "/",
-  "start_url": "/?source=pwa",
-  "id": "/",
+  "scope": "/public-vault/",
+  "start_url": "/public-vault/?source=pwa",
+  "id": "/public-vault/",
   "launch_handler": {
     "client_mode": "navigate-existing"
   },
@@ -52,7 +52,7 @@
       "name": "My Vault",
       "short_name": "My Vault",
       "description": "Browse all files - like My Drive",
-      "url": "/?shortcut=myvault",
+      "url": "/public-vault/?shortcut=myvault",
       "icons": [
         {
           "src": "favicon.png",
@@ -65,7 +65,7 @@
       "name": "Recent",
       "short_name": "Recent",
       "description": "Recently opened documents",
-      "url": "/?shortcut=recent",
+      "url": "/public-vault/?shortcut=recent",
       "icons": [
         {
           "src": "favicon.png",
@@ -78,7 +78,7 @@
       "name": "Starred",
       "short_name": "Starred",
       "description": "Pinned / starred documents",
-      "url": "/?shortcut=starred",
+      "url": "/public-vault/?shortcut=starred",
       "icons": [
         {
           "src": "favicon.png",
@@ -91,7 +91,7 @@
       "name": "Search Vault",
       "short_name": "Search",
       "description": "Search in your vault",
-      "url": "/?shortcut=search",
+      "url": "/public-vault/?shortcut=search",
       "icons": [
         {
           "src": "favicon.png",
@@ -127,14 +127,13 @@
     }
   ],
   "share_target": {
-    "action": "/",
+    "action": "/public-vault/",
     "method": "GET",
     "params": {
       "title": "title",
       "text": "text",
       "url": "url"
-    },
-    "enctype": "multipart/form-data"
+    }
   },
   "edge_side_panel": {
     "preferred_width": 400

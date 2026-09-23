@@ -42,7 +42,7 @@ function renderPricing(){
       <div style="font-weight:800;font-size:16px;color:#0f172a;">${p.name}</div>
       <div style="font-size:13px;color:#64748b;margin:6px 0;">${p.storageGB>=1024?'1TB':p.storageGB+'GB'} storage</div>
       <div style="font-weight:900;font-size:20px;color:${isFree?'#16a34a':'#2563eb'};">${price}</div>
-      ${isFree?'<div style="margin-top:8px;font-size:11px;color:#dc2626;font-weight:700;"><i data-lucide="triangle-alert" style="width:11px;height:11px;"></i> Free only till 10GB — upgrade for more</div>':''}
+      ${isFree?'<div style="margin-top:8px;font-size:11px;color:#dc2626;font-weight:700;"><i data-lucide="alert-triangle" style="width:11px;height:11px;"></i> Free only till 10GB — upgrade for more</div>':''}
       <div style="margin-top:12px;width:100%;text-align:center;padding:10px;border-radius:10px;background:${active?'#2563eb':'#f1f5f9'};color:${active?'#fff':'#0f172a'};font-weight:800;font-size:13px;">${active?'✓ Selected':'Select'}</div>
     </div>`;
   }).join('');
