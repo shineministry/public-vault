@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    SMART DOWNLOAD (owner-only)
    Only for shineil (owner) — remembers a successful download verification
    so the password is not asked on every single download. Other members
@@ -164,7 +164,7 @@ async function _decryptPhotoOnce(file, docKey, attempt) {
             // legitimately queue behind others for a few seconds.
             const timeoutId = setTimeout(() => controller.abort(), 20000);
             try {
-                const res = await fetch('https://backend.shinumaths989.workers.dev/photos/' + docKey, {
+                const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/photos/' + docKey, {
                     headers: { 'Authorization': 'Bearer ' + vaultSessionToken },
                     signal: controller.signal
                 });
@@ -313,7 +313,7 @@ displayName){
             const timeoutId = setTimeout(() => controller.abort(), 8000);
             let res;
             try {
-                res = await fetch("https://backend.shinumaths989.workers.dev/" + fetchPath, {
+                res = await fetch("https://lively-star-38ef.shinumaths989.workers.dev/" + fetchPath, {
                     headers: { "Authorization": "Bearer " + vaultSessionToken },
                     signal: controller.signal
                 });
@@ -944,7 +944,7 @@ await window.sha256(
 
 const passkeyRes =
 await fetch(
- "https://backend.shinumaths989.workers.dev/get-secret",
+ "https://lively-star-38ef.shinumaths989.workers.dev/get-secret",
   {
    method:"POST",
    headers:{

@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    NOTE: Notification panel (toggleNotifications, renderNotifications,
    markAllNotifsRead, dismissNotifBubble, etc.) lives in features.js,
    which owns the real IndexedDB-backed vault_notifications store.
@@ -101,7 +101,7 @@ async function openLogs(){
 
 const token = sessionStorage.getItem('vaultSession') || '';
 const res = await fetch(
-    "https://backend.shinumaths989.workers.dev/get-logs",
+    "https://lively-star-38ef.shinumaths989.workers.dev/get-logs",
     {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
@@ -171,7 +171,7 @@ async function requestPasskeyAccess() {
 
     // 1. Submit the initial request payload to generate a Firestore document tracking track
     try {
-        const initRes = await fetch("https://backend.shinumaths989.workers.dev/request-passkey", {
+        const initRes = await fetch("https://lively-star-38ef.shinumaths989.workers.dev/request-passkey", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -197,7 +197,7 @@ async function requestPasskeyAccess() {
     // 2. Poll the worker securely using the allocated document identifier
     const checkInterval = setInterval(async () => {
         try {
-            const pollRes = await fetch("https://backend.shinumaths989.workers.dev/check-passkey", {
+            const pollRes = await fetch("https://lively-star-38ef.shinumaths989.workers.dev/check-passkey", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

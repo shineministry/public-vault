@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    STARTUP SITE
 ========================= */
 
@@ -141,7 +141,7 @@ function checkVaultHealth(){
     const bs = document.getElementById('backendStatus');
     const ts = document.getElementById('tokenStatus');
     bs.textContent = 'Checking...';
-    fetch('https://backend.shinumaths989.workers.dev/get-secret', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hash:'healthcheck'})})
+    fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-secret', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hash:'healthcheck'})})
     .then(() => { bs.textContent = '✓ Backend reachable'; })
     .catch(() => { bs.textContent = '✗ Backend unreachable'; });
     const tok = sessionStorage.getItem('vaultSession');

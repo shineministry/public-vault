@@ -1,4 +1,4 @@
-/* =============================================================
+﻿/* =============================================================
    OFFLINE AUTH  —  offline-auth.js
    v20260609-clean
 
@@ -27,7 +27,7 @@
 
 window.SHINE_OFFLINE_AUTH_VERSION = '20260609-clean';
 
-const _WORKER_URL = window.BACKEND_URL || 'https://backend.shinumaths989.workers.dev';
+const _WORKER_URL = window.BACKEND_URL || 'https://lively-star-38ef.shinumaths989.workers.dev';
 
 // ── IndexedDB setup ────────────────────────────────────────────────────────
 const _AUTH_DB_NAME    = 'vaultOfflineDB';

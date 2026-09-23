@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    INIT VAULT
 ========================= */
 
@@ -20,7 +20,7 @@ try {
     let data = {};
     try {
         const res = await fetch(
-            "https://backend.shinumaths989.workers.dev/files.json?_t=" + Date.now(),
+            "https://lively-star-38ef.shinumaths989.workers.dev/files.json?_t=" + Date.now(),
             { headers: { "Authorization": "Bearer " + sessionToken }, cache: "no-store" }
         );
 

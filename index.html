@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -76,7 +76,7 @@ Recommended:
             Object.keys(_reportedErrors).forEach(function(k){ if (_reportedErrors[k] < cutoff) delete _reportedErrors[k]; });
           }
           var x = new XMLHttpRequest();
-          x.open('POST', 'https://backend.shinumaths989.workers.dev/frontend-error');
+          x.open('POST', 'https://lively-star-38ef.shinumaths989.workers.dev/frontend-error');
           x.setRequestHeader('Content-Type', 'application/json');
           x.setRequestHeader('Authorization', 'Bearer ' + t);
           x.send(JSON.stringify({ source: source, message: (message||'').slice(0,500), line: line||0, col: col||0 }));
@@ -1716,7 +1716,7 @@ Recommended:
         });
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', {
+        navigator.serviceWorker.register('./sw.js', {
           updateViaCache: 'none'
         }).then(reg => {
           reg.update().catch(function(){});
@@ -3740,7 +3740,7 @@ Recommended:
         try {
           const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
           if (!token) return;
-          await fetch('https://backend.shinumaths989.workers.dev/save-pin-hash', {
+          await fetch('https://lively-star-38ef.shinumaths989.workers.dev/save-pin-hash', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
             body: JSON.stringify({ memberKey, pinHash })
@@ -3754,7 +3754,7 @@ Recommended:
         try {
           const token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
           if (!token) return;
-          const res = await fetch('https://backend.shinumaths989.workers.dev/get-pin-hashes', {
+          const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-pin-hashes', {
             headers: { 'Authorization': 'Bearer ' + token }
           });
           if (!res.ok) return;
@@ -4873,7 +4873,7 @@ Recommended:
           { id:'preview', icon:'<i data-lucide="eye" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Quick Preview', check:async()=>{let o=typeof startHoverPreview==='function'&&typeof getPreviewBitmap==='function';return{state:o?'operational':'degraded',labelText:o?'Ready':'Unavailable',detail:o?'Preview module loaded':'Not loaded'}}},
           { id:'decrypt', icon:'<i data-lucide="unlock" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Decryption', check:async()=>{let o=typeof decryptBuffer==='function';return{state:o?'operational':'major',labelText:o?'Ready':'Missing',detail:o?'Decrypt function available':'Crypto module not loaded'}}},
           { id:'mobile', icon:'<i data-lucide="smartphone" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Mobile Responsiveness', check:async()=>{let o=typeof toggleMobileMenu==='function';return{state:o?'operational':'degraded',labelText:o?'Adaptive':'Fixed',detail:o?'Responsive layout active':'Mobile menu not loaded'}}},
-          { id:'frontend', icon:'<i data-lucide="puzzle" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Frontend Integrity', check:async()=>{try{var f=await fetch('https://backend.shinumaths989.workers.dev/frontend-errors-today',{headers:{'Authorization':'Bearer '+(sessionStorage.getItem('vaultSessionToken')||sessionStorage.getItem('vaultSession')||'')}});if(!f.ok)return{state:'degraded',labelText:'Unreachable',detail:'Cannot check frontend error count'};var d=await f.json();var cnt=d.count||0;if(cnt===0)return{state:'operational',labelText:'Clean ('+cnt+')',detail:'No frontend errors reported today'};if(cnt<5)return{state:'degraded',labelText:cnt+' errors',detail:cnt+' frontend error(s) reported across devices today'};return{state:'major',labelText:cnt+' errors',detail:cnt+' frontend error(s) - check HTML/CSS/JS files'};}catch(e){return{state:'degraded',labelText:'Check failed',detail:e.message}}}},
+          { id:'frontend', icon:'<i data-lucide="puzzle" style="width:14px;height:14px;vertical-align:middle;"></i>', label:'Frontend Integrity', check:async()=>{try{var f=await fetch('https://lively-star-38ef.shinumaths989.workers.dev/frontend-errors-today',{headers:{'Authorization':'Bearer '+(sessionStorage.getItem('vaultSessionToken')||sessionStorage.getItem('vaultSession')||'')}});if(!f.ok)return{state:'degraded',labelText:'Unreachable',detail:'Cannot check frontend error count'};var d=await f.json();var cnt=d.count||0;if(cnt===0)return{state:'operational',labelText:'Clean ('+cnt+')',detail:'No frontend errors reported today'};if(cnt<5)return{state:'degraded',labelText:cnt+' errors',detail:cnt+' frontend error(s) reported across devices today'};return{state:'major',labelText:cnt+' errors',detail:cnt+' frontend error(s) - check HTML/CSS/JS files'};}catch(e){return{state:'degraded',labelText:'Check failed',detail:e.message}}}},
         ];
         // ---- 90-Day Uptime History - track ALL components ----
         const UPTIME_TRACKED_IDS = STATUS_COMPONENTS.map(function(c){return c.id;});
@@ -5025,7 +5025,7 @@ Recommended:
             var token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
             if (!token) return;
             var body = results.map(function(r){ return { id:r.id, state:r.state, label:r.label, icon:r.icon, detail:r.detail||r.labelText||'' }; });
-            await fetch('https://backend.shinumaths989.workers.dev/status-report', {
+            await fetch('https://lively-star-38ef.shinumaths989.workers.dev/status-report', {
               method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
               body:JSON.stringify({ results: body })
             });
@@ -5036,7 +5036,7 @@ Recommended:
           try {
             var token = sessionStorage.getItem('vaultSessionToken') || sessionStorage.getItem('vaultSession') || '';
             if (!token) return null;
-            var res = await fetch('https://backend.shinumaths989.workers.dev/status-history', { headers:{'Authorization':'Bearer '+token} });
+            var res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/status-history', { headers:{'Authorization':'Bearer '+token} });
             if (!res.ok) return null;
             var d = await res.json();
             return d.success ? d.history : null;
@@ -5132,7 +5132,7 @@ Recommended:
             // it with a deliberately-invalid hash is a much more accurate
             // "is the backend actually reachable" check. We only care that
             // we got *any* HTTP response back, not whether it's a success.
-            const r = await fetch('https://backend.shinumaths989.workers.dev/get-secret', {
+            const r = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-secret', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ hash: '_statuscheck_' }),
@@ -5359,7 +5359,7 @@ Recommended:
             try {
               const token = sessionStorage.getItem('vaultSession');
               if (token) {
-                const res = await fetch('https://backend.shinumaths989.workers.dev/files.json?_t=' + Date.now(), {
+                const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/files.json?_t=' + Date.now(), {
                   headers: { Authorization: 'Bearer ' + token },
                   cache: 'no-store'
                 });

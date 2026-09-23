@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <link rel="icon" type="image/png" href="favicon.png">
@@ -984,7 +984,7 @@
         .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
         .normalize("NFKC");
       const hash = await window.sha256(normalized);
-      const res = await fetch('https://backend.shinumaths989.workers.dev/get-secret', {
+      const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-secret', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hash })
@@ -999,7 +999,7 @@
 
   // ── Show PDF ──
   async function showPDF(data) {
-    const fileUrl = 'https://backend.shinumaths989.workers.dev/docs/' + data.file;
+    const fileUrl = 'https://lively-star-38ef.shinumaths989.workers.dev/docs/' + data.file;
 
     // Switch to overlay
     document.getElementById('auth-scene').style.display = 'none';
@@ -1062,7 +1062,7 @@ async function attemptDownload() {
   const enteredHash = await window.sha256(enteredPassword);
 
   const verifyRes = await fetch(
-    'https://backend.shinumaths989.workers.dev/get-secret',
+    'https://lively-star-38ef.shinumaths989.workers.dev/get-secret',
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1077,7 +1077,7 @@ async function attemptDownload() {
     dlSubmit.classList.add('loading');
 
     try {
-      const fileUrl = 'https://backend.shinumaths989.workers.dev/docs/' + resolvedData.file;
+      const fileUrl = 'https://lively-star-38ef.shinumaths989.workers.dev/docs/' + resolvedData.file;
       // FIX: get session token using vaultKey from the share token
       const dlSessionToken = await getShareSessionToken(resolvedData.vaultKey);
       const res = await fetch(fileUrl, {
@@ -1179,7 +1179,7 @@ async function attemptDownload() {
           .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
           .normalize("NFKC");
         const hash = await window.sha256(normalized);
-        const res = await fetch('https://backend.shinumaths989.workers.dev/get-secret', {
+        const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-secret', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ hash })

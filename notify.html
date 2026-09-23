@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -372,7 +372,7 @@
 
 <script>
 // ── Admin credentials are verified server-side via Cloudflare Worker ──
-const WORKER_URL = "https://backend.shinumaths989.workers.dev";
+const WORKER_URL = "https://lively-star-38ef.shinumaths989.workers.dev";
 
 // ── IDB ──
 const DB_NAME    = 'vaultOfflineDB';
@@ -533,7 +533,7 @@ async function publishNotification() {
 
     // Push to backend — makes other devices see it
     try {
-      const res = await fetch('https://backend.shinumaths989.workers.dev/save-notification', {
+      const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/save-notification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(notif)
@@ -568,7 +568,7 @@ async function loadPublished() {
   // Step 1: Fetch from Firestore backend — this is the single source of truth
   let serverNotifs = [];
   try {
-    const res = await fetch('https://backend.shinumaths989.workers.dev/get-notifications', {
+    const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-notifications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -637,7 +637,7 @@ async function removeNotif(id) {
   await deleteNotif(id);
   // Delete from Firestore so ALL devices stop seeing it
   try {
-    const res = await fetch('https://backend.shinumaths989.workers.dev/delete-notification', {
+    const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/delete-notification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id })
@@ -657,7 +657,7 @@ async function clearAllNotifications() {
   await clearAllNotifs();
   // Delete each from Firestore backend
   const deletes = all.map(n =>
-    fetch('https://backend.shinumaths989.workers.dev/delete-notification', {
+    fetch('https://lively-star-38ef.shinumaths989.workers.dev/delete-notification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: n.id })

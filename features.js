@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    FEATURE 1: E2E ENCRYPTION
    (AES-256-GCM already used in
    openSecureFile – badge shown in
@@ -6,7 +6,7 @@
 ========================= */
 
 // ============ GLOBAL CONFIG ============
-window.BACKEND_URL = 'https://backend.shinumaths989.workers.dev'; // single source of truth for backend URL
+window.BACKEND_URL = 'https://lively-star-38ef.shinumaths989.workers.dev'; // single source of truth for backend URL
 const WORKER_URL = window.BACKEND_URL;
 
 // Device-specific key for local encryption. Must be in localStorage, not
@@ -599,7 +599,7 @@ async function generateShareLink(){
 
         const res =
         await fetch(
-            'https://backend.shinumaths989.workers.dev/create-share',
+            'https://lively-star-38ef.shinumaths989.workers.dev/create-share',
             {
                 method:'POST',
                 headers:{
@@ -1216,7 +1216,7 @@ async function checkDocExpiryReminders(){
     if(!expiringSoon.length) return;
     try{
         await fetch(
-            'https://backend.shinumaths989.workers.dev/expiry-reminder',
+            'https://lively-star-38ef.shinumaths989.workers.dev/expiry-reminder',
             {
                 method:'POST',
                 headers:{'Content-Type':'application/json'},
@@ -1984,7 +1984,7 @@ async function downloadSelectedAsZip() {
   if (dlPass === null) return;
   try {
     var dlHash = await window.sha256(dlPass);
-    var passRes = await fetch('https://backend.shinumaths989.workers.dev/get-secret', {
+    var passRes = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-secret', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hash: dlHash })
@@ -2031,7 +2031,7 @@ async function downloadSelectedAsZip() {
       if (!buffer) {
         var isPhoto = (f.category && f.category.toUpperCase() === 'PHOTOS');
         var fetchPath = isPhoto ? 'photos/' + f.file : 'docs/' + f.file;
-        var res = await fetch('https://backend.shinumaths989.workers.dev/' + fetchPath, {
+        var res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/' + fetchPath, {
           headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!res.ok) { failed.push(f.name); continue; }

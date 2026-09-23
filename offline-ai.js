@@ -1,4 +1,4 @@
-/* =============================================================
+﻿/* =============================================================
    OFFLINE AI ENGINE — offline-ai.js
    v20260719-v2
 
@@ -50,7 +50,7 @@ window.OfflineAI = (function () {
     TOP_P: 0.9,
 
     // Backend
-    BACKEND_URL: 'https://backend.shinumaths989.workers.dev',
+    BACKEND_URL: 'https://lively-star-38ef.shinumaths989.workers.dev',
 
     // Timeouts
     SYNC_TIMEOUT: 30000,

@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "Vault Drive - Secure Document Vault",
   "short_name": "Vault Drive",
   "description": "Your private vault with Google Drive experience - encrypted, offline-ready, organized.",
@@ -112,7 +112,7 @@
   ],
   "file_handlers": [
     {
-      "action": "/",
+      "action": "/public-vault/",
       "accept": {
         "application/pdf": [
           ".pdf"
@@ -141,7 +141,7 @@
   "protocol_handlers": [
     {
       "protocol": "web+vault",
-      "url": "/?vault=%s"
+      "url": "/public-vault/?vault=%s"
     }
   ]
 }

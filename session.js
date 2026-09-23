@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
     START SESSION (idempotent)
 ======================== */
 let _sessionTimerInterval = null;
@@ -81,7 +81,7 @@ async function logout(message="") {
  notifyBackendLogout(message || "Logged out.");
  try {
  await fetch(
- "https://backend.shinumaths989.workers.dev/save-visitor-log",
+ "https://lively-star-38ef.shinumaths989.workers.dev/save-visitor-log",
  {
  method: "POST",
  headers: { "Content-Type": "application/json" },
@@ -98,7 +98,7 @@ async function logout(message="") {
  sessionStorage.clear(); 
 
 // On logout, call:
-await fetch('https://backend.shinumaths989.workers.dev/logout', {
+await fetch('https://lively-star-38ef.shinumaths989.workers.dev/logout', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ sessionId: window.currentSessionId }) // must be stored at login

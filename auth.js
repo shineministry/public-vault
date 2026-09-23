@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    GLOBAL VARIABLES SIT
 ========================= */
 var masterPassword = "";
@@ -183,7 +183,7 @@ function notifyBackendLogout(reason = "Logged out.") {
 
     try {
         fetch(
-            "https://backend.shinumaths989.workers.dev/save-visitor-log",
+            "https://lively-star-38ef.shinumaths989.workers.dev/save-visitor-log",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -195,7 +195,7 @@ function notifyBackendLogout(reason = "Logged out.") {
 
     try {
         fetch(
-            "https://backend.shinumaths989.workers.dev/register-session",
+            "https://lively-star-38ef.shinumaths989.workers.dev/register-session",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -363,7 +363,7 @@ async function searchAI() {
 
     const res =
       await fetch(
-        "https://backend.shinumaths989.workers.dev/ai-search",
+        "https://lively-star-38ef.shinumaths989.workers.dev/ai-search",
         {
           method: "POST",
 
@@ -663,7 +663,7 @@ async function submitTOTP() {
   if (btn) { btn.textContent = "Verifying..."; btn.disabled = true; }
 
   try {
-    const BACKEND = window.BACKEND_URL || "https://backend.shinumaths989.workers.dev"; // ← update this
+    const BACKEND = window.BACKEND_URL || "https://lively-star-38ef.shinumaths989.workers.dev"; // ← update this
 
     const res = await fetch(`${BACKEND}/verify-totp`, {
       method: "POST",
@@ -817,7 +817,7 @@ async function runAIIndexingOnLogin() {
 
     // ── 1. CHECK ENGINE GLOBAL STATUS ────────────────────────────────────
     try {
-        const checkRes = await fetch('https://backend.shinumaths989.workers.dev/ai-index-status', {
+        const checkRes = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/ai-index-status', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -866,7 +866,7 @@ async function runAIIndexingOnLogin() {
     if (!allFiles.length) {
         console.log("AI Index: Local payload trace empty. Polling server backend manifest instead...");
         try {
-            const res = await fetch("https://backend.shinumaths989.workers.dev/files.json", {
+            const res = await fetch("https://lively-star-38ef.shinumaths989.workers.dev/files.json", {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
@@ -899,7 +899,7 @@ async function runAIIndexingOnLogin() {
     // ── 3. QUERY PERSISTENCE STATUS FOR SKIPPING COMPLETED DOCS ─────────
     let alreadyIndexed = new Set();
     try {
-        const progressRes = await fetch('https://backend.shinumaths989.workers.dev/ai-chunk-status-all', {
+        const progressRes = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/ai-chunk-status-all', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -937,7 +937,7 @@ async function runAIIndexingOnLogin() {
         try {
             // Step A: Download stream buffer from storage vault
             const dlRes = await fetch(
-                `https://backend.shinumaths989.workers.dev/docs/${encodeURIComponent(filePath)}`,
+                `https://lively-star-38ef.shinumaths989.workers.dev/docs/${encodeURIComponent(filePath)}`,
                 { headers: { "Authorization": `Bearer ${token}` } }
             );
             if (!dlRes.ok) {
@@ -990,7 +990,7 @@ async function runAIIndexingOnLogin() {
             let uploadedChunksCount = 0;
             for (let i = 0; i < chunks.length; i++) {
                 try {
-                    const chunkRes = await fetch("https://backend.shinumaths989.workers.dev/ai-index", {
+                    const chunkRes = await fetch("https://lively-star-38ef.shinumaths989.workers.dev/ai-index", {
                         method: "POST",
                         headers: { 
                             "Content-Type": "application/json", 
@@ -1018,7 +1018,7 @@ async function runAIIndexingOnLogin() {
             console.log(`AI Index: Storage save loop verified "${fileName}" — ${uploadedChunksCount}/${chunks.length} matrix slices updated.`);
 
             // Step F: Fire sync event payload tracking completion milestone status to persistence records
-            await fetch('https://backend.shinumaths989.workers.dev/ai-file-indexed', {
+            await fetch('https://lively-star-38ef.shinumaths989.workers.dev/ai-file-indexed', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1037,7 +1037,7 @@ async function runAIIndexingOnLogin() {
 
     // ── 5. FINALIZATION STATE WRITEOUT AND REGISTRATION ──────────────────
     try {
-        await fetch('https://backend.shinumaths989.workers.dev/ai-index-status', {
+        await fetch('https://lively-star-38ef.shinumaths989.workers.dev/ai-index-status', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -1107,7 +1107,7 @@ async function deleteFileChunks(fileName) {
   const token = sessionStorage.getItem('vaultSessionToken') ||
                 sessionStorage.getItem('vaultSession') || '';
   try {
-    await fetch('https://backend.shinumaths989.workers.dev/ai-chunk-delete', {
+    await fetch('https://lively-star-38ef.shinumaths989.workers.dev/ai-chunk-delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ fileName })
@@ -1125,7 +1125,7 @@ async function indexAI(fileUrl, fileName) {
   // ── Check if this file's chunks already exist ──
   try {
     const checkRes = await fetch(
-      'https://backend.shinumaths989.workers.dev/ai-chunk-status',
+      'https://lively-star-38ef.shinumaths989.workers.dev/ai-chunk-status',
       {
         method: 'POST',
         headers: {
@@ -1165,7 +1165,7 @@ async function indexAI(fileUrl, fileName) {
   if (!fullText || fullText.trim().length < 20) {
     console.warn(`✦ No text extracted from "${fileName}" — may be a scanned image.`);
     // Still save a placeholder so AI knows the file exists
-    await fetch('https://backend.shinumaths989.workers.dev/ai-index', {
+    await fetch('https://lively-star-38ef.shinumaths989.workers.dev/ai-index', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1206,7 +1206,7 @@ async function indexAI(fileUrl, fileName) {
   for (let i = 0; i < chunks.length; i++) {
     try {
       const res = await fetch(
-        'https://backend.shinumaths989.workers.dev/ai-index',
+        'https://lively-star-38ef.shinumaths989.workers.dev/ai-index',
         {
           method: 'POST',
           headers: {
@@ -1389,7 +1389,7 @@ async function sendAIMessage() {
     // Only attempt online if we have a real token
     if (!token.startsWith('offline-')) {
       try {
-        let res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
+        let res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/ai-search', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1405,7 +1405,7 @@ async function sendAIMessage() {
             token = fresh;
             sessionStorage.setItem('vaultSessionToken', fresh);
             sessionStorage.setItem('vaultSession', fresh);
-            res = await fetch('https://backend.shinumaths989.workers.dev/ai-search', {
+            res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/ai-search', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -1647,7 +1647,7 @@ async function showStep2() {
         let res;
         try {
             res = await fetchWithTimeout(
-                "https://backend.shinumaths989.workers.dev/get-secret",
+                "https://lively-star-38ef.shinumaths989.workers.dev/get-secret",
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1784,7 +1784,7 @@ if (!sessionStorage.getItem('vaultUser')) {
             if (hash !== hashPair.legacyHash) {
                 try {
                     const legacyRes = await fetchWithTimeout(
-                        "https://backend.shinumaths989.workers.dev/get-secret",
+                        "https://lively-star-38ef.shinumaths989.workers.dev/get-secret",
                         {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
@@ -2052,7 +2052,7 @@ function onCaptchaSuccess(){
             ip = info.ip || 'Unknown';
             location = `${info.city || ''}, ${info.region || ''}, ${info.country_name || ''}`;
         }
-        await fetch('https://backend.shinumaths989.workers.dev/login-email', {
+        await fetch('https://lively-star-38ef.shinumaths989.workers.dev/login-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2100,7 +2100,7 @@ function onCaptchaSuccess(){
     try{
 
         await fetch(
-            "https://backend.shinumaths989.workers.dev/save-visitor-log",
+            "https://lively-star-38ef.shinumaths989.workers.dev/save-visitor-log",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -2172,7 +2172,7 @@ function onCaptchaSuccess(){
         }catch(e){}
 
         await fetch(
-        "https://backend.shinumaths989.workers.dev/security-alert",
+        "https://lively-star-38ef.shinumaths989.workers.dev/security-alert",
         {
 
             method:"POST",
@@ -2256,7 +2256,7 @@ function onCaptchaSuccess(){
     try{
 
         await fetch(
-            "https://backend.shinumaths989.workers.dev/register-session",
+            "https://lively-star-38ef.shinumaths989.workers.dev/register-session",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -2288,7 +2288,7 @@ let _forceLogoutInterval = null;
         try{
 
             const res = await fetch(
-                "https://backend.shinumaths989.workers.dev/check-session",
+                "https://lively-star-38ef.shinumaths989.workers.dev/check-session",
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
