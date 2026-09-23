@@ -21,7 +21,7 @@ async function handleRegister(){
   if(btn){ btn.disabled=true; btn.textContent='Creating account...'; }
 
   try{
-    const backend = (window.PUBLIC_WORKER_URL || 'https://__PUBLIC_WORKER_URL__').replace(/\/$/,'');
+    const backend = (window.PUBLIC_WORKER_URL || 'https://lively-star-38ef.shinumaths989.workers.dev').replace(/\/$/,'');
     // 1) Register
     const res = await fetch(`${backend}/public/register`,{
       method:'POST',
@@ -81,7 +81,7 @@ async function enterDemoMode(){
   const secret = prompt('Admin demo secret:');
   if(!secret) return;
   try{
-    const backend=(window.PUBLIC_WORKER_URL||'https://__PUBLIC_WORKER_URL__').replace(/\/$/,'');
+    const backend=(window.PUBLIC_WORKER_URL||'https://lively-star-38ef.shinumaths989.workers.dev').replace(/\/$/,'');
     const r=await fetch(`${backend}/public/demo-login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok||!j.success) throw new Error(j.error||'Demo login failed');
