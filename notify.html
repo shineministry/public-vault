@@ -1,0 +1,692 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault Notifications by Admin</title>
+<link rel="icon" type="image/png" href="favicon.png"> 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #020617;
+    --bg2: #0f172a;
+    --surface: rgba(255,255,255,.06);
+    --border: rgba(255,255,255,.12);
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --purple: #a855f7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background: radial-gradient(circle at 10% 20%, #1e3a8a 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, #0f766e 0%, transparent 40%),
+                linear-gradient(135deg, var(--bg1), var(--bg2));
+    color: var(--text);
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    position: fixed; inset: 0;
+    background: linear-gradient(135deg, #020617, #0f172a);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+  }
+  .login-box {
+    width: 100%; max-width: 400px;
+    background: rgba(255,255,255,.07);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 44px 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    animation: fadeUp .5s ease;
+  }
+  .login-logo {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; margin: 0 auto 20px;
+  }
+  .login-title { text-align:center; font-size:1.6rem; font-weight:900; margin-bottom:6px; }
+  .login-sub   { text-align:center; color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .inp {
+    width:100%; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+    outline:none; padding:15px 18px; border-radius:14px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:14px; margin-bottom:12px;
+    transition:.2s;
+  }
+  .inp:focus { border-color:var(--blue); background:rgba(59,130,246,.08); }
+  .btn-login {
+    width:100%; padding:15px; border:none; border-radius:14px;
+    background:linear-gradient(135deg,#2563eb,#06b6d4);
+    color:#fff; font-family:'Inter',sans-serif; font-size:15px; font-weight:800;
+    cursor:pointer; transition:.2s; letter-spacing:.3px;
+    box-shadow: 0 4px 20px rgba(37,99,235,.35);
+  }
+  .btn-login:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(37,99,235,.45); }
+  #login-error { color:var(--red); text-align:center; font-size:13px; margin-top:10px; display:none; }
+
+  /* ── MAIN APP ── */
+  #app { display:none; min-height:100vh; }
+
+  /* ── HEADER ── */
+  .header {
+    background: rgba(15,23,42,.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-brand { display:flex; align-items:center; gap:12px; }
+  .header-brand .hb-icon { font-size:24px; }
+  .header-brand .hb-text { font-size:16px; font-weight:800; letter-spacing:.3px; }
+  .header-brand .hb-sub  { font-size:11px; color:var(--muted); font-weight:500; }
+  .header-right { display:flex; align-items:center; gap:12px; }
+  .badge-admin {
+    background: linear-gradient(135deg,#a855f7,#ec4899);
+    color:#fff; font-size:11px; font-weight:800; padding:4px 12px;
+    border-radius:20px; letter-spacing:.5px;
+  }
+  .btn-logout-sm {
+    background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
+    color:#fca5a5; padding:8px 16px; border-radius:10px; font-size:13px;
+    font-weight:700; cursor:pointer; transition:.2s;
+  }
+  .btn-logout-sm:hover { background:rgba(239,68,68,.25); }
+
+  /* ── CONTAINER ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── STATS ROW ── */
+  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:32px; }
+  .stat-card {
+    background: var(--surface); border:1px solid var(--border);
+    border-radius:18px; padding:20px 22px;
+    display:flex; align-items:center; gap:14px;
+  }
+  .stat-icon { font-size:28px; }
+  .stat-val  { font-size:26px; font-weight:900; }
+  .stat-lbl  { font-size:12px; color:var(--muted); font-weight:600; margin-top:1px; }
+
+  /* ── TABS ── */
+  .tabs { display:flex; gap:6px; margin-bottom:24px; }
+  .tab {
+    padding:10px 22px; border-radius:12px; font-size:14px; font-weight:700;
+    cursor:pointer; border:1px solid var(--border); background:transparent;
+    color:var(--muted); transition:.2s;
+  }
+  .tab.active { background:linear-gradient(135deg,#2563eb,#06b6d4); color:#fff; border-color:transparent; box-shadow:0 4px 16px rgba(37,99,235,.3); }
+  .tab:hover:not(.active) { background:rgba(255,255,255,.06); color:var(--text); }
+
+  /* ── COMPOSE CARD ── */
+  .card {
+    background: var(--surface); border:1px solid var(--border);
+    border-radius:20px; padding:28px; margin-bottom:20px;
+  }
+  .card-title { font-size:17px; font-weight:800; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+
+  label.field-lbl { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; display:block; margin-bottom:8px; margin-top:16px; }
+  label.field-lbl:first-of-type { margin-top:0; }
+
+  .inp-dark {
+    width:100%; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.1);
+    outline:none; padding:14px 16px; border-radius:12px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:14px; transition:.2s; resize:vertical;
+  }
+  .inp-dark:focus { border-color:var(--blue); background:rgba(59,130,246,.06); }
+  textarea.inp-dark { min-height:100px; }
+
+  .type-pills { display:flex; gap:10px; margin-bottom:4px; }
+  .type-pill {
+    flex:1; padding:14px; border-radius:14px; border:2px solid var(--border);
+    background:rgba(0,0,0,.2); cursor:pointer; text-align:center; transition:.2s;
+  }
+  .type-pill:hover { border-color:rgba(255,255,255,.25); }
+  .type-pill.selected { border-color:var(--blue); background:rgba(59,130,246,.1); }
+  .type-pill .tp-icon { font-size:24px; margin-bottom:6px; }
+  .type-pill .tp-name { font-size:14px; font-weight:800; }
+  .type-pill .tp-desc { font-size:11px; color:var(--muted); margin-top:3px; }
+
+  #targeted-field { display:none; margin-top:12px; }
+
+  .user-chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .user-chip {
+    padding:6px 14px; border-radius:20px; background:rgba(255,255,255,.07);
+    border:1px solid var(--border); font-size:12px; font-weight:700;
+    cursor:pointer; transition:.2s; user-select:none;
+  }
+  .user-chip.active { background:rgba(37,99,235,.2); border-color:var(--blue); color:#93c5fd; }
+
+  /* ── PRIORITY ── */
+  .priority-row { display:flex; gap:8px; flex-wrap:wrap; }
+  .priority-opt {
+    padding:8px 16px; border-radius:10px; font-size:13px; font-weight:700;
+    cursor:pointer; border:2px solid var(--border); background:transparent;
+    transition:.2s; color:var(--muted);
+  }
+  .priority-opt:hover { border-color:rgba(255,255,255,.3); color:var(--text); }
+  .priority-opt.selected.info    { border-color:#3b82f6; background:rgba(59,130,246,.15); color:#93c5fd; }
+  .priority-opt.selected.warning { border-color:#f59e0b; background:rgba(245,158,11,.15); color:#fcd34d; }
+  .priority-opt.selected.urgent  { border-color:#ef4444; background:rgba(239,68,68,.15);  color:#fca5a5; }
+
+  /* ── SUBMIT ── */
+  .btn-publish {
+    width:100%; padding:16px; border:none; border-radius:14px;
+    background:linear-gradient(135deg,#2563eb,#06b6d4);
+    color:#fff; font-family:'Inter',sans-serif; font-size:15px; font-weight:800;
+    cursor:pointer; transition:.2s; letter-spacing:.3px;
+    box-shadow:0 4px 20px rgba(37,99,235,.35); margin-top:20px;
+    position:relative; overflow:hidden;
+  }
+  .btn-publish:hover { transform:translateY(-1px); box-shadow:0 8px 28px rgba(37,99,235,.5); }
+  .btn-publish:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+  /* ── PUBLISHED LIST ── */
+  #notif-log { display:flex; flex-direction:column; gap:12px; }
+  .notif-entry {
+    background:rgba(0,0,0,.2); border:1px solid var(--border);
+    border-radius:14px; padding:16px 18px;
+    display:flex; align-items:flex-start; gap:14px;
+    animation: fadeUp .3s ease;
+  }
+  .notif-entry .ne-icon { font-size:22px; flex-shrink:0; margin-top:2px; }
+  .notif-entry .ne-body { flex:1; min-width:0; }
+  .notif-entry .ne-title { font-size:14px; font-weight:800; margin-bottom:3px; }
+  .notif-entry .ne-text  { font-size:13px; color:var(--muted); line-height:1.5; }
+  .notif-entry .ne-meta  { font-size:11px; color:#475569; margin-top:6px; display:flex; gap:10px; flex-wrap:wrap; }
+  .notif-entry .ne-del   { background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3); color:#fca5a5; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; transition:.2s; }
+  .notif-entry .ne-del:hover { background:rgba(239,68,68,.25); }
+  .priority-badge { padding:2px 9px; border-radius:10px; font-size:11px; font-weight:800; }
+  .priority-badge.info    { background:rgba(59,130,246,.2); color:#93c5fd; }
+  .priority-badge.warning { background:rgba(245,158,11,.2); color:#fcd34d; }
+  .priority-badge.urgent  { background:rgba(239,68,68,.2);  color:#fca5a5; }
+
+  /* ── SUCCESS TOAST ── */
+  #toast {
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:#0f172a; border:1px solid rgba(255,255,255,.15);
+    color:#f8fafc; padding:12px 24px; border-radius:14px;
+    font-size:14px; font-weight:700; z-index:9999;
+    box-shadow:0 8px 30px rgba(0,0,0,.4);
+    opacity:0; transition:.3s;
+    pointer-events:none;
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { text-align:center; padding:48px 20px; color:var(--muted); }
+  .empty-state .es-icon { font-size:48px; margin-bottom:12px; }
+  .empty-state .es-text { font-size:15px; font-weight:600; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+  @media(max-width:640px) {
+    .stats-row { grid-template-columns:1fr 1fr; }
+    .type-pills { flex-direction:column; }
+    .container  { padding:20px 16px; }
+    .header     { padding:0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🔔</div>
+    <div class="login-title">Notify Admin</div>
+    <div class="login-sub">Publish notifications to your Vault users</div>
+    <input type="text"     id="admin-user" class="inp" placeholder="Admin username" autocomplete="off">
+    <input type="password" id="admin-pass" class="inp" placeholder="Admin password">
+    <button class="btn-login" onclick="doAdminLogin()">Sign In →</button>
+    <div id="login-error">❌ Invalid credentials</div>
+  </div>
+</div>
+
+<!-- ── MAIN APP ── -->
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-brand">
+      <div class="hb-icon">🔔</div>
+      <div>
+        <div class="hb-text">Vault Notify</div>
+        <div class="hb-sub">Admin Notification Center</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="badge-admin">⚡ ADMIN</span>
+      <button class="btn-logout-sm" onclick="adminLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">📢</div>
+        <div>
+          <div class="stat-val" id="stat-total">0</div>
+          <div class="stat-lbl">Total Published</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🌐</div>
+        <div>
+          <div class="stat-val" id="stat-global">0</div>
+          <div class="stat-lbl">Global</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎯</div>
+        <div>
+          <div class="stat-val" id="stat-targeted">0</div>
+          <div class="stat-lbl">Targeted</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" id="tab-compose" onclick="switchTab('compose')">✍️ Compose</button>
+      <button class="tab" id="tab-published" onclick="switchTab('published')">📋 Published</button>
+    </div>
+
+    <!-- COMPOSE TAB -->
+    <div id="tab-compose-content">
+      <div class="card">
+        <div class="card-title">📨 New Notification</div>
+
+        <label class="field-lbl">Delivery Type</label>
+        <div class="type-pills">
+          <div class="type-pill selected" id="pill-global" onclick="selectType('global')">
+            <div class="tp-icon">📢</div>
+            <div class="tp-name">Global</div>
+            <div class="tp-desc">Reaches all users automatically</div>
+          </div>
+          <div class="type-pill" id="pill-targeted" onclick="selectType('targeted')">
+            <div class="tp-icon">🎯</div>
+            <div class="tp-name">By User</div>
+            <div class="tp-desc">Targeted to specific users</div>
+          </div>
+        </div>
+
+        <div id="targeted-field">
+          <label class="field-lbl">Select Users</label>
+          <div class="user-chips" id="user-chips">
+            <div class="user-chip" data-val="shineil"  onclick="toggleChip(this)">👤 Shineil</div>
+            <div class="user-chip" data-val="brother"  onclick="toggleChip(this)">👤 Kevin</div>
+            <div class="user-chip" data-val="father"   onclick="toggleChip(this)">👤 Stephen</div>
+            <div class="user-chip" data-val="mother"   onclick="toggleChip(this)">👤 Kanchan</div>
+          </div>
+        </div>
+
+        <label class="field-lbl">Notification Title</label>
+        <input type="text" id="notif-title" class="inp-dark" placeholder="e.g. Vault Maintenance Tonight" maxlength="100">
+
+        <label class="field-lbl">Message Body</label>
+        <textarea id="notif-body" class="inp-dark" placeholder="Write your notification message here…" maxlength="500"></textarea>
+
+        <label class="field-lbl">Priority</label>
+        <div class="priority-row">
+          <button class="priority-opt selected info"    data-p="info"    onclick="selectPriority(this)">ℹ️ Info</button>
+          <button class="priority-opt warning"          data-p="warning" onclick="selectPriority(this)">⚠️ Warning</button>
+          <button class="priority-opt urgent"           data-p="urgent"  onclick="selectPriority(this)">🔴 Urgent</button>
+        </div>
+
+        <button class="btn-publish" id="publish-btn" onclick="publishNotification()">
+          📤 Publish Notification
+        </button>
+      </div>
+    </div>
+
+    <!-- PUBLISHED TAB -->
+    <div id="tab-published-content" style="display:none;">
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between;">
+          <span>📋 Published Notifications</span>
+          <button onclick="clearAllNotifications()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#fca5a5;padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">🗑️ Clear All</button>
+        </div>
+        <div id="notif-log">
+          <div class="empty-state"><div class="es-icon">📭</div><div class="es-text">No notifications published yet</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast">✅ Notification published!</div>
+
+<script>
+// ── Admin credentials are verified server-side via Cloudflare Worker ──
+const WORKER_URL = "https://lively-star-38ef.shinumaths989.workers.dev";
+
+// ── IDB ──
+const DB_NAME    = 'vaultOfflineDB';
+const DB_VERSION = 8;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      ['pm_entries','vault_docs','vault_meta','vault_auth'].forEach((s,i) => {
+        const keys = [{keyPath:'id'},{keyPath:'filename'},{keyPath:'key'},{keyPath:'id'}];
+        if (!db.objectStoreNames.contains(s)) db.createObjectStore(s, keys[i]);
+      });
+      if (!db.objectStoreNames.contains('vault_notifications'))
+        db.createObjectStore('vault_notifications', { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+async function getAllNotifs() {
+  const db = await openDB();
+  return new Promise(r => {
+    const req = db.transaction('vault_notifications','readonly').objectStore('vault_notifications').getAll();
+    req.onsuccess = () => r(req.result || []);
+    req.onerror   = () => r([]);
+  });
+}
+
+async function saveNotif(notif) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction('vault_notifications','readwrite').objectStore('vault_notifications').add(notif);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function deleteNotif(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction('vault_notifications','readwrite').objectStore('vault_notifications').delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function clearAllNotifs() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction('vault_notifications','readwrite').objectStore('vault_notifications').clear();
+    req.onsuccess = () => resolve();
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+// ── Auth ──
+async function doAdminLogin() {
+  const u = document.getElementById('admin-user').value.trim();
+  const p = document.getElementById('admin-pass').value;
+  try {
+    const res = await fetch(WORKER_URL + "/verify-portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ portal: "notify", password: p, username: u })
+    });
+    const data = await res.json();
+    if (data.success) {
+      sessionStorage.setItem('notifyAdminAuth','1');
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadPublished();
+    } else {
+      const err = document.getElementById('login-error');
+      err.style.display = 'block';
+      err.textContent = '❌ Invalid credentials.';
+      setTimeout(() => err.style.display = 'none', 3500);
+    }
+  } catch (e) {
+    const errEl = document.getElementById('login-error');
+    errEl.style.display = 'block';
+    errEl.textContent = '❌ Connection error. Try again.';
+    setTimeout(() => errEl.style.display = 'none', 3500);
+  }
+}
+document.getElementById('admin-pass').addEventListener('keydown', e => { if(e.key==='Enter') doAdminLogin(); });
+
+function adminLogout() {
+  sessionStorage.removeItem('notifyAdminAuth');
+  location.reload();
+}
+
+// Auto-login if already authed
+if (sessionStorage.getItem('notifyAdminAuth') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  setTimeout(loadPublished, 100);
+}
+
+// ── UI State ──
+let selectedType     = 'global';
+let selectedPriority = 'info';
+let selectedUsers    = new Set();
+
+function selectType(type) {
+  selectedType = type;
+  document.getElementById('pill-global').classList.toggle('selected', type === 'global');
+  document.getElementById('pill-targeted').classList.toggle('selected', type === 'targeted');
+  document.getElementById('targeted-field').style.display = type === 'targeted' ? 'block' : 'none';
+}
+
+function toggleChip(el) {
+  const val = el.dataset.val;
+  if (selectedUsers.has(val)) { selectedUsers.delete(val); el.classList.remove('active'); }
+  else                         { selectedUsers.add(val);    el.classList.add('active');    }
+}
+
+function selectPriority(btn) {
+  document.querySelectorAll('.priority-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedPriority = btn.dataset.p;
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-compose-content').style.display   = tab === 'compose'   ? 'block' : 'none';
+  document.getElementById('tab-published-content').style.display = tab === 'published' ? 'block' : 'none';
+  document.getElementById('tab-compose').classList.toggle('active',   tab === 'compose');
+  document.getElementById('tab-published').classList.toggle('active', tab === 'published');
+  if (tab === 'published') loadPublished();
+}
+
+// ── Publish ──
+async function publishNotification() {
+  const title = document.getElementById('notif-title').value.trim();
+  const body  = document.getElementById('notif-body').value.trim();
+  if (!title) { shake('notif-title'); return; }
+  if (!body)  { shake('notif-body');  return; }
+  if (selectedType === 'targeted' && selectedUsers.size === 0) {
+    showToast('⚠️ Select at least one user', '#f59e0b'); return;
+  }
+
+  const btn = document.getElementById('publish-btn');
+  btn.disabled = true; btn.textContent = '⏳ Publishing…';
+
+  try {
+    const notifId = 'notif_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const notif = {
+      id: notifId, type: selectedType,
+      targets: selectedType === 'targeted' ? [...selectedUsers].join(',') : 'all',
+      title, body, priority: selectedPriority,
+      timestamp: Date.now(), read: false, _key: notifId
+    };
+
+    // Always save locally first — visible on this device regardless of backend
+    await saveNotif(notif);
+
+    // Push to backend — makes other devices see it
+    try {
+      const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/save-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notif)
+      });
+      if (res.ok) {
+        showToast('✅ Published to all devices', '#22c55e');
+      } else {
+        const errText = await res.text().catch(() => '');
+        showToast('⚠️ Saved locally but backend sync failed: ' + errText, '#f59e0b');
+      }
+    } catch (e) {
+      showToast('⚠️ Saved locally but backend unreachable: ' + e.message, '#f59e0b');
+    }
+
+    document.getElementById('notif-title').value = '';
+    document.getElementById('notif-body').value  = '';
+    selectedUsers.clear();
+    document.querySelectorAll('.user-chip').forEach(c => c.classList.remove('active'));
+    loadPublished();
+  } catch (e) {
+    showToast('❌ Failed to save notification: ' + e.message, '#ef4444');
+  } finally {
+    btn.disabled = false; btn.textContent = '📤 Publish Notification';
+  }
+}
+
+// ── Load published ── (Firestore is source of truth)
+async function loadPublished() {
+  const log = document.getElementById('notif-log');
+  log.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><div class="es-text">Loading from server…</div></div>';
+
+  // Step 1: Fetch from Firestore backend — this is the single source of truth
+  let serverNotifs = [];
+  try {
+    const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      serverNotifs = data.notifications || [];
+      // Replace local IDB with exactly what the server has
+      const db = await openDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('vault_notifications', 'readwrite');
+        tx.objectStore('vault_notifications').clear();
+        tx.oncomplete = resolve;
+        tx.onerror = reject;
+      });
+      const db2 = await openDB();
+      const tx2 = db2.transaction('vault_notifications', 'readwrite');
+      const store2 = tx2.objectStore('vault_notifications');
+      for (const n of serverNotifs) {
+        store2.put(n);
+      }
+      await new Promise((resolve, reject) => {
+        tx2.oncomplete = resolve;
+        tx2.onerror = reject;
+      });
+    } else {
+      console.warn('[notify] get-notifications failed:', res.status);
+    }
+  } catch (e) {
+    console.warn('[notify] Backend unreachable, showing local IDB only:', e.message);
+  }
+
+  // Step 2: Read from IDB (now in sync with server)
+  const all = await getAllNotifs();
+  const sorted = all.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+
+  // Stats
+  document.getElementById('stat-total').textContent    = sorted.length;
+  document.getElementById('stat-global').textContent   = sorted.filter(n => n.type === 'global').length;
+  document.getElementById('stat-targeted').textContent = sorted.filter(n => n.type === 'targeted').length;
+
+  if (sorted.length === 0) {
+    log.innerHTML = '<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">No notifications published yet</div></div>';
+    return;
+  }
+
+  log.innerHTML = sorted.map(n => `
+    <div class="notif-entry">
+      <div class="ne-icon">${n.type === 'global' ? '📢' : '🎯'}</div>
+      <div class="ne-body">
+        <div class="ne-title">${escHtml(n.title || '')}</div>
+        <div class="ne-text">${escHtml(n.body || '')}</div>
+        <div class="ne-meta">
+          <span>${n.type === 'global' ? '🌐 Global' : '🎯 ' + escHtml(n.targets || '')}</span>
+          <span class="priority-badge ${n.priority || 'info'}">${(n.priority||'info').toUpperCase()}</span>
+          <span>${n.timestamp ? new Date(n.timestamp).toLocaleString() : ''}</span>
+          ${n.read ? '<span style="color:#22c55e;">✓ Read</span>' : '<span style="color:#94a3b8;">● Unread</span>'}
+        </div>
+      </div>
+      <button class="ne-del" onclick="removeNotif('${n.id}')">🗑️</button>
+    </div>
+  `).join('');
+}
+
+async function removeNotif(id) {
+  // Delete from local IDB first
+  await deleteNotif(id);
+  // Delete from Firestore so ALL devices stop seeing it
+  try {
+    const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/delete-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    if (!res.ok) console.warn('[notify] Backend delete returned:', res.status);
+  } catch (e) {
+    console.warn('[notify] Backend delete failed (local delete still done):', e.message);
+  }
+  loadPublished();
+  showToast('🗑️ Notification removed from all devices', '#94a3b8');
+}
+
+async function clearAllNotifications() {
+  if (!confirm('Delete ALL notifications from all devices? This cannot be undone.')) return;
+  // Get all IDs before clearing local
+  const all = await getAllNotifs();
+  await clearAllNotifs();
+  // Delete each from Firestore backend
+  const deletes = all.map(n =>
+    fetch('https://lively-star-38ef.shinumaths989.workers.dev/delete-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: n.id })
+    }).catch(e => console.warn('[notify] Backend delete failed for', n.id, e.message))
+  );
+  await Promise.all(deletes);
+  loadPublished();
+  showToast('🗑️ All notifications cleared from all devices', '#94a3b8');
+}
+
+// ── Helpers ──
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.animation = 'none';
+  el.style.borderColor = '#ef4444';
+  setTimeout(() => el.style.borderColor = '', 800);
+}
+
+function showToast(msg, color='#22c55e') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = color + '44';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

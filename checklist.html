@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Document Checklist — Excel MS</title>
+      <link rel="icon" type="image/png" href="favicon.png">
+<meta name="theme-color" content="#0B3D91">
+<script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:15px;color:#1a1a1a;background:#fff;}
+
+/* ====== TITLE BAR ====== */
+.xl-titlebar{display:flex;align-items:center;height:32px;background:#217346;padding:0 12px;gap:8px;user-select:none;}
+.xl-titlebar-icon{display:flex;align-items:center;}
+.xl-titlebar-icon svg{width:16px;height:16px;color:#fff;}
+.xl-titlebar-text{color:#fff;font-size:12px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ====== RIBBON / TOOLBAR ====== */
+.xl-ribbon{background:#f3f3f3;border-bottom:1px solid #d6d6d6;padding:4px 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:36px;}
+.xl-ribbon-group{display:flex;align-items:center;gap:6px;}
+.xl-ribbon-sep{width:1px;height:24px;background:#d6d6d6;}
+.xl-ribbon-label{font-size:11px;color:#444;font-weight:600;white-space:nowrap;}
+.xl-ribbon select{padding:4px 8px;border:1px solid #ababab;border-radius:2px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a1a;cursor:pointer;min-width:140px;}
+.xl-ribbon select:focus{outline:1px solid #217346;}
+.xl-ribbon-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid transparent;border-radius:2px;background:transparent;font-size:11px;font-family:inherit;font-weight:600;color:#444;cursor:pointer;white-space:nowrap;}
+.xl-ribbon-btn:hover{background:#e0e0e0;border-color:#c0c0c0;}
+.xl-ribbon-btn svg{width:14px;height:14px;}
+.xl-ribbon-btn.deploy{background:#217346;color:#fff;border-color:#1a5c38;}
+.xl-ribbon-btn.deploy:hover{background:#1a5c38;}
+.xl-ribbon-btn.deploy.deployed{background:#16a34a;color:#fff;}
+.xl-ribbon-btn.add{background:#fff;border:1px solid #ababab;color:#217346;}
+.xl-ribbon-btn.add:hover{background:#e6f4ea;border-color:#217346;}
+.xl-ribbon-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+
+/* ====== FORMULA BAR ====== */
+.xl-formula-bar{display:flex;align-items:center;height:26px;border-bottom:1px solid #d6d6d6;background:#fff;user-select:none;}
+.xl-cell-ref{width:70px;text-align:center;font-size:11px;font-weight:600;color:#333;border-right:1px solid #d6d6d6;height:100%;display:flex;align-items:center;justify-content:center;}
+.xl-formula-fx{font-size:11px;font-style:italic;font-weight:700;color:#555;margin:0 6px 0 2px;}
+.xl-formula-input{flex:1;font-size:12px;color:#333;padding:0 6px;height:100%;display:flex;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+
+/* ====== SPREADSHEET SHEET ====== */
+.xl-sheet-area{flex:1;overflow:auto;position:relative;}
+.xl-sheet{border-collapse:collapse;width:100%;table-layout:fixed;}
+.xl-sheet th,.xl-sheet td{border:1px solid #d6d6d6;padding:0;position:relative;}
+.xl-corner{width:46px;min-width:46px;background:#f3f3f3;border-right:2px solid #b0b0b0;border-bottom:2px solid #b0b0b0;}
+.xl-col-head{background:#f3f3f3;text-align:center;font-weight:700;font-size:11px;color:#333;height:22px;border-bottom:2px solid #b0b0b0;cursor:default;position:relative;overflow:visible;}
+.xl-col-head:hover{background:#e2e2e2;}
+.xl-col-head-text{display:flex;align-items:center;justify-content:center;height:100%;pointer-events:none;}
+.xl-col-resize{position:absolute;right:-3px;top:0;width:6px;height:100%;cursor:col-resize;z-index:10;}
+.xl-col-resize:hover,.xl-col-resize.active{background:#217346;}
+.xl-row-head{background:#f3f3f3;text-align:center;font-weight:700;font-size:11px;color:#333;width:46px;min-width:46px;border-right:2px solid #b0b0b0;border-bottom:1px solid #d6d6d6;cursor:default;}
+.xl-row-head:hover{background:#e2e2e2;}
+.xl-cell{height:36px;padding:6px 10px;font-size:14px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:cell;text-align:center;}
+.xl-cell-num{text-align:center;font-weight:700;color:#555;font-size:11px;}
+.xl-cell-name{font-weight:700;color:#1a1a1a;}
+.xl-cell-desc{font-size:11px;color:#666;line-height:1.4;white-space:normal;word-wrap:break-word;text-align:center;}
+.xl-cell-doc-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;}
+.xl-cell-doc-name{font-weight:700;color:#1a1a1a;text-align:center;white-space:normal;}
+.xl-cell-center{text-align:center;}
+.xl-cell-btn{text-align:center;}
+.xl-row-even .xl-cell{background:#fff;}
+.xl-row-odd .xl-cell{background:#f5f9fd;}
+.xl-sheet tbody tr:hover .xl-cell{background:#e8f0fe !important;}
+.xl-sheet tbody tr.xl-selected .xl-cell{background:#d4e4fc !important;}
+.xl-sheet tbody tr.xl-selected .xl-row-head{background:#b8d4f8 !important;}
+
+/* ====== EDIT MODE CELLS ====== */
+.xl-cell-edit{width:100%;border:1px solid transparent;border-radius:2px;padding:2px 4px;font:inherit;font-size:14px;background:transparent;color:inherit;}
+.xl-cell-edit:focus{border-color:#217346;background:#fff;outline:none;box-shadow:0 0 0 1px #217346;}
+.xl-cell-edit.editing{border-color:#217346;background:#fff;}
+
+/* ====== CELL COMPONENTS ====== */
+.xl-pdf-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border:1px solid #ababab;border-radius:2px;background:#f8f8f8;font-size:11px;font-family:inherit;font-weight:600;color:#1a73e8;cursor:pointer;white-space:nowrap;}
+.xl-pdf-btn:hover{background:#e8f0fe;border-color:#1a73e8;}
+.xl-pdf-btn svg{width:12px;height:12px;}
+.xl-status-select{width:100%;padding:3px 4px;border:1px solid #ababab;border-radius:2px;font-size:11px;font-family:inherit;font-weight:700;text-align:center;cursor:pointer;background:#fff;color:#333;}
+.xl-status-select:focus{outline:1px solid #217346;}
+.xl-status-select.st-done{color:#0d7a3e;background:#e6f4ea;border-color:#a8d5ba;}
+.xl-status-select.st-no{color:#c62828;background:#fde7e7;border-color:#f0b0b0;}
+.xl-status-select.st-na{color:#666;background:#f0f0f0;border-color:#c0c0c0;}
+
+/* Row action buttons (edit/delete) */
+.xl-row-actions{display:flex;gap:2px;justify-content:center;}
+.xl-row-action{width:22px;height:22px;border:1px solid #ccc;border-radius:2px;background:#f8f8f8;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;color:#555;}
+.xl-row-action:hover{background:#e0e0e0;border-color:#999;}
+.xl-row-action.del:hover{background:#fde7e7;border-color:#c62828;color:#c62828;}
+.xl-row-action svg{width:12px;height:12px;}
+
+/* ====== STATUS BAR ====== */
+.xl-statusbar{display:flex;align-items:center;justify-content:space-between;height:24px;background:#217346;padding:0 12px;user-select:none;}
+.xl-statusbar-left,.xl-statusbar-right{display:flex;align-items:center;gap:12px;}
+.xl-statusbar span{color:rgba(255,255,255,.85);font-size:11px;display:flex;align-items:center;gap:4px;}
+.xl-statusbar svg{width:12px;height:12px;color:rgba(255,255,255,.85);}
+
+/* ====== SHEET TABS ====== */
+.xl-sheet-tabs{display:flex;align-items:center;height:26px;background:#f3f3f3;border-top:1px solid #d6d6d6;padding:0 8px;gap:2px;overflow-x:auto;}
+.xl-sheet-tab{padding:4px 14px;font-size:11px;font-weight:600;color:#555;cursor:pointer;border:1px solid transparent;border-bottom:none;white-space:nowrap;position:relative;top:1px;}
+.xl-sheet-tab:hover{background:#e8e8e8;}
+.xl-sheet-tab.active{background:#fff;border-color:#d6d6d6;color:#1a1a1a;}
+
+/* ====== DARK MODE ====== */
+body.dark .xl-titlebar{background:#1a4d2e;}
+body.dark .xl-ribbon{background:#2d2d2d;border-color:#444;}
+body.dark .xl-ribbon select{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
+body.dark .xl-ribbon-btn{color:#ccc;}
+body.dark .xl-ribbon-btn:hover{background:#444;border-color:#555;}
+body.dark .xl-ribbon-btn.deploy{background:#1a5c38;color:#fff;}
+body.dark .xl-ribbon-btn.deploy:hover{background:#217346;}
+body.dark .xl-ribbon-btn.add{background:#3a3a3a;color:#6db3f2;border-color:#555;}
+body.dark .xl-ribbon-sep{background:#555;}
+body.dark .xl-formula-bar{background:#2d2d2d;border-color:#444;}
+body.dark .xl-cell-ref{color:#aaa;border-color:#444;}
+body.dark .xl-formula-input{color:#ddd;}
+body.dark .xl-corner{background:#2d2d2d;border-color:#555;}
+body.dark .xl-col-head,.xl-row-head{background:#2d2d2d;color:#ccc;border-color:#555;}
+body.dark .xl-col-head:hover,.xl-row-head:hover{background:#3a3a3a;}
+body.dark .xl-cell{color:#e0e0e0;}
+body.dark .xl-cell-num{color:#999;}
+body.dark .xl-cell-name{color:#f0f0f0;}
+body.dark .xl-cell-desc{color:#aaa;}
+body.dark .xl-row-even .xl-cell{background:#2a2a2a;}
+body.dark .xl-row-odd .xl-cell{background:#333;}
+body.dark .xl-sheet tbody tr:hover .xl-cell{background:#3a4a5a !important;}
+body.dark .xl-sheet tbody tr.xl-selected .xl-cell{background:#2a4a7a !important;}
+body.dark .xl-sheet-tabs{background:#2d2d2d;border-color:#444;}
+body.dark .xl-sheet-tab{color:#aaa;}
+body.dark .xl-sheet-tab.active{background:#3a3a3a;border-color:#555;color:#e0e0e0;}
+body.dark .xl-status-select{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
+body.dark .xl-pdf-btn{background:#3a3a3a;color:#6db3f2;border-color:#555;}
+body.dark .xl-pdf-btn:hover{background:#2a4a7a;border-color:#6db3f2;}
+body.dark .xl-cell-edit{color:#e0e0e0;}
+body.dark .xl-cell-edit:focus{background:#3a3a3a;}
+body.dark .xl-row-action{background:#3a3a3a;border-color:#555;color:#ccc;}
+body.dark .xl-row-action:hover{background:#444;}
+body.dark .xl-row-action.del:hover{background:#5a2a2a;color:#f87171;}
+
+/* ====== PROMPT ====== */
+.xl-prompt-wrap{display:flex;align-items:center;justify-content:center;flex:1;overflow:auto;}
+.xl-prompt-box{text-align:center;padding:40px;}
+.xl-prompt-box svg{width:48px;height:48px;color:#217346;margin-bottom:12px;}
+.xl-prompt-title{font-weight:800;font-size:18px;color:#1a1a1a;margin-bottom:6px;}
+.xl-prompt-sub{font-size:14px;color:#666;}
+
+/* ====== HOVER ADD ROW/COL ====== */
+.xl-add-btn{position:absolute;display:none;align-items:center;justify-content:center;background:#e6f4ea;border:1px solid #217346;color:#217346;border-radius:3px;cursor:pointer;font-size:11px;font-weight:700;z-index:20;min-width:22px;min-height:22px;line-height:1;}
+.xl-add-btn:hover{background:#217346;color:#fff;}
+.xl-col-add{bottom:-11px;left:50%;transform:translateX(-50%);}
+.xl-row-add{right:-11px;top:50%;transform:translateY(-50%);}
+.xl-corner-add{bottom:-11px;right:-11px;}
+.xl-col-head:hover .xl-col-add,.xl-row-head:hover .xl-row-add,.xl-corner:hover .xl-corner-add{display:flex;}
+
+/* ====== TOAST ====== */
+.xl-toast{position:fixed;bottom:40px;right:16px;background:#217346;color:#fff;padding:10px 18px;border-radius:6px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;}
+.xl-toast.show{opacity:1;transform:translateY(0);}
+
+/* ====== LAYOUT ====== */
+.xl-app{display:flex;flex-direction:column;height:100vh;width:100vw;}
+.xl-app>#checklist-content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* ====== ADD TYPE MODAL ====== */
+.xl-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.xl-modal{background:#fff;border-radius:8px;padding:24px;width:360px;max-width:90%;box-shadow:0 12px 40px rgba(0,0,0,.25);}
+.xl-modal h3{font-size:15px;margin-bottom:12px;color:#1a1a1a;}
+.xl-modal input,.xl-modal textarea{width:100%;padding:8px 10px;border:1px solid #ababab;border-radius:4px;font:inherit;font-size:12px;margin-bottom:8px;}
+.xl-modal input:focus,.xl-modal textarea:focus{outline:1px solid #217346;}
+.xl-modal textarea{height:60px;resize:vertical;}
+.xl-modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px;}
+.xl-modal-btns button{padding:6px 16px;border-radius:4px;border:1px solid #ababab;font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.xl-modal-btns .xl-modal-save{background:#217346;color:#fff;border-color:#1a5c38;}
+.xl-modal-btns .xl-modal-save:hover{background:#1a5c38;}
+.xl-modal-btns .xl-modal-cancel{background:#f3f3f3;}
+body.dark .xl-modal{background:#2d2d2d;color:#e0e0e0;}
+body.dark .xl-modal input,.body.dark .xl-modal textarea{background:#3a3a3a;color:#e0e0e0;border-color:#555;}
+body.dark .xl-modal-btns .xl-modal-cancel{background:#444;color:#ccc;}
+
+/* ====== ROW CONTEXT MENU ====== */
+.xl-ctx-menu{position:fixed;background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:10001;min-width:160px;padding:4px 0;display:none;}
+.xl-ctx-menu.show{display:block;}
+.xl-ctx-item{padding:7px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:#333;white-space:nowrap;}
+.xl-ctx-item:hover{background:#f0f4ff;color:#1a73e8;}
+.xl-ctx-item.danger:hover{background:#fde7e7;color:#c62828;}
+body.dark .xl-ctx-menu{background:#2d2d2d;border-color:#555;}
+body.dark .xl-ctx-item{color:#e0e0e0;}
+body.dark .xl-ctx-item:hover{background:#3a4a5a;color:#6db3f2;}
+
+/* ====== WEB VIEWER MODAL ====== */
+.xl-web-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:10000;}
+.xl-web-overlay.active{display:flex;}
+.xl-web-box{background:#fff;border-radius:8px;width:95vw;height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.4);}
+.xl-web-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f5f5f5;border-bottom:1px solid #ddd;flex-shrink:0;}
+.xl-web-bar-title{font-size:12px;font-weight:600;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;margin-right:8px;}
+.xl-web-bar-close{background:none;border:none;font-size:20px;cursor:pointer;color:#666;padding:0 6px;line-height:1;}
+.xl-web-bar-close:hover{color:#c62828;}
+.xl-web-bar-open{font-size:11px;color:#1a73e8;text-decoration:none;font-weight:600;white-space:nowrap;}
+.xl-web-bar-open:hover{text-decoration:underline;}
+.xl-web-box iframe{flex:1;border:none;width:100%;}
+body.dark .xl-web-box{background:#1e1e1e;}
+body.dark .xl-web-bar{background:#2d2d2d;border-color:#444;}
+body.dark .xl-web-bar-title{color:#e0e0e0;}
+body.dark .xl-web-bar-close{color:#aaa;}
+
+/* ====== REAL COLUMN LABELS (replace Excel-style A/B/C/D letters) ====== */
+.xl-col-head-text{font-size:10px;letter-spacing:.3px;text-transform:uppercase;}
+
+/* ====== MOBILE / SMALL SCREEN SUPPORT ======
+   The sheet previously assumed a desktop-width viewport (fixed min-widths
+   summing well past 100vw, mouse-only column resize, no touch scroll
+   momentum) so on phones the grid was effectively unusable — nothing
+   scrolled and rows/controls fell outside the visible area. */
+.xl-sheet-area{-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;}
+@media (max-width:760px){
+  html,body{overflow:auto;}
+  .xl-titlebar-text{font-size:11px;}
+  .xl-ribbon{gap:6px;padding:6px;}
+  .xl-ribbon select{min-width:110px;font-size:12px;}
+  .xl-ribbon-label{display:none;}
+  .xl-formula-bar{height:auto;flex-wrap:wrap;padding:4px 0;}
+  .xl-cell-ref{width:56px;font-size:10px;}
+  .xl-formula-input{font-size:11px;}
+  .xl-sheet-area{-webkit-overflow-scrolling:touch;}
+  .xl-corner{width:32px;min-width:32px;}
+  .xl-row-head{width:32px;min-width:32px;font-size:10px;}
+  .xl-col-head{font-size:9px;}
+  .xl-cell{font-size:13px;padding:6px 8px;}
+  .xl-pdf-btn{padding:6px 10px;font-size:11px;}
+  .xl-status-select{padding:6px 4px;font-size:11px;}
+  .xl-row-action{width:26px;height:26px;}
+  .xl-statusbar span{font-size:10px;}
+}
+</style>
+</head>
+<body>
+<div class="xl-app">
+  <!-- TITLE BAR (no window buttons) -->
+  <div class="xl-titlebar">
+    <div class="xl-titlebar-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13l2 2 4-4"/></svg>
+    </div>
+    <div class="xl-titlebar-text">Document Checklist — Excel MS</div>
+  </div>
+  <!-- RIBBON -->
+  <div class="xl-ribbon">
+    <div class="xl-ribbon-group">
+      <span class="xl-ribbon-label">Checklist:</span>
+      <select id="checklist-select" onchange="renderChecklist(this.value)"><option value="">— Select Checklist —</option></select>
+    </div>
+    <div class="xl-ribbon-sep"></div>
+    <div class="xl-ribbon-group">
+      <span class="xl-ribbon-label">Member:</span>
+      <select id="member-select" onchange="switchMember(this.value)">
+        <option value="shineil">SHINEIL</option>
+        <option value="brother">KEVIN</option>
+        <option value="father">STEPHEN</option>
+        <option value="mother">KANCHAN</option>
+      </select>
+    </div>
+    <div class="xl-ribbon-sep"></div>
+    <div class="xl-ribbon-group">
+      <span class="xl-ribbon-label" id="ribbon-progress"></span>
+    </div>
+    <div class="xl-ribbon-sep"></div>
+    <div class="xl-ribbon-group">
+      <button class="xl-ribbon-btn add" onclick="showAddTypeModal()" title="Add new checklist type"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Type</button>
+      <button class="xl-ribbon-btn add" id="add-item-btn" onclick="showAddItemModal()" title="Add item to current checklist" style="display:none;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Item</button>
+    </div>
+    <div class="xl-ribbon-right">
+      <button class="xl-ribbon-btn deploy" id="deploy-btn" onclick="deploy()" title="Deploy changes to vault"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> DEPLOY</button>
+    </div>
+  </div>
+  <!-- FORMULA BAR -->
+  <div class="xl-formula-bar">
+    <div class="xl-cell-ref" id="cell-ref">A1</div>
+    <div class="xl-formula-fx">fx</div>
+    <div class="xl-formula-input" id="formula-display">Select a checklist type to begin</div>
+  </div>
+  <!-- CONTENT -->
+  <div id="checklist-content">
+    <div id="xl-prompt" class="xl-prompt-wrap">
+      <div class="xl-prompt-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M9 14l2 2 4-4"/></svg>
+        <div class="xl-prompt-title">What checklist would you like to view?</div>
+        <div class="xl-prompt-sub">Select a checklist type from the dropdown above.</div>
+      </div>
+    </div>
+    <div id="xl-sheet-wrap" style="display:none;flex:1;overflow:hidden;flex-direction:column;">
+      <div class="xl-sheet-area" id="sheet-area">
+        <table class="xl-sheet" id="checklist-table">
+          <thead>
+            <tr>
+              <th class="xl-corner"></th>
+              <th class="xl-col-head" style="width:60px;min-width:46px;"><div class="xl-col-head-text">#</div><div class="xl-col-resize" data-idx="0"></div></th>
+              <th class="xl-col-head" style="width:26%;min-width:140px;"><div class="xl-col-head-text">Name</div><div class="xl-col-resize" data-idx="1"></div></th>
+              <th class="xl-col-head" style="width:26%;min-width:160px;"><div class="xl-col-head-text">Description</div><div class="xl-col-resize" data-idx="2"></div></th>
+              <th class="xl-col-head" style="width:130px;min-width:100px;"><div class="xl-col-head-text">Status</div><div class="xl-col-resize" data-idx="3"></div></th>
+              <th class="xl-col-head" style="width:200px;min-width:160px;"><div class="xl-col-head-text">File</div><div class="xl-col-resize" data-idx="4"></div></th>
+              <th class="xl-col-head" style="width:70px;min-width:50px;"><div class="xl-col-head-text">Actions</div></th>
+            </tr>
+          </thead>
+          <tbody id="xl-tbody"></tbody>
+        </table>
+      </div>
+      <div class="xl-sheet-tabs">
+        <div class="xl-sheet-tab active" id="tab-active">Checklist</div>
+      </div>
+    </div>
+  </div>
+  <!-- STATUS BAR -->
+  <div class="xl-statusbar">
+    <div class="xl-statusbar-left"><span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Ready</span></div>
+    <div class="xl-statusbar-right"><span id="sb-count"></span><span id="sb-done"></span></div>
+  </div>
+</div>
+<!-- TOAST -->
+<div class="xl-toast" id="toast"></div>
+
+<!-- WEB VIEWER MODAL -->
+<div class="xl-web-overlay" id="webOverlay" onclick="if(event.target===this)closeWebOverlay()">
+  <div class="xl-web-box">
+    <div class="xl-web-bar">
+      <span class="xl-web-bar-title" id="webTitle"></span>
+      <a class="xl-web-bar-open" id="webLink" href="#" target="_blank" rel="noopener">Open in new tab</a>
+      <button class="xl-web-bar-close" onclick="closeWebOverlay()">&times;</button>
+    </div>
+    <iframe id="webFrame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+  </div>
+</div>
+
+<!-- ROW CONTEXT MENU -->
+<div class="xl-ctx-menu" id="ctxMenu">
+  <div class="xl-ctx-item" onclick="ctxAddRowAbove()">Add Row Above</div>
+  <div class="xl-ctx-item" onclick="ctxAddRowBelow()">Add Row Below</div>
+  <div class="xl-ctx-item" onclick="ctxDuplicateRow()">Duplicate Row</div>
+  <div class="xl-ctx-item danger" onclick="ctxDeleteRow()">Delete Row</div>
+</div>
+
+<script>
+/* ================================================================
+   CHECKLIST DATA — Each member gets their own separate lists.
+   ================================================================ */
+const DEFAULT_CHECKLIST_DATA = {
+    "Residence Permit": [
+        { name: "Passport", desc: "Valid passport with minimum 6 months validity. Must include bio-data page copy.", pdf: "docs/passport.enc" },
+        { name: "Visa Application Form", desc: "Completed and signed residence permit application form (as per local authority template).", pdf: "docs/visa-application.enc" },
+        { name: "Proof of Residence", desc: "Rental agreement, utility bill, or property ownership document showing current address.", pdf: "docs/proof-of-residence.enc" },
+        { name: "Employment Letter", desc: "Official letter from employer confirming position, salary, and duration of employment.", pdf: "docs/employment-letter.enc" },
+        { name: "Bank Statements", desc: "Last 3-6 months of bank statements showing financial stability.", pdf: "docs/bank-statements.enc" },
+        { name: "Health Insurance", desc: "Valid health insurance policy covering the duration of stay.", pdf: "docs/health-insurance.enc" },
+        { name: "Passport Photos", desc: "Recent passport-sized photographs (as per specification - size, background, etc.).", pdf: "docs/passport-photos.enc" },
+        { name: "Police Clearance Certificate", desc: "Criminal background check from country of origin or current residence.", pdf: "docs/police-clearance.enc" },
+        { name: "Proof of Accommodation", desc: "Hotel booking, host declaration, or tenancy agreement.", pdf: "docs/proof-of-accommodation.enc" },
+        { name: "Cover Letter", desc: "Personal cover letter explaining the purpose and duration of stay.", pdf: "docs/cover-letter.enc" }
+    ],
+    "Visa D": [
+        { name: "National Visa Application Form", desc: "Long-stay (Type D) visa application form, fully completed and signed.", pdf: "docs/visa-d-application.enc" },
+        { name: "Valid Passport", desc: "Original passport with at least 2 blank pages and valid for 3+ months beyond planned stay.", pdf: "docs/passport.enc" },
+        { name: "Passport Photos", desc: "Two recent biometric passport photographs meeting Schengen/local specifications.", pdf: "docs/passport-photos.enc" },
+        { name: "Proof of Purpose", desc: "Document confirming the main purpose: work contract, university admission, family reunification letter.", pdf: "docs/proof-of-purpose.enc" },
+        { name: "Financial Means", desc: "Bank statements or sponsorship letter proving sufficient funds for the stay.", pdf: "docs/financial-means.enc" },
+        { name: "Travel Insurance", desc: "Travel medical insurance with minimum 30,000 EUR coverage valid in the destination country.", pdf: "docs/travel-insurance.enc" },
+        { name: "Accommodation Proof", desc: "Confirmed accommodation arrangement - hotel booking, rental contract, or host invitation.", pdf: "docs/accommodation-proof.enc" },
+        { name: "Flight Itinerary", desc: "Round-trip flight reservation or travel itinerary.", pdf: "docs/flight-itinerary.enc" },
+        { name: "Cover Letter", desc: "Detailed cover letter explaining trip purpose, duration, and itinerary.", pdf: "docs/cover-letter.enc" },
+        { name: "Previous Visa Copies", desc: "Copies of previous visas or travel history (if applicable).", pdf: "docs/previous-visas.enc" }
+    ]
+};
+
+/* ================================================================
+   STATUS PERSISTENCE
+   ================================================================ */
+const STATUS_KEY = 'checklistStatuses';
+const DATA_KEY = 'checklistDeployedData';
+const MEMBER_KEY = 'checklistActiveMember';
+
+function _loadAllMemberData(){ try { return JSON.parse(localStorage.getItem(DATA_KEY)||'{}'); } catch(e){ return {}; } }
+function _saveAllMemberData(d){ try { localStorage.setItem(DATA_KEY, JSON.stringify(d)); } catch(e){} }
+function _loadCurrentMemberData(){
+    var all = _loadAllMemberData();
+    var mem = localStorage.getItem(MEMBER_KEY) || 'shineil';
+    if (all[mem]) return all[mem];
+    return JSON.parse(JSON.stringify(DEFAULT_CHECKLIST_DATA));
+}
+let CHECKLIST_DATA = _loadCurrentMemberData();
+
+function loadStatuses(){ try { return JSON.parse(localStorage.getItem(STATUS_KEY)||'{}'); } catch(e){ return {}; } }
+function saveStatuses(s){ try { localStorage.setItem(STATUS_KEY, JSON.stringify(s)); } catch(e){} }
+function setStatus(type, idx, val){
+    const s = loadStatuses();
+    const mem = currentMember();
+    if (!s[mem]) s[mem] = {};
+    if (!s[mem][type]) s[mem][type] = {};
+    s[mem][type][idx] = val;
+    saveStatuses(s);
+    updateProgress(type);
+    updateStatusBar(type);
+}
+function currentMember(){ return localStorage.getItem(MEMBER_KEY) || 'shineil'; }
+function switchMember(m){
+    var all = _loadAllMemberData();
+    all[currentMember()] = CHECKLIST_DATA;
+    _saveAllMemberData(all);
+    localStorage.setItem(MEMBER_KEY, m);
+    CHECKLIST_DATA = _loadCurrentMemberData();
+    initDropdown();
+    renderChecklist(currentType);
+}
+function loadMemberStatuses(type){ const s = loadStatuses(); const mem = currentMember(); return (s[mem] && s[mem][type]) || {}; }
+
+/* ================================================================
+   DEPLOY — saves CHECKLIST_DATA to localStorage for vault to read
+   ================================================================ */
+function deploy(){
+    try {
+        var all = _loadAllMemberData();
+        all[currentMember()] = CHECKLIST_DATA;
+        _saveAllMemberData(all);
+        const btn = document.getElementById('deploy-btn');
+        btn.classList.add('deployed');
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 12 2 2 4-4"/></svg> Deployed!';
+        showToast('Deployed to vault successfully!');
+        setTimeout(() => {
+            btn.classList.remove('deployed');
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> DEPLOY';
+        }, 2500);
+    } catch(e) {
+        showToast('Deploy failed: ' + e.message);
+    }
+}
+
+function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ================================================================
+   INIT DROPDOWN
+   ================================================================ */
+function initDropdown(){
+    const sel = document.getElementById('checklist-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">\u2014 Select Checklist \u2014</option>';
+    Object.keys(CHECKLIST_DATA).forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t; opt.textContent = t;
+        sel.appendChild(opt);
+    });
+}
+
+/* ================================================================
+   PROGRESS + STATUS BAR
+   ================================================================ */
+function updateProgress(type){
+    const items = CHECKLIST_DATA[type] || [];
+    const statuses = loadMemberStatuses(type);
+    const done = items.filter((_,i) => statuses[i] === 'done').length;
+    const el = document.getElementById('ribbon-progress');
+    if (el) el.textContent = done + ' / ' + items.length + ' completed';
+}
+function updateStatusBar(type){
+    const items = CHECKLIST_DATA[type] || [];
+    const statuses = loadMemberStatuses(type);
+    const countEl = document.getElementById('sb-count');
+    const doneEl = document.getElementById('sb-done');
+    if (countEl) countEl.textContent = items.length + ' item(s)';
+    const done = items.filter((_,i) => statuses[i] === 'done').length;
+    if (doneEl) doneEl.textContent = done + ' done';
+}
+
+/* ================================================================
+   CELL REF + FORMULA BAR
+   ================================================================ */
+function updateCellRef(col, row){
+    document.getElementById('cell-ref').textContent = String.fromCharCode(64+col) + row;
+}
+function updateFormulaBar(text){
+    document.getElementById('formula-display').textContent = text;
+}
+
+/* ================================================================
+   RENDER CHECKLIST
+   ================================================================ */
+let currentType = '';
+let selectedRow = -1;
+
+function renderChecklist(type){
+    currentType = type;
+    selectedRow = -1;
+    const prompt = document.getElementById('xl-prompt');
+    const wrap = document.getElementById('xl-sheet-wrap');
+    const tbody = document.getElementById('xl-tbody');
+    const tabLabel = document.getElementById('tab-active');
+    const addBtn = document.getElementById('add-item-btn');
+
+    if (!type){
+        prompt.style.display = 'flex';
+        wrap.style.display = 'none';
+        if (addBtn) addBtn.style.display = 'none';
+        updateFormulaBar('Select a checklist type to begin');
+        return;
+    }
+    const items = CHECKLIST_DATA[type];
+    if (!items || !items.length){
+        prompt.style.display = 'flex';
+        wrap.style.display = 'none';
+        if (addBtn) addBtn.style.display = 'none';
+        return;
+    }
+    prompt.style.display = 'none';
+    wrap.style.display = 'flex';
+    if (tabLabel) tabLabel.textContent = type;
+    if (addBtn) addBtn.style.display = '';
+
+    const statuses = loadMemberStatuses(type);
+    tbody.innerHTML = '';
+
+    /* Update corner + header add buttons */
+    let corner = document.querySelector('.xl-corner');
+    if (corner && !corner.querySelector('.xl-corner-add')) {
+        corner.style.position = 'relative';
+        const ca = document.createElement('div');
+        ca.className = 'xl-add-btn xl-corner-add';
+        ca.title = 'Add Row + Column';
+        ca.textContent = '+';
+        ca.onclick = function(){ addRow(); addCol(); };
+        corner.appendChild(ca);
+    }
+
+    items.forEach((item, i) => {
+        const tr = document.createElement('tr');
+        tr.className = (i % 2 === 0) ? 'xl-row-even' : 'xl-row-odd';
+        tr.dataset.row = i;
+        const statusVal = statuses[i] || '';
+        const stClass = statusVal === 'done' ? 'st-done' : (statusVal === 'not-done' ? 'st-no' : (statusVal === 'na' ? 'st-na' : ''));
+        const docs = Array.isArray(item.docs) ? item.docs : (item.pdf ? [item.pdf] : []);
+        // File column: each attached document gets an editable path input
+        // (so paths can be corrected) plus an "Open PDF" button.
+        const docHtml = docs.length
+            ? docs.map((d, di) => {
+                const docFileName = (item._docNames && item._docNames[di] != null) ? item._docNames[di] : d.replace(/^.*[\\\/]/, '').replace(/\.(pdf|enc)$/i, '');
+                return '<div style="margin-bottom:5px;">' +
+                '<input class="xl-cell-edit xl-cell-doc-name" style="width:100%;text-align:center;font-size:10px;font-weight:700;color:#217346;margin-bottom:2px;" value="' + escAttr(docFileName) + '" data-field="docname" data-type="' + escAttr(type) + '" data-idx="' + i + '" data-doc-idx="' + di + '" onchange="onDocNameEdit(this)" title="Document name" />' +
+                '<div style="display:flex;align-items:center;gap:4px;">' +
+                '<input class="xl-cell-edit" style="flex:1;min-width:90px;font-size:11px;text-align:left;" value="' + escAttr(d) + '" data-field="docpath" data-type="' + escAttr(type) + '" data-idx="' + i + '" data-doc-idx="' + di + '" onchange="onDocPathEdit(this)" placeholder="docs/file.enc" />' +
+                '<button class="xl-pdf-btn" data-pdf="' + escAttr(d) + '" data-name="' + escAttr(item.name) + '" onclick="openPDF(this)" title="Open PDF"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> Open' + (docs.length > 1 ? ' ' + (di+1) : '') + '</button>' +
+                '<button class="xl-row-action del" title="Remove this document" onclick="removeDocFromRow(\'' + escAttr(type) + '\',' + i + ',' + di + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>' +
+                '</div></div>';
+              }).join('')
+            : '<span style="color:#999;font-size:11px;">No file</span>';
+        const addDocBtn = '<button class="xl-pdf-btn" style="background:#e6f4ea;border-color:#217346;color:#21734a;" onclick="addDocToRow(\'' + escAttr(type) + '\',' + i + ')" title="Add document"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Doc</button>';
+
+        tr.innerHTML =
+            '<td class="xl-cell xl-row-head" style="position:relative;">' + (i+1) +
+            '<div class="xl-add-btn xl-row-add" title="Add Row Below" onclick="addRowAfter(' + i + ')">+</div></td>' +
+            '<td class="xl-cell xl-cell-num">' + (i+1) + '</td>' +
+            '<td class="xl-cell xl-cell-name">' +
+                '<input class="xl-cell-edit xl-cell-doc-name" style="text-align:center;" value="' + escAttr(item.name) + '" data-field="name" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onEdit(this)" />' +
+            '</td>' +
+            '<td class="xl-cell xl-cell-desc-col">' +
+                '<input class="xl-cell-edit xl-cell-desc" style="text-align:center;" value="' + escAttr(item.desc) + '" data-field="desc" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onEdit(this)" />' +
+            '</td>' +
+            '<td class="xl-cell xl-cell-center"><select class="xl-status-select ' + stClass + '" data-type="' + escAttr(type) + '" data-idx="' + i + '" onchange="onStatusChange(this)">' +
+            '<option value=""' + (!statusVal ? ' selected' : '') + '>\u2014</option>' +
+            '<option value="done"' + (statusVal === 'done' ? ' selected' : '') + '>YES (Done)</option>' +
+            '<option value="not-done"' + (statusVal === 'not-done' ? ' selected' : '') + '>NO (Not Done)</option>' +
+            '<option value="na"' + (statusVal === 'na' ? ' selected' : '') + '>N/A</option>' +
+            '</select></td>' +
+            '<td class="xl-cell xl-cell-btn" style="white-space:normal;overflow:visible;">' + docHtml + addDocBtn + '</td>' +
+            '<td class="xl-cell"><div class="xl-row-actions">' +
+            '<button class="xl-row-action" title="More actions" onclick="openRowMenu(event,\'' + escAttr(type) + '\',' + i + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></svg></button>' +
+            '<button class="xl-row-action del" title="Delete item" onclick="deleteItem(\'' + escAttr(type) + '\',' + i + ')"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+            '</div></td>';
+
+        tr.addEventListener('click', function(e){
+            if (e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.classList.contains('xl-cell-edit')) return;
+            selectRow(tr, i, item);
+        });
+        // (openRowMenu, defined globally below, handles the tap-friendly "⋮" button)
+        tr.addEventListener('contextmenu', function(e){
+            e.preventDefault();
+            ctxRowIndex = i;
+            ctxType = type;
+            var menu = document.getElementById('ctxMenu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.classList.add('show');
+        });
+        tbody.appendChild(tr);
+    });
+
+    updateProgress(type);
+    updateStatusBar(type);
+    updateFormulaBar(type + ' \u2014 ' + items.length + ' items');
+    updateCellRef('A', 1);
+    /* Restore member select */
+    const ms = document.getElementById('member-select');
+    if (ms) ms.value = currentMember();
+}
+
+function selectRow(tr, idx, item){
+    document.querySelectorAll('#xl-tbody tr.xl-selected').forEach(r => r.classList.remove('xl-selected'));
+    tr.classList.add('xl-selected');
+    selectedRow = idx;
+    updateCellRef('B', idx + 2);
+    updateFormulaBar(item.name + ': ' + item.desc);
+}
+
+/* ================================================================
+   EDIT CELLS inline
+   ================================================================ */
+function onEdit(input){
+    const type = input.dataset.type;
+    const idx = parseInt(input.dataset.idx);
+    const field = input.dataset.field;
+    CHECKLIST_DATA[type][idx][field] = input.value;
+}
+function onDocPathEdit(input){
+    const type = input.dataset.type;
+    const idx = parseInt(input.dataset.idx);
+    const di = parseInt(input.dataset.docIdx);
+    const item = CHECKLIST_DATA[type][idx];
+    if (Array.isArray(item.docs)) item.docs[di] = input.value;
+    else if (di === 0) item.pdf = input.value;
+}
+function onDocNameEdit(input){
+    const type = input.dataset.type;
+    const idx = parseInt(input.dataset.idx);
+    const di = parseInt(input.dataset.docIdx);
+    const item = CHECKLIST_DATA[type][idx];
+    if (!item._docNames) item._docNames = {};
+    item._docNames[di] = input.value.trim();
+    renderChecklist(type);
+}
+function escHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ================================================================
+   DELETE ITEM
+   ================================================================ */
+function deleteItem(type, idx){
+    if (!confirm('Delete "' + CHECKLIST_DATA[type][idx].name + '"?')) return;
+    CHECKLIST_DATA[type].splice(idx, 1);
+    renderChecklist(type);
+    showToast('Item deleted. Click DEPLOY to push changes.');
+}
+
+/* ================================================================
+   ADD TYPE MODAL
+   ================================================================ */
+function showAddTypeModal(){
+    const overlay = document.createElement('div');
+    overlay.className = 'xl-modal-overlay';
+    overlay.onclick = function(e){ if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = '<div class="xl-modal"><h3>Add New Checklist Type</h3>' +
+        '<input id="new-type-name" placeholder="Checklist name (e.g. Work Permit)" autofocus />' +
+        '<div class="xl-modal-btns"><button class="xl-modal-cancel" onclick="this.closest(\'.xl-modal-overlay\').remove()">Cancel</button>' +
+        '<button class="xl-modal-save" onclick="addType()">Add</button></div></div>';
+    document.body.appendChild(overlay);
+    setTimeout(() => { const inp = overlay.querySelector('#new-type-name'); if(inp) inp.focus(); }, 50);
+}
+function addType(){
+    const name = (document.getElementById('new-type-name').value || '').trim();
+    if (!name) return;
+    if (CHECKLIST_DATA[name]) { showToast('Type already exists!'); return; }
+    CHECKLIST_DATA[name] = [];
+    document.querySelector('.xl-modal-overlay').remove();
+    initDropdown();
+    document.getElementById('checklist-select').value = name;
+    renderChecklist(name);
+    showToast('Type "' + name + '" added. Click DEPLOY to push to vault.');
+}
+
+/* ================================================================
+   ADD ITEM MODAL
+   ================================================================ */
+function showAddItemModal(){
+    if (!currentType) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'xl-modal-overlay';
+    overlay.onclick = function(e){ if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = '<div class="xl-modal"><h3>Add Item to ' + escHtml(currentType) + '</h3>' +
+        '<input id="new-item-name" placeholder="Document name" />' +
+        '<textarea id="new-item-desc" placeholder="Description / requirements"></textarea>' +
+        '<input id="new-item-pdf" placeholder="PDF path (e.g. docs/myfile.pdf)" />' +
+        '<div class="xl-modal-btns"><button class="xl-modal-cancel" onclick="this.closest(\'.xl-modal-overlay\').remove()">Cancel</button>' +
+        '<button class="xl-modal-save" onclick="addItem()">Add</button></div></div>';
+    document.body.appendChild(overlay);
+    setTimeout(() => { const inp = overlay.querySelector('#new-item-name'); if(inp) inp.focus(); }, 50);
+}
+function addItem(){
+    const name = (document.getElementById('new-item-name').value || '').trim();
+    const desc = (document.getElementById('new-item-desc').value || '').trim();
+    const pdf = (document.getElementById('new-item-pdf').value || '').trim();
+    if (!name) return;
+    CHECKLIST_DATA[currentType].push({ name: name, desc: desc || '-', pdf: pdf || '' });
+    document.querySelector('.xl-modal-overlay').remove();
+    renderChecklist(currentType);
+    showToast('Item added. Click DEPLOY to push to vault.');
+}
+
+/* ================================================================
+   STATUS CHANGE
+   ================================================================ */
+function onStatusChange(sel){
+    setStatus(sel.dataset.type, parseInt(sel.dataset.idx), sel.value);
+    sel.className = 'xl-status-select' + (sel.value === 'done' ? ' st-done' : (sel.value === 'not-done' ? ' st-no' : (sel.value === 'na' ? ' st-na' : '')));
+}
+
+/* ================================================================
+   ADD ROW / ADD COL / ADD DOC TO ROW
+   ================================================================ */
+function addRow(){
+    if (!currentType) return;
+    CHECKLIST_DATA[currentType].push({ name: 'New Item', desc: '', docs: [] });
+    renderChecklist(currentType);
+    showToast('Row added. Click DEPLOY to push changes.');
+}
+function addRowAfter(idx){
+    if (!currentType) return;
+    CHECKLIST_DATA[currentType].splice(idx + 1, 0, { name: 'New Item', desc: '', docs: [] });
+    renderChecklist(currentType);
+    showToast('Row added below. Click DEPLOY to push changes.');
+}
+function addCol(){
+    showToast('Column added (description field extended).');
+}
+function addDocToRow(type, idx){
+    const url = prompt('Enter document path (e.g. docs/file.enc) or R2 URL:');
+    if (!url) return;
+    const item = CHECKLIST_DATA[type][idx];
+    if (!Array.isArray(item.docs)) item.docs = item.pdf ? [item.pdf] : [];
+    item.docs.push(url);
+    delete item.pdf;
+    renderChecklist(type);
+    showToast('Document added. Click DEPLOY to push changes.');
+}
+function removeDocFromRow(type, idx, di){
+    const item = CHECKLIST_DATA[type][idx];
+    if (!item) return;
+    const docs = Array.isArray(item.docs) ? item.docs : (item.pdf ? [item.pdf] : []);
+    if (di < 0 || di >= docs.length) return;
+    if (!confirm('Remove document ' + (di+1) + ' from "' + item.name + '"?')) return;
+    docs.splice(di, 1);
+    if (docs.length === 1) { item.pdf = docs[0]; delete item.docs; }
+    else if (docs.length === 0) { delete item.pdf; delete item.docs; }
+    else item.docs = docs;
+    renderChecklist(type);
+    showToast('Document removed. Click DEPLOY to push changes.');
+}
+
+/* ================================================================
+   FX FIELD EDIT — click formula bar to edit selected cell
+   ================================================================ */
+(function(){
+    document.addEventListener('DOMContentLoaded', function(){
+        const fxEl = document.getElementById('formula-display');
+        if (!fxEl) return;
+        fxEl.style.cursor = 'text';
+        fxEl.addEventListener('click', function(){
+            if (selectedRow < 0 || !currentType) return;
+            const item = CHECKLIST_DATA[currentType][selectedRow];
+            if (!item) return;
+            const val = prompt('Edit cell content:', item.name + ': ' + item.desc);
+            if (val === null) return;
+            const parts = val.split(':');
+            item.name = (parts[0] || '').trim() || item.name;
+            item.desc = (parts.slice(1).join(':') || '').trim() || item.desc;
+            renderChecklist(currentType);
+        });
+    });
+})();
+
+/* ================================================================
+   OPEN PDF / WEB LINKS
+   ================================================================ */
+function openPDF(btn){
+    const pdfPath = btn.dataset.pdf;
+    const name = btn.dataset.name;
+    if (/^https?:\/\//i.test(pdfPath)) {
+        document.getElementById('webTitle').textContent = name || pdfPath;
+        document.getElementById('webLink').href = pdfPath;
+        document.getElementById('webFrame').src = pdfPath;
+        document.getElementById('webOverlay').classList.add('active');
+    } else if (window.parent && window.parent !== window){
+        window.parent.postMessage({ type: 'openChecklistPDF', pdf: pdfPath, name: name }, '*');
+    } else {
+        showToast('PDF: ' + name + ' — ' + pdfPath);
+    }
+}
+function closeWebOverlay(){
+    document.getElementById('webFrame').src = '';
+    document.getElementById('webOverlay').classList.remove('active');
+}
+
+/* ================================================================
+   ROW CONTEXT MENU
+   ================================================================ */
+var ctxRowIndex = -1;
+var ctxType = '';
+
+function ctxAddRowAbove(){
+    hideCtxMenu();
+    if (!ctxType || ctxRowIndex < 0) return;
+    CHECKLIST_DATA[ctxType].splice(ctxRowIndex, 0, { name: 'New Item', desc: '', docs: [] });
+    renderChecklist(ctxType);
+    showToast('Row added above. Click DEPLOY to push changes.');
+}
+function ctxAddRowBelow(){
+    hideCtxMenu();
+    if (!ctxType || ctxRowIndex < 0) return;
+    CHECKLIST_DATA[ctxType].splice(ctxRowIndex + 1, 0, { name: 'New Item', desc: '', docs: [] });
+    renderChecklist(ctxType);
+    showToast('Row added below. Click DEPLOY to push changes.');
+}
+function ctxDuplicateRow(){
+    hideCtxMenu();
+    if (!ctxType || ctxRowIndex < 0) return;
+    var orig = CHECKLIST_DATA[ctxType][ctxRowIndex];
+    var copy = JSON.parse(JSON.stringify(orig));
+    copy.name = copy.name + ' (copy)';
+    CHECKLIST_DATA[ctxType].splice(ctxRowIndex + 1, 0, copy);
+    renderChecklist(ctxType);
+    showToast('Row duplicated. Click DEPLOY to push changes.');
+}
+function ctxDeleteRow(){
+    hideCtxMenu();
+    if (!ctxType || ctxRowIndex < 0) return;
+    var item = CHECKLIST_DATA[ctxType][ctxRowIndex];
+    if (!confirm('Delete "' + (item.name || 'row') + '"?')) return;
+    CHECKLIST_DATA[ctxType].splice(ctxRowIndex, 1);
+    renderChecklist(ctxType);
+    showToast('Row deleted. Click DEPLOY to push changes.');
+}
+function hideCtxMenu(){
+    document.getElementById('ctxMenu').classList.remove('show');
+}
+
+/* Mobile/desktop-friendly row menu opener — triggered by tapping the "⋮"
+   button, since phones never fire a 'contextmenu' event on tap. Positions
+   the menu near the button and clamps it inside the viewport so it isn't
+   cut off on small screens. */
+function openRowMenu(e, type, idx){
+    e.stopPropagation();
+    ctxRowIndex = idx;
+    ctxType = type;
+    var menu = document.getElementById('ctxMenu');
+    var btn = e.currentTarget.getBoundingClientRect();
+    menu.classList.add('show'); // show first so offsetWidth/Height are measurable
+    var mw = menu.offsetWidth || 160;
+    var mh = menu.offsetHeight || 140;
+    var left = Math.min(btn.left, window.innerWidth - mw - 8);
+    var top = Math.min(btn.bottom + 4, window.innerHeight - mh - 8);
+    menu.style.left = Math.max(8, left) + 'px';
+    menu.style.top = Math.max(8, top) + 'px';
+}
+document.addEventListener('click', hideCtxMenu);
+document.addEventListener('contextmenu', function(e){ if (!e.target.closest('#xl-tbody')) hideCtxMenu(); });
+
+/* ================================================================
+   COLUMN RESIZE
+   ================================================================ */
+(function(){
+    document.addEventListener('mousedown', function(e){
+        const h = e.target.closest('.xl-col-resize');
+        if (!h) return;
+        e.preventDefault();
+        h.classList.add('active');
+        const th = h.closest('th');
+        const startX = e.pageX, startW = th.offsetWidth;
+        function onMove(ev){ th.style.width = Math.max(46, startW + ev.pageX - startX) + 'px'; }
+        function onUp(){ h.classList.remove('active'); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+})();
+
+/* ================================================================
+   DARK MODE
+   ================================================================ */
+(function(){
+    if (window.parent && window.parent !== window && window.parent.document.body.classList.contains('dark-mode')){
+        document.body.classList.add('dark');
+    }
+})();
+
+/* ================================================================
+   INIT
+   ================================================================ */
+initDropdown();
+</script>
+</body>
+</html>

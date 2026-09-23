@@ -1,0 +1,63 @@
+{
+  "_instructions": {
+    "howToUse": "Add one object per date (YYYY-MM-DD). The generator finds today's entry automatically, or you can pick a date manually in the tool.",
+    "fields": {
+      "date": "YYYY-MM-DD — the date this verse is posted",
+      "reference": "e.g. 'Matthew 11:30' — shown top-left",
+      "quote": "The verse text. Use \\n for a manual line break. Wrap 1-3 words with **like this** to make them the large accent color (matches the 'YOKE' / 'LIGHT' style in the sample).",
+      "day": "Weekday label for the side ribbon, e.g. 'Thursday'",
+      "greeting": "Bottom-right message, e.g. 'Good Morning, God Bless You'",
+      "includeJesus": "true/false — whether the AI background image should depict Jesus (as a warm, tasteful, non-photoreal illustrated/silhouette figure). Set false for scenery-only days (sunrise, nature, a person praying from behind, etc).",
+      "scene": "Short plain description of the background scene, e.g. 'a young man sitting on a rooftop ledge at sunrise, city skyline below, birds and a feather floating'",
+      "mood": "1-3 words for lighting/mood, e.g. 'golden hour, warm, peaceful'",
+      "imagePromptOverride": "OPTIONAL. If set, this exact text is sent to the image generator instead of the auto-built prompt from scene/mood/includeJesus."
+    },
+    "notes": [
+      "Keep 'scene' generic and reverent — no named/copyrighted characters, no real people.",
+      "For includeJesus:true days, the prompt intentionally asks for a soft, painterly/illustrative treatment (robed figure, warm light) rather than a hyper-real photo, which tends to look more respectful and on-brand.",
+      "Costs: images are generated for free via Pollinations (no API key). If you switch to a paid image API later, imagePromptOverride is the field to feed it."
+    ]
+  },
+  "verses": [
+    {
+      "date": "2026-07-16",
+      "reference": "Matthew 11:30",
+      "quote": "'Yes, my **yoke** is easy\\nand my burden **light**.'",
+      "day": "Thursday",
+      "greeting": "Good Morning, God Bless You",
+      "includeJesus": false,
+      "scene": "a young man sitting on a rooftop ledge at sunrise, city skyline below, birds and a single white feather floating in the sky",
+      "mood": "golden hour, warm, peaceful, soft haze"
+    },
+    {
+      "date": "2026-07-17",
+      "reference": "John 8:12",
+      "quote": "'I am the **light** of the world.\\nWhoever follows me will\\nnever walk in darkness.'",
+      "day": "Friday",
+      "greeting": "Good Morning, God Bless You",
+      "includeJesus": true,
+      "scene": "a robed figure with a soft halo of light walking down a quiet sunlit path through tall trees, gentle rays breaking through the canopy",
+      "mood": "soft painterly illustration, warm backlight, reverent, gentle"
+    },
+    {
+      "date": "2026-07-18",
+      "reference": "Psalm 23:1",
+      "quote": "'The Lord is my **shepherd**;\\nI shall not **want**.'",
+      "day": "Saturday",
+      "greeting": "Good Morning, God Bless You",
+      "includeJesus": false,
+      "scene": "a green rolling hillside meadow at dawn with a small flock of sheep grazing near a wooden fence, mist in the distant valley",
+      "mood": "pastoral, soft morning light, tranquil"
+    },
+    {
+      "date": "2026-07-19",
+      "reference": "Philippians 4:13",
+      "quote": "'I can do all things\\nthrough Christ who\\n**strengthens** me.'",
+      "day": "Sunday",
+      "greeting": "Good Morning, God Bless You",
+      "includeJesus": false,
+      "scene": "a woman standing at the top of a mountain trail at sunrise, arms slightly open, valley and clouds below",
+      "mood": "epic golden light, uplifting, wide open sky"
+    }
+  ]
+}

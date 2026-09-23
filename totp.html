@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOTP Code Generator — Online Vault</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --accent: #2563eb;
+      --accent2: #1d4ed8;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #22c55e;
+      --shadow: 0 10px 25px rgba(0,0,0,.08);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html,body {
+      width:100%; min-height:100vh;
+      background:var(--bg);
+      font-family:"Segoe UI",system-ui,sans-serif;
+      color:var(--text);
+      display:flex; align-items:center; justify-content:center;
+      padding:24px 16px;
+    }
+    @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes floating { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+    @keyframes glowPulse { 0%,100%{box-shadow:var(--shadow)} 50%{box-shadow:0 10px 40px rgba(37,99,235,.15)} }
+    @keyframes digitPop { 0%{transform:scale(.85);opacity:.4} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+
+    .page-bg { position:fixed;inset:0;z-index:0;background:linear-gradient(135deg,#eff6ff,#f8fafc,#fff); }
+    .card {
+      position:relative;z-index:1;
+      width:100%;max-width:460px;
+      background:rgba(255,255,255,.96);
+      backdrop-filter:blur(18px);
+      border:1px solid rgba(255,255,255,.4);
+      border-radius:28px;padding:36px 32px 32px;
+      box-shadow:var(--shadow);text-align:center;
+      animation:fadeInUp .7s ease,glowPulse 5s infinite;
+    }
+    .logo { font-size:50px;margin-bottom:12px;display:block;animation:floating 5s ease-in-out infinite; }
+    h2 { font-size:1.3rem;font-weight:800;color:var(--text);letter-spacing:.3px;margin-bottom:6px; }
+    .subtitle { color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:22px; }
+
+    /* ── Input row ── */
+    .secret-row { display:flex;gap:8px;margin-bottom:6px;align-items:center; }
+    .secret-row input {
+      flex:1;border:1px solid var(--border);border-radius:14px;
+      padding:11px 14px;font-size:13px;font-family:monospace;
+      letter-spacing:.07em;color:var(--text);background:#f8fafc;
+      outline:none;transition:border-color .25s,box-shadow .25s;text-transform:uppercase;
+    }
+    .secret-row input:focus { border-color:var(--accent);box-shadow:0 0 0 4px rgba(37,99,235,.1); }
+    .icon-btn {
+      width:42px;height:42px;flex-shrink:0;
+      border:1px solid var(--border);border-radius:12px;
+      background:white;cursor:pointer;font-size:15px;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .2s,transform .15s;
+    }
+    .icon-btn:hover { background:#eff6ff; }
+    .icon-btn:active { transform:scale(.95); }
+
+    /* ── Method buttons ── */
+    .method-row { display:flex;gap:6px;margin-bottom:16px; }
+    .method-btn {
+      flex:1;padding:8px 4px;font-size:11px;font-weight:700;
+      border:1px solid var(--border);border-radius:12px;
+      background:white;cursor:pointer;color:var(--muted);
+      transition:all .2s;line-height:1.4;
+    }
+    .method-btn:hover { border-color:var(--accent);color:var(--accent);background:#eff6ff; }
+    .method-btn .micon { font-size:18px;display:block;margin-bottom:3px; }
+
+    /* ── Saved key notice ── */
+    .saved-notice {
+      display:none;
+      background:#f0fdf4;border:1px solid #86efac;
+      border-radius:12px;padding:10px 14px;
+      font-size:12px;color:#15803d;font-weight:600;
+      margin-bottom:14px;
+      align-items:center;justify-content:space-between;gap:8px;
+    }
+    .saved-notice button {
+      font-size:11px;color:#15803d;background:none;border:none;
+      cursor:pointer;text-decoration:underline;white-space:nowrap;
+    }
+
+    /* ── QR scan overlay ── */
+    .qr-overlay {
+      display:none;
+      position:fixed;inset:0;z-index:999;
+      background:rgba(0,0,0,.75);
+      align-items:center;justify-content:center;
+      flex-direction:column;gap:16px;
+    }
+    .qr-overlay.active { display:flex; }
+    .qr-box {
+      background:white;border-radius:20px;
+      padding:24px;text-align:center;width:90%;max-width:360px;
+    }
+    .qr-box h3 { font-size:15px;font-weight:700;margin-bottom:8px; }
+    .qr-box p  { font-size:12px;color:var(--muted);margin-bottom:14px; }
+    #qrVideo { width:100%;border-radius:12px;background:#000;max-height:260px;object-fit:cover; }
+    #qrCanvas { display:none; }
+    .qr-close {
+      padding:10px 28px;border:none;border-radius:12px;
+      background:var(--danger);color:white;font-weight:700;
+      cursor:pointer;font-size:13px;margin-top:4px;
+    }
+    .qr-status { font-size:12px;color:var(--muted);margin-top:8px;min-height:18px; }
+
+    /* ── Countdown ring ── */
+    .ring-wrap { position:relative;width:80px;height:80px;margin:0 auto 18px; }
+    .ring-wrap svg { display:block; }
+    .ring-center {
+      position:absolute;inset:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;pointer-events:none;
+    }
+    .ring-sec { font-size:18px;font-weight:800;font-family:monospace;color:var(--accent);transition:color .4s;line-height:1; }
+    .ring-label { font-size:9px;color:var(--muted);margin-top:1px;letter-spacing:.04em; }
+
+    /* ── Progress bar ── */
+    .progress-track { height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:24px; }
+    .progress-fill  { height:100%;border-radius:99px;background:var(--accent);transition:width 1s linear,background .4s; }
+
+    /* ── Digit display ── */
+    .code-row { display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:10px; }
+    .digit-group { display:flex;gap:5px; }
+    .sep { font-size:24px;color:#cbd5e1;font-weight:300;align-self:center;margin:0 2px; }
+    .digit {
+      width:42px;height:56px;border-radius:12px;
+      border:1.5px solid var(--border);background:#f8fafc;
+      display:flex;align-items:center;justify-content:center;
+      font-size:25px;font-weight:800;font-family:"Courier New",monospace;
+      color:var(--text);transition:border-color .3s,background .3s,color .3s;user-select:all;
+    }
+    .digit.fresh  { animation:digitPop .35s cubic-bezier(.34,1.56,.64,1);border-color:var(--accent);background:#eff6ff;color:var(--accent); }
+    .digit.warn   { border-color:var(--warning);color:var(--warning);background:#fffbeb; }
+    .digit.danger { border-color:var(--danger);color:var(--danger);background:#fef2f2; }
+
+    .code-hint { font-size:11px;color:var(--muted);margin-bottom:22px;letter-spacing:.02em; }
+
+    /* ── Buttons ── */
+    .btn-copy {
+      width:100%;border:none;border-radius:16px;padding:14px;
+      font-weight:800;letter-spacing:.4px;color:white;cursor:pointer;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      transition:.25s;box-shadow:0 8px 20px rgba(37,99,235,.2);
+      font-size:14px;margin-bottom:10px;
+    }
+    .btn-copy:hover { transform:translateY(-2px); }
+    .btn-copy:active { transform:scale(.98); }
+    .btn-copy.copied { background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 8px 20px rgba(22,163,74,.2); }
+
+    .back-link { font-size:12px;color:var(--muted);cursor:pointer;background:none;border:none;transition:color .2s; }
+    .back-link:hover { color:var(--accent); }
+
+    .status-strip {
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin-top:18px;padding-top:16px;border-top:1px solid var(--border);
+      font-size:11px;color:var(--muted);
+    }
+    .status-dot { width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(34,197,94,.15);flex-shrink:0; }
+
+    .placeholder { padding:24px 0 8px;font-size:13px;color:var(--muted);line-height:1.7; }
+    .placeholder span { font-size:30px;display:block;margin-bottom:10px; }
+    .err-msg { display:none;font-size:12px;color:var(--danger);margin-bottom:10px;font-weight:600; }
+
+    /* hidden file input */
+    #qrFileInput { display:none; }
+
+    @media(max-width:400px){
+      .card { padding:28px 18px 24px; }
+      .digit { width:36px;height:50px;font-size:21px; }
+      .method-btn { font-size:10px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-bg"></div>
+
+<!-- QR scan overlay -->
+<div class="qr-overlay" id="qrOverlay">
+  <div class="qr-box">
+    <h3>📷 Scan QR Code</h3>
+    <p>Point camera at your TOTP QR code<br>(otpauth:// format)</p>
+    <video id="qrVideo" autoplay playsinline muted></video>
+    <canvas id="qrCanvas"></canvas>
+    <div class="qr-status" id="qrStatus">Starting camera…</div>
+    <button class="qr-close" onclick="closeQR()">✕ Cancel</button>
+  </div>
+</div>
+
+<!-- Hidden file picker for QR image upload -->
+<input type="file" id="qrFileInput" accept="image/*" onchange="handleQRFile(event)">
+
+<div class="card">
+  <span class="logo">🔐</span>
+  <h2>TOTP Code Generator</h2>
+  <p class="subtitle">8-digit code · refreshes every 60 seconds</p>
+
+  <!-- Saved key notice -->
+  <div class="saved-notice" id="savedNotice">
+    🔑 Using saved key &nbsp;<button onclick="forgetKey()">Forget key</button>
+  </div>
+
+  <!-- Secret input -->
+  <div class="secret-row">
+    <input type="password" id="secretInput" placeholder="Paste Base32 key…"
+           spellcheck="false" autocomplete="off" oninput="onSecretChange()">
+    <button class="icon-btn" onclick="toggleVis()" id="toggleBtn" title="Show / hide">👁️</button>
+  </div>
+  <div class="err-msg" id="errMsg">Invalid key — use Base32 characters (A–Z, 2–7)</div>
+
+  <!-- Three convenience methods -->
+  <div class="method-row">
+    <button class="method-btn" onclick="openQRScan()">
+      <span class="micon">📷</span>Scan QR
+    </button>
+    <button class="method-btn" onclick="document.getElementById('qrFileInput').click()">
+      <span class="micon">🖼️</span>Upload QR
+    </button>
+    <button class="method-btn" onclick="saveKey()" id="saveBtn">
+      <span class="micon">💾</span>Save key
+    </button>
+  </div>
+
+  <!-- Code area (shown after valid secret) -->
+  <div id="codeArea" style="display:none;">
+    <div class="ring-wrap">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="34" fill="none" stroke="#e2e8f0" stroke-width="6"/>
+        <circle id="ringArc" cx="40" cy="40" r="34" fill="none"
+                stroke="#2563eb" stroke-width="6"
+                stroke-dasharray="213.6" stroke-dashoffset="0"
+                stroke-linecap="round" transform="rotate(-90 40 40)"
+                style="transition:stroke-dashoffset 1s linear,stroke .4s;"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-sec" id="ringSec">60</div>
+        <div class="ring-label">seconds</div>
+      </div>
+    </div>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progFill" style="width:100%;"></div>
+    </div>
+
+    <div class="code-row">
+      <div class="digit-group">
+        <div class="digit" id="d0">-</div>
+        <div class="digit" id="d1">-</div>
+        <div class="digit" id="d2">-</div>
+        <div class="digit" id="d3">-</div>
+      </div>
+      <div class="sep">·</div>
+      <div class="digit-group">
+        <div class="digit" id="d4">-</div>
+        <div class="digit" id="d5">-</div>
+        <div class="digit" id="d6">-</div>
+        <div class="digit" id="d7">-</div>
+      </div>
+    </div>
+
+    <div class="code-hint">Code valid for <strong id="hintSec">60</strong>s · tap to copy</div>
+    <button class="btn-copy" id="copyBtn" onclick="copyCode()">📋 COPY CODE</button>
+    <button class="back-link" onclick="resetView()">← Use a different key</button>
+
+    <div class="status-strip">
+      <div class="status-dot"></div>
+      🔒 Codes never leave this device · Powered by SKM
+    </div>
+  </div>
+
+  <!-- Placeholder -->
+  <div class="placeholder" id="placeholder">
+    <span>🗝️</span>
+    Paste your Base32 key above, scan a QR code,<br>
+    or upload a QR screenshot to start generating codes.
+  </div>
+</div>
+
+<!-- jsQR for QR decoding -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<script>
+/* ══════════════ TOTP ENGINE (RFC 6238) ══════════════ */
+function base32Decode(input) {
+  const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  const s = input.toUpperCase().replace(/=+$/, '').replace(/\s/g, '');
+  let bits = 0, val = 0;
+  const out = [];
+  for (const ch of s) {
+    const idx = B32.indexOf(ch);
+    if (idx < 0) throw new Error('Invalid Base32 char: ' + ch);
+    val = (val << 5) | idx;
+    bits += 5;
+    if (bits >= 8) { bits -= 8; out.push((val >>> bits) & 0xff); }
+  }
+  return new Uint8Array(out);
+}
+
+function counterToBytes(counter) {
+  const buf = new Uint8Array(8);
+  let c = BigInt(counter);
+  for (let i = 7; i >= 0; i--) { buf[i] = Number(c & 0xffn); c >>= 8n; }
+  return buf;
+}
+
+async function hmacSHA1(keyBytes, msgBytes) {
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name:'HMAC', hash:'SHA-1' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, msgBytes));
+}
+
+async function generateTOTP(secret, digits=8, period=60) {
+  const keyBytes = base32Decode(secret);
+  const counter  = Math.floor(Date.now() / 1000 / period);
+  const hmac     = await hmacSHA1(keyBytes, counterToBytes(counter));
+  const offset   = hmac[19] & 0x0f;
+  const binCode  = ((hmac[offset] & 0x7f) << 24) | ((hmac[offset+1] & 0xff) << 16)
+                 | ((hmac[offset+2] & 0xff) <<  8) |  (hmac[offset+3] & 0xff);
+  return String(binCode % Math.pow(10, digits)).padStart(digits, '0');
+}
+
+/* ══════════════ ENCRYPTED STORAGE ══════════════ */
+const STORAGE_KEY = 'vault_totp_secret';
+const SALT_KEY    = 'vault_totp_salt';
+const PBKDF2_ITER = 100000;
+
+async function _totpDeriveKey(salt) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode('vault-totp-v1'), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: PBKDF2_ITER, hash: 'SHA-256' },
+    keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+}
+
+async function _encryptSecret(plaintext) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key  = await _totpDeriveKey(salt);
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const enc  = new TextEncoder();
+  const ct   = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plaintext)));
+  const combined = new Uint8Array(12 + 16 + ct.length);
+  combined.set(iv, 0); combined.set(salt, 12); combined.set(ct, 28);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function _decryptSecret(stored) {
+  try {
+    const combined = new Uint8Array(atob(stored).split('').map(c => c.charCodeAt(0)));
+    const iv   = combined.slice(0, 12);
+    const salt = combined.slice(12, 28);
+    const ct   = combined.slice(28);
+    const key  = await _totpDeriveKey(salt);
+    const dec  = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct));
+    return new TextDecoder().decode(dec);
+  } catch(e) { return null; }
+}
+
+/* ══════════════ STATE ══════════════ */
+const PERIOD = 60, CIRC = 213.6;
+let _secret = '', _timerID = null, _lastBucket = -1;
+
+/* ══════════════ SAVED KEY ══════════════ */
+async function loadSavedKey() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const decrypted = await _decryptSecret(saved);
+      if (decrypted && isValidBase32(decrypted)) {
+        document.getElementById('savedNotice').style.display = 'flex';
+        document.getElementById('secretInput').value = decrypted;
+        _secret = decrypted;
+        document.getElementById('placeholder').style.display = 'none';
+        document.getElementById('codeArea').style.display = 'block';
+        startEngine();
+      }
+    }
+  } catch(e) {}
+}
+
+async function saveKey() {
+  const raw = document.getElementById('secretInput').value.trim().toUpperCase().replace(/\s/g,'');
+  if (!raw || !isValidBase32(raw)) {
+    showErr('Enter a valid key first before saving.');
+    return;
+  }
+  try {
+    const encrypted = await _encryptSecret(raw);
+    localStorage.setItem(STORAGE_KEY, encrypted);
+    document.getElementById('savedNotice').style.display = 'flex';
+    const btn = document.getElementById('saveBtn');
+    btn.innerHTML = '<span class="micon">✅</span>Saved!';
+    setTimeout(() => { btn.innerHTML = '<span class="micon">💾</span>Save key'; }, 2000);
+  } catch(e) { showErr('Could not save — storage may be blocked.'); }
+}
+
+function forgetKey() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+  document.getElementById('savedNotice').style.display = 'none';
+  resetView();
+}
+
+/* ══════════════ SECRET HANDLING ══════════════ */
+function isValidBase32(s) {
+  return /^[A-Z2-7\s=]+$/i.test(s.trim()) && s.replace(/[\s=]/g,'').length >= 8;
+}
+
+function showErr(msg) {
+  const el = document.getElementById('errMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function onSecretChange() {
+  const raw = document.getElementById('secretInput').value.trim();
+  document.getElementById('errMsg').style.display = 'none';
+  if (!raw) { resetView(); return; }
+  if (!isValidBase32(raw)) { showErr('Invalid key — use Base32 characters (A–Z, 2–7)'); return; }
+  _secret = raw.toUpperCase().replace(/\s/g,'');
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('codeArea').style.display = 'block';
+  startEngine();
+}
+
+function applySecret(secret) {
+  _secret = secret.toUpperCase().replace(/\s/g,'');
+  document.getElementById('secretInput').value = secret;
+  document.getElementById('errMsg').style.display = 'none';
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('codeArea').style.display = 'block';
+  startEngine();
+}
+
+function resetView() {
+  stopEngine();
+  _secret = '';
+  document.getElementById('secretInput').value = '';
+  document.getElementById('codeArea').style.display = 'none';
+  document.getElementById('placeholder').style.display = 'block';
+  document.getElementById('errMsg').style.display = 'none';
+}
+
+function toggleVis() {
+  const inp = document.getElementById('secretInput');
+  const btn = document.getElementById('toggleBtn');
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁️'; }
+}
+
+/* ══════════════ QR CODE SCANNING ══════════════ */
+let _qrStream = null, _qrRafID = null;
+
+function openQRScan() {
+  document.getElementById('qrOverlay').classList.add('active');
+  document.getElementById('qrStatus').textContent = 'Starting camera…';
+  const video = document.getElementById('qrVideo');
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      _qrStream = stream;
+      video.srcObject = stream;
+      video.play();
+      document.getElementById('qrStatus').textContent = 'Point at your TOTP QR code…';
+      _qrRafID = requestAnimationFrame(scanQRFrame);
+    })
+    .catch(() => {
+      document.getElementById('qrStatus').textContent = '❌ Camera access denied. Try "Upload QR" instead.';
+    });
+}
+
+function scanQRFrame() {
+  const video  = document.getElementById('qrVideo');
+  const canvas = document.getElementById('qrCanvas');
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(img.data, img.width, img.height);
+    if (code && code.data) {
+      const secret = extractSecretFromOTPAuth(code.data);
+      if (secret) {
+        closeQR();
+        applySecret(secret);
+        return;
+      }
+    }
+  }
+  _qrRafID = requestAnimationFrame(scanQRFrame);
+}
+
+function closeQR() {
+  document.getElementById('qrOverlay').classList.remove('active');
+  if (_qrRafID) { cancelAnimationFrame(_qrRafID); _qrRafID = null; }
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
+}
+
+/* ══════════════ QR IMAGE UPLOAD ══════════════ */
+function handleQRFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imgData.data, imgData.width, imgData.height);
+      if (code && code.data) {
+        const secret = extractSecretFromOTPAuth(code.data);
+        if (secret) { applySecret(secret); return; }
+      }
+      showErr('No TOTP QR code found in that image. Try a clearer screenshot.');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+/* Parse otpauth://totp/...?secret=XXX&... */
+function extractSecretFromOTPAuth(text) {
+  try {
+    if (text.startsWith('otpauth://')) {
+      const url    = new URL(text);
+      const secret = url.searchParams.get('secret');
+      if (secret && isValidBase32(secret)) return secret;
+    }
+    if (isValidBase32(text.trim())) return text.trim();
+  } catch(e) {}
+  return null;
+}
+
+/* ══════════════ ENGINE ══════════════ */
+function setDigits(code, cls) {
+  for (let i = 0; i < 8; i++) {
+    const el = document.getElementById('d' + i);
+    el.textContent = code[i] ?? '-';
+    el.className   = 'digit ' + cls;
+  }
+}
+
+function applyTimerState(sec) {
+  const pct    = sec / PERIOD;
+  const ring   = document.getElementById('ringArc');
+  const secEl  = document.getElementById('ringSec');
+  const prog   = document.getElementById('progFill');
+  const hint   = document.getElementById('hintSec');
+  ring.setAttribute('stroke-dashoffset', (CIRC * (1 - pct)).toFixed(3));
+  secEl.textContent = sec;
+  if (hint) hint.textContent = sec;
+  prog.style.width = (pct * 100).toFixed(2) + '%';
+  const [colour, dCls] = sec <= 10 ? ['#ef4444','danger'] : sec <= 20 ? ['#f59e0b','warn'] : ['#2563eb',''];
+  ring.setAttribute('stroke', colour);
+  secEl.style.color  = colour;
+  prog.style.background = colour;
+  for (let i = 0; i < 8; i++) {
+    const d = document.getElementById('d' + i);
+    if (!d.classList.contains('fresh')) d.className = 'digit ' + dCls;
+  }
+}
+
+async function refreshCode() {
+  try {
+    const code = await generateTOTP(_secret, 8, PERIOD);
+    setDigits(code, 'fresh');
+    setTimeout(() => { for (let i=0;i<8;i++) document.getElementById('d'+i).classList.remove('fresh'); }, 500);
+  } catch(e) { setDigits('--------',''); showErr('Bad key: ' + e.message); }
+}
+
+function startEngine() {
+  stopEngine(); _lastBucket = -1;
+  async function tick() {
+    const now = Math.floor(Date.now() / 1000);
+    const sec = PERIOD - (now % PERIOD);
+    const bucket = Math.floor(now / PERIOD);
+    if (bucket !== _lastBucket) { _lastBucket = bucket; await refreshCode(); }
+    applyTimerState(sec);
+  }
+  tick();
+  _timerID = setInterval(tick, 1000);
+}
+
+function stopEngine() {
+  if (_timerID) { clearInterval(_timerID); _timerID = null; }
+}
+
+/* ══════════════ COPY ══════════════ */
+async function copyCode() {
+  const code = Array.from({length:8},(_,i)=>document.getElementById('d'+i).textContent).join('');
+  if (code.includes('-')) return;
+  try { await navigator.clipboard.writeText(code); }
+  catch { const ta=document.createElement('textarea');ta.value=code;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta); }
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = '✅ COPIED!'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent='📋 COPY CODE'; btn.classList.remove('copied'); }, 2000);
+}
+
+document.getElementById('secretInput').addEventListener('keydown', e => { if(e.key==='Enter') onSecretChange(); });
+
+/* Load saved key on startup */
+loadSavedKey();
+</script>
+</body>
+</html>

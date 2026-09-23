@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submission of Important Updated Documents and Access to Online Vault</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 11pt;
+            color: #2d3748;
+            line-height: 1.6;
+            /* Institutional subtle diamond/grid pattern background */
+            background-color: #f0f4f8;
+            background-image: radial-gradient(#cbd5e0 1px, transparent 1px), radial-gradient(#cbd5e0 1px, #f0f4f8 1px);
+            background-size: 24px 24px;
+            background-position: 0 0, 12px 12px;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .email-card {
+            max-width: 750px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            /* Sophisticated rounded corners with internal framing */
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(26, 54, 93, 0.08);
+            border: 1px solid #cbd5e0;
+            outline: 4px solid rgba(26, 54, 93, 0.03);
+            outline-offset: -1px;
+        }
+        .email-header {
+            background-color: #1a365d;
+            background-image: linear-gradient(135deg, #1a365d 0%, #2a4365 100%);
+            color: #ffffff;
+            padding: 35px 40px;
+            border-bottom: 4px solid #d69e2e; /* Gold academic accent line */
+        }
+        .meta-table {
+            width: 100%;
+            max-width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+        .meta-table td {
+            padding: 4px 0;
+            vertical-align: top;
+            color: #e2e8f0;
+            font-size: 10.5pt;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        .meta-label {
+            font-weight: 600;
+            color: #f6ad55;
+            width: 80px;
+            white-space: nowrap;
+        }
+        .subject-line {
+            font-size: 13.5pt;
+            font-weight: bold;
+            color: #ffffff;
+            margin-top: 5px;
+            letter-spacing: 0.3px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        .email-body {
+            padding: 40px;
+            background-color: #ffffff;
+        }
+        .salutation {
+            font-size: 12.5pt;
+            font-weight: bold;
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+        .paragraph {
+            margin-bottom: 18px;
+            text-align: justify;
+            color: #4a5568;
+        }
+        .document-list {
+            list-style-type: none;
+            padding-left: 0;
+            margin: 30px 0;
+        }
+        .document-item {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.01);
+        }
+        .document-title {
+            font-weight: 700;
+            color: #2b6cb0;
+            font-size: 11.5pt;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #edf2f7;
+            padding-bottom: 6px;
+        }
+        .document-desc {
+            color: #4a5568;
+            text-align: justify;
+        }
+        .vault-box {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #3182ce;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .vault-title {
+            font-size: 12.5pt;
+            font-weight: bold;
+            color: #2b6cb0;
+            margin-bottom: 12px;
+        }
+        .step-title {
+            font-weight: bold;
+            color: #2d3748;
+            margin-top: 15px;
+            margin-bottom: 6px;
+            font-size: 11pt;
+        }
+        .link-text {
+            color: #3182ce;
+            word-break: break-all;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .link-text:hover {
+            text-decoration: underline;
+        }
+        .info-list {
+            margin: 10px 0 15px 20px;
+            padding-left: 0;
+            color: #4a5568;
+        }
+        .info-list li {
+            margin-bottom: 6px;
+        }
+        .note-box {
+            background-color: #fffaf0;
+            border: 1px solid #feebc8;
+            border-left: 4px solid #dd6b20;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 10.5pt;
+        }
+        .note-title {
+            font-weight: bold;
+            color: #dd6b20;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-size: 9.5pt;
+            letter-spacing: 0.5px;
+        }
+        .note-desc {
+            color: #744210;
+            text-align: justify;
+        }
+        .desktop-notice {
+            font-size: 9.5pt;
+            color: #718096;
+            font-style: italic;
+            margin-top: 8px;
+        }
+        .signature-section {
+            margin-top: 40px;
+            border-top: 2px solid #edf2f7;
+            padding-top: 30px;
+            color: #4a5568;
+        }
+        .signature-name {
+            font-size: 12.5pt;
+            font-weight: bold;
+            color: #1a365d;
+            margin-top: 5px;
+        }
+        .address-block {
+            margin-top: 25px;
+            font-size: 10pt;
+            color: #718096;
+            line-height: 1.5;
+            background-color: #f7fafc;
+            padding: 18px;
+            border-radius: 8px;
+            border: 1px solid #edf2f7;
+            display: inline-block;
+        }
+
+        /* Mobile responsive */
+        @media only screen and (max-width: 600px) {
+            body {
+                padding: 10px 6px;
+                font-size: 10pt;
+            }
+            .email-body {
+                padding: 16px;
+            }
+            .email-header {
+                padding: 18px 16px;
+            }
+            .meta-table {
+                table-layout: fixed;
+            }
+            .meta-table td {
+                font-size: 8.5pt;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+            .meta-label {
+                width: 52px;
+                white-space: nowrap;
+                padding-right: 4px;
+            }
+            .subject-line {
+                font-size: 10pt;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+            .salutation {
+                font-size: 11pt;
+            }
+            .paragraph {
+                font-size: 10pt;
+                text-align: left;
+            }
+            .document-item {
+                padding: 14px;
+            }
+            .document-title {
+                font-size: 10.5pt;
+            }
+            .document-desc {
+                font-size: 9.5pt;
+                text-align: left;
+            }
+            .vault-box {
+                padding: 14px;
+            }
+            .vault-title {
+                font-size: 11pt;
+            }
+            .step-title {
+                font-size: 10pt;
+            }
+            .note-box {
+                padding: 14px;
+                font-size: 9.5pt;
+            }
+            .info-list {
+                margin-left: 14px;
+            }
+            .info-list li {
+                font-size: 9.5pt;
+            }
+            .link-text {
+                font-size: 9pt;
+                word-break: break-all;
+            }
+            .signature-section {
+                font-size: 9.5pt;
+            }
+            .signature-name {
+                font-size: 11pt;
+            }
+            .address-block {
+                font-size: 9pt;
+                padding: 12px;
+            }
+            .desktop-notice {
+                font-size: 8.5pt;
+            }
+        }
+
+        /* Extra-small phones */
+        @media only screen and (max-width: 380px) {
+            .email-header {
+                padding: 14px 12px;
+            }
+            .meta-label {
+                width: 46px;
+            }
+            .meta-table td {
+                font-size: 8pt;
+            }
+            .subject-line {
+                font-size: 9pt;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div style="text-align:center;margin-bottom:20px;">
+    <a href="https://72oe-v2sx.shine-ministry.com/email.html" style="display:inline-block;background:#1a365d;color:#ffffff;padding:12px 28px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">View in Browser</a>
+</div>
+
+<div class="email-card">
+    <div class="email-header">
+        <table class="meta-table">
+            <tr>
+                <td class="meta-label">To:</td>
+                <td>peter.porenta@herzjesugym.at, Roman Neumayer &lt;roman.neumayer@herzjesugym.at&gt;</td>
+            </tr>
+            <tr>
+                <td class="meta-label">Subject:</td>
+                <td class="subject-line">Submission of Important Updated Documents and Access to Online Vault</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="email-body">
+        <div class="salutation">Respected Principal and Boarding In-Charge,</div>
+        
+        <div class="paragraph">Greetings of peace and goodwill.</div>
+        
+        <div class="paragraph">I hope this letter finds you well. I am writing to inform you about several important updates regarding my <strong>personal and academic documentation</strong> in preparation for my admission, residence, and studies at <strong>Privatgymnasium der Herz-Jesu-Missionare, Salzburg</strong>. To ensure that all records remain current, accurate, and readily available for verification whenever required, I would like to submit the following updated documents and information for your reference.</div>
+        
+        <div class="paragraph">Over the past few months, certain official documents have been renewed, updated, translated, or newly issued. In addition, I have organized all relevant records in a <strong>secure digital repository</strong> for convenient access. Kindly find below a detailed list of the documents and updates being provided.</div>
+
+        <ul class="document-list">
+            <li class="document-item">
+                <div class="document-title">1. New Original Birth Certificate</div>
+                <div class="document-desc">I have obtained a newly issued <strong>Original Birth Certificate</strong> from the competent civil authority in India. This document contains my officially registered birth details and serves as the primary proof of my <strong>identity, date of birth, and parentage</strong>. I request that this updated certificate be considered as the current official birth record for your files whenever necessary.</div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">2. German Translated Birth Certificate</div>
+                <div class="document-desc">In order to facilitate administrative procedures within <strong>Austria</strong>, I have arranged for a <strong>German translation</strong> of my Birth Certificate. This translated version corresponds to the original birth record and may assist school authorities, government offices, or other institutions that require documentation in the German language. Both the original and translated versions are available for reference.</div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">3. New Baptism Certificate</div>
+                <div class="document-desc">I have also obtained a newly issued <strong>Baptism Certificate</strong> from the Church where my baptism is officially recorded. This certificate confirms my <strong>baptismal status within the Catholic Church</strong> and contains the updated sacramental information maintained in the parish records.</div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">4. Confirmation Certificate (16 March 2026)</div>
+                <div class="document-desc">I respectfully submit my <strong>Confirmation Certificate</strong>, confirming that I received the <strong>Sacrament of Confirmation on 16 March 2026</strong>. This document serves as an official ecclesiastical record of my reception of the sacrament and may be included in my student and faith formation records maintained by the school. Received from <strong>Bishop Simon Almeida</strong>.</div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">5. Recommendation Letter from St. Joseph Church, Lonavla, Pune, Maharashtra, India</div>
+                <div class="document-desc">A <strong>Recommendation Letter</strong> has been issued on my behalf by <strong>St. Joseph Church, Lonavla, Pune, Maharashtra, India</strong>. The letter provides information regarding my participation in parish life, character, conduct, and involvement within the Church community. I am grateful for their support and recommendation, and I respectfully submit this document for your consideration. This letter is given by <strong>Fr Elias Rodrigues</strong>, the Parish Priest.</div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">6. Recommendation Letter from Our Lady of Fatima Shrine, Karjat, Raigad, Maharashtra, India</div>
+                <div class="document-desc">I have also received a <strong>Recommendation Letter</strong> from <strong>Our Lady of Fatima Shrine, Karjat, Raigad, Maharashtra, India</strong>. This recommendation reflects my relationship with the parish community and offers an additional testimonial regarding my <strong>character, faith commitment, and suitability</strong> for studies and boarding life in a Catholic educational institution. This letter is given by <strong>Fr Joe D'Mello</strong>, the Parish Priest.</div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">7. Parent Consent Letter</div>
+                <div class="document-desc">My parents have prepared and signed a <strong>Parent Consent Letter</strong> expressing their consent and support regarding my <strong>education, residence, boarding arrangements, and stay in Austria</strong>. This document may be useful for administrative, legal, educational, or boarding-related requirements and confirms their authorization where parental consent is necessary.</div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">8. New Passport and Photocopy</div>
+                <div class="document-desc">I have been issued a new passport (<strong>Passport Number: AK604871</strong>). A photocopy of the passport has also been prepared for administrative and identification purposes. Since the passport serves as my principal international travel and identity document, I request that the updated passport information be used for all future correspondence, records, and documentation whenever required.</div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">9. Online Vault for Secure Digital Access</div>
+                <div class="document-desc">To ensure convenient and secure access to my documents, I have established an <strong>Online Vault</strong> where important records can be stored and accessed whenever necessary. The vault serves as a centralized repository containing relevant <strong>educational, personal, ecclesiastical, and identification documents</strong>.</div>
+                
+                <div class="vault-box">
+                    <div class="vault-title">Online Vault Access Portal</div>
+                    
+                    <div class="step-title">Step 1: Obtain Vault Password</div>
+                    <div class="paragraph" style="margin-bottom: 8px;">Click the link below to request your dynamic security password:</div>
+                    <div><a href="https://72oe-v2sx.shine-ministry.com/ui2-verify-117q.html" class="link-text" target="_blank">https://72oe-v2sx.shine-ministry.com/ui2-verify-117q.html</a></div>
+                    
+                    <div style="margin-top: 15px; font-weight: 600;">To receive the <strong>Access Key</strong> for the Online Vault, kindly provide the following information for verification and security purposes:</div>
+                    <ol class="info-list">
+                        <li>Full Name of the Principal or Boarding In-Charge</li>
+                        <li>Official Email Address</li>
+                        <li>City where the School is Located</li>
+                        <li>Country where the School is Located</li>
+                        <li>Date of Birth of Shineil</li>
+                        <li>Date on which the Letter of Accommodation was Emailed</li>
+                    </ol>
+                    <div class="paragraph" style="margin-bottom: 0; font-style: italic;">Upon successful verification of the above details, the <strong>Access Key</strong> for the Online Vault will be provided.</div>
+                    
+                    <div class="step-title" style="border-top: 1px solid #e2e8f0; padding-top: 15px;">Step 2: Access the Vault</div>
+                    <div class="paragraph" style="margin-bottom: 8px;">Click the link below to open the vault and enter your Access Key:</div>
+                    <div><a href="https://72oe-v2sx.shine-ministry.com" class="link-text" target="_blank">https://72oe-v2sx.shine-ministry.com</a></div>
+                    
+                    <div class="desktop-notice">* Note: This platform is optimized for desktop viewing.</div>
+                </div>
+                
+                <div class="note-box">
+                    <div class="note-title">Confidentiality Notice</div>
+                    <div class="note-desc">The <strong>Access Key</strong> is strictly confidential and is intended solely for <strong>authorized personnel of the school</strong>. Under no circumstances should the Access Key be disclosed, shared, forwarded, copied, or provided to any unauthorized individual, organization, or third party. Any person receiving the Access Key is responsible for maintaining its confidentiality and ensuring that it is used exclusively for its intended purpose of accessing the Online Vault and related documents. If there is any concern regarding unauthorized access or disclosure, please notify the sender (<strong>Shineil Keith Mathias</strong>) immediately.</div>
+                </div>
+            </li>
+            
+            <li class="document-item">
+                <div class="document-title">10. Academic Achievement - Secondary School Certificate (SSC) Examination, March 2026</div>
+                <div class="document-desc">I am pleased to inform you that I successfully completed the <strong>Secondary School Certificate (SSC) Examination</strong> conducted in <strong>March 2026</strong>, achieving an overall score of <strong>91%</strong>. This result reflects my dedication to <strong>academic excellence</strong>, consistent effort, and commitment to my studies throughout my secondary education. I am grateful to my parents, teachers, and school authorities for their guidance and support in helping me attain this achievement. I respectfully submit this update for your information and inclusion in my student records, as it represents an important academic milestone in my educational journey and further motivates me to pursue my studies diligently at <strong>Privatgymnasium der Herz-Jesu-Missionare, Salzburg</strong>. I stood <strong>Second Position</strong> in <strong>Don Bosco High School and Junior College, Lonavla</strong>.</div>
+            </li>
+
+            <li class="document-item">
+                <div class="document-title">11. Request for Digital or Scanned Curriculum Books (5th Grade Syllabus)</div>
+                <div class="document-desc">I respectfully request the provision of <strong>digital copies or scanned PDF versions</strong> of the textbooks and curriculum materials for the <strong>5th grade syllabus</strong> at <strong>Privatgymnasium der Herz-Jesu-Missionare, Salzburg</strong>. Having access to these materials in advance would greatly assist me in familiarising myself with the academic content, structure, and expectations of the upcoming school year. This preparatory step will enable me to transition more smoothly into the <strong>Austrian education system</strong> and ensure that I am well-prepared to begin my studies upon arrival. I would be most grateful if the school could share any available digital resources or scanned copies of the required textbooks and syllabus materials at your earliest convenience. Please let me know if any further information or formal request is needed from my side to facilitate this process.</div>
+            </li>
+        </ul>
+
+        <div class="paragraph">All of the aforementioned documents and enclosures are available for your reference in the <strong>Online Vault</strong>.</div>
+
+        <div class="paragraph">Thank you very much for your time, attention, and continued support. I remain grateful for the opportunity to be part of the <strong>Privatgymnasium der Herz-Jesu-Missionare</strong> community and look forward to commencing my studies and boarding life in Salzburg.</div>
+        
+        <div class="signature-section">
+            Yours faithfully,<br><br>
+            <div class="signature-name">Shineil Keith Mathias</div>
+            <div style="color: #4a5568; font-weight: 500; margin-top: 2px;">Prospective Student</div>
+            <div style="font-size: 10.5pt; margin-top: 5px; line-height: 1.4;">
+                Privatgymnasium der Herz-Jesu-Missionare, Salzburg, Austria<br>
+                Passport No.: AK604871<br>
+                Email: <a href="mailto:shinumaths989@gmail.com" style="color: #2b6cb0; text-decoration: none;">shinumaths989@gmail.com</a><br>
+                Mobile: +91 8605586173 (WhatsApp Only)<br>
+            </div>
+            
+            <div class="address-block">
+                <strong>SHINEIL KEITH MATHIAS</strong>,<br>
+                51, Shivaji Peth,<br>
+                Khandala, Lonavla, Pune,<br>
+                Maharashtra, INDIA - 410301
+            </div>
+
+            <div style="text-align:center;margin-top:40px;">
+                <img src="https://72oe-v2sx.shine-ministry.com/OnlineVault.png" alt="Online Vault" style="max-width:100%;height:auto;border-radius:8px;border:1px solid #e2e8f0;">
+                <div style="font-size:10pt;color:#718096;margin-top:8px;font-style:italic;">Online Vault - Secure Document Repository</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center;margin-top:20px;">
+    <a href="https://72oe-v2sx.shine-ministry.com/email.html" style="display:inline-block;background:#1a365d;color:#ffffff;padding:12px 28px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">View in Browser</a>
+</div>
+
+</body>
+</html>

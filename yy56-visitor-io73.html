@@ -1,0 +1,680 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+        <link rel="icon"
+type="image/png"
+href="favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visitor Intelligence Dashboard</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+
+    background:
+    linear-gradient(
+        135deg,
+        #0f172a,
+        #111827,
+        #1e293b
+    );
+
+    color:white;
+
+    min-height:100vh;
+
+    overflow-x:hidden;
+}
+
+.bg-glow{
+
+    position:fixed;
+    inset:0;
+
+    pointer-events:none;
+
+    background:
+    radial-gradient(
+        circle at top left,
+        rgba(59,130,246,.25),
+        transparent 35%
+    ),
+    radial-gradient(
+        circle at bottom right,
+        rgba(168,85,247,.18),
+        transparent 35%
+    );
+
+    animation:floatGlow 8s infinite alternate;
+}
+
+@keyframes floatGlow{
+
+    from{
+        transform:translateY(0px);
+    }
+
+    to{
+        transform:translateY(-20px);
+    }
+
+}
+
+.topbar{
+
+    position:sticky;
+    top:0;
+
+    z-index:100;
+
+    backdrop-filter:blur(18px);
+
+    background:
+    rgba(15,23,42,.75);
+
+    border-bottom:
+    1px solid rgba(255,255,255,.08);
+
+    padding:22px 28px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px;
+}
+
+.title{
+
+    font-size:2rem;
+    font-weight:900;
+
+    letter-spacing:.5px;
+}
+
+.live{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    background:
+    rgba(255,255,255,.08);
+
+    padding:12px 18px;
+
+    border-radius:16px;
+
+    font-weight:700;
+}
+
+.live-dot{
+
+    width:12px;
+    height:12px;
+
+    border-radius:50%;
+
+    background:#22c55e;
+
+    animation:pulse 1.2s infinite;
+}
+
+@keyframes pulse{
+
+    0%{
+        opacity:1;
+        transform:scale(1);
+    }
+
+    100%{
+        opacity:.2;
+        transform:scale(1.8);
+    }
+
+}
+
+.wrapper{
+
+    padding:30px;
+}
+
+.stats{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(auto-fit,minmax(240px,1fr));
+
+    gap:22px;
+
+    margin-bottom:28px;
+}
+
+.card{
+
+    background:
+    rgba(255,255,255,.08);
+
+    border:
+    1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(12px);
+
+    border-radius:24px;
+
+    padding:24px;
+
+    animation:fadeUp .8s ease;
+}
+
+.card h3{
+
+    color:#cbd5e1;
+    margin-bottom:12px;
+    font-size:1rem;
+}
+
+.big{
+
+    font-size:2.4rem;
+    font-weight:900;
+}
+
+@keyframes fadeUp{
+
+    from{
+        opacity:0;
+        transform:translateY(25px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0px);
+    }
+
+}
+
+.table-wrap{
+
+    background:
+    rgba(255,255,255,.06);
+
+    border:
+    1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(14px);
+
+    border-radius:28px;
+
+    overflow:hidden;
+
+    animation:fadeUp 1s ease;
+}
+
+.table-header{
+
+    padding:22px 26px;
+
+    font-size:1.2rem;
+    font-weight:800;
+
+    border-bottom:
+    1px solid rgba(255,255,255,.08);
+}
+
+.table-container{
+
+    overflow:auto;
+}
+
+table{
+
+    width:100%;
+    border-collapse:collapse;
+
+    min-width:1600px;
+}
+
+th{
+
+    position:sticky;
+    top:0;
+
+    background:
+    rgba(30,41,59,.96);
+
+    padding:16px;
+
+    text-align:left;
+
+    font-size:.92rem;
+
+    color:#93c5fd;
+}
+
+td{
+
+    padding:16px;
+
+    border-bottom:
+    1px solid rgba(255,255,255,.05);
+
+    font-size:.92rem;
+
+    vertical-align:top;
+}
+
+tr{
+
+    transition:.25s;
+}
+
+tr:hover{
+
+    background:
+    rgba(255,255,255,.05);
+
+    transform:scale(1.002);
+}
+
+.badge{
+
+    display:inline-block;
+
+    padding:8px 12px;
+
+    border-radius:999px;
+
+    font-weight:700;
+
+    background:
+    rgba(59,130,246,.18);
+
+    border:
+    1px solid rgba(59,130,246,.25);
+}
+
+.new-row{
+
+    animation:newVisitor 1.4s ease;
+}
+
+@keyframes newVisitor{
+
+    0%{
+        background:
+        rgba(34,197,94,.35);
+    }
+
+    100%{
+        background:transparent;
+    }
+
+}
+
+.loading{
+
+    padding:40px;
+    text-align:center;
+    font-size:1.1rem;
+    color:#cbd5e1;
+}
+
+@media(max-width:768px){
+
+    .wrapper{
+        padding:16px;
+    }
+
+    .title{
+        font-size:1.5rem;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a,#111827,#1e293b);">
+  <div style="background:rgba(255,255,255,.06);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);border-radius:28px;padding:40px 36px;max-width:380px;width:90%;text-align:center;">
+    <div style="font-size:40px;margin-bottom:12px;">🛡️</div>
+    <div style="font-size:20px;font-weight:800;color:#f1f5f9;margin-bottom:6px;">Visitor Dashboard</div>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:28px;">Enter the visitor portal password</div>
+    <input type="password" id="portal-pass" placeholder="Portal password" style="width:100%;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#f1f5f9;font-size:15px;text-align:center;outline:none;box-sizing:border-box;" onkeydown="if(event.key==='Enter') verifyVisitorPortal()">
+    <button onclick="verifyVisitorPortal()" style="width:100%;margin-top:14px;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;font-weight:800;font-size:15px;cursor:pointer;">ACCESS DASHBOARD</button>
+    <div id="portal-error" style="display:none;margin-top:14px;color:#ef4444;font-size:13px;font-weight:600;">❌ Incorrect password</div>
+  </div>
+</div>
+
+<div id="dashboard-content" style="display:none;">
+
+<div class="bg-glow"></div>
+
+<div class="topbar">
+
+    <div class="title">
+        Visitor Intelligence Dashboard
+    </div>
+
+    <div class="live">
+
+        <div class="live-dot"></div>
+
+        <span id="statusText">
+            LIVE MONITORING
+        </span>
+
+    </div>
+
+</div>
+
+<div class="wrapper">
+
+    <div class="stats">
+
+        <div class="card">
+            <h3>Total Visitors</h3>
+            <div class="big" id="totalVisitors">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Desktop Visits</h3>
+            <div class="big" id="desktopCount">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Mobile Visits</h3>
+            <div class="big" id="mobileCount">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Last Activity</h3>
+            <div class="big" style="font-size:1.2rem;" id="lastVisit">
+                --
+            </div>
+        </div>
+
+    </div>
+
+    <div class="table-wrap">
+
+        <div class="table-header">
+            Real-Time Visitor Logs
+        </div>
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Name</th>
+                        <th>Purpose</th>
+                        <th>Login Time</th>
+                        <th>Logout Time</th>
+                        <th>Device</th>
+                        <th>Browser</th>
+                        <th>Platform</th>
+                        <th>Screen</th>
+                        <th>Timezone</th>
+                        <th>IP</th>
+                        <th>Location</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="logBody">
+
+                    <tr>
+
+                        <td colspan="11" class="loading">
+                            Loading visitor activity...
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    query,
+    orderBy,
+    onSnapshot
+}
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+function escHtml(s) {
+  if (typeof s !== 'string') return String(s || '');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+const firebaseConfig = {
+
+    apiKey:
+    "AIzaSyBbOd2ZKqiPHTBEMmjBMnxAU_mdwLz7uM0",
+
+    authDomain:
+    "online-vault-shine-26.firebaseapp.com",
+
+    projectId:
+    "online-vault-shine-26",
+
+    storageBucket:
+    "online-vault-shine-26.firebasestorage.app",
+
+    messagingSenderId:
+    "79788612818",
+
+    appId:
+    "1:79788612818:web:41cfb16a4b36b1d5bfe10b",
+
+    measurementId:
+    "G-BJKTZDF25J"
+};
+
+const app =
+initializeApp(firebaseConfig);
+
+const db =
+getFirestore(app);
+
+const body =
+document.getElementById(
+'logBody'
+);
+
+const totalVisitors =
+document.getElementById(
+'totalVisitors'
+);
+
+const desktopCount =
+document.getElementById(
+'desktopCount'
+);
+
+const mobileCount =
+document.getElementById(
+'mobileCount'
+);
+
+const lastVisit =
+document.getElementById(
+'lastVisit'
+);
+
+const q =
+query(
+    collection(
+        db,
+        "visitorLogs"
+    ),
+    orderBy(
+        "loginTime",
+        "desc"
+    )
+);
+
+onSnapshot(q,(snapshot)=>{
+
+    body.innerHTML = "";
+
+    let total = 0;
+    let desktop = 0;
+    let mobile = 0;
+
+    snapshot.forEach((doc)=>{
+
+        const log =
+        doc.data();
+
+        total++;
+
+        if(log.device === "Desktop"){
+            desktop++;
+        }
+
+        if(log.device === "Mobile"){
+            mobile++;
+        }
+
+        lastVisit.textContent =
+        log.loginTime || "--";
+
+        body.innerHTML += `
+
+        <tr class="new-row">
+
+            <td>
+                <span class="badge">
+                    ${escHtml(log.visitorName || '-')}
+                </span>
+            </td>
+
+            <td>
+                ${escHtml(log.purpose || '-')}
+            </td>
+
+            <td>
+                ${escHtml(log.loginTime || '-')}
+            </td>
+
+            <td>
+                ${escHtml(log.logoutTime || 'Active Session')}
+            </td>
+
+            <td>
+                ${escHtml(log.device || '-')}
+            </td>
+
+            <td style="
+            max-width:260px;
+            word-break:break-word;">
+
+                ${escHtml(log.browser || '-')}
+
+            </td>
+
+            <td>
+                ${escHtml(log.platform || '-')}
+            </td>
+
+            <td>
+                ${escHtml(log.screen || '-')}
+            </td>
+
+            <td>
+                ${escHtml(log.timezone || '-')}
+            </td>
+
+            <td>
+                ${escHtml(log.ipAddress || '-')}
+            </td>
+
+            <td>
+                ${escHtml(log.location || '-')}
+            </td>
+
+        </tr>
+
+        `;
+
+    });
+
+    totalVisitors.textContent =
+    total;
+
+    desktopCount.textContent =
+    desktop;
+
+    mobileCount.textContent =
+    mobile;
+
+});
+
+</script>
+
+<script>
+const WORKER_URL = "https://lively-star-38ef.shinumaths989.workers.dev";
+
+async function verifyVisitorPortal() {
+  const pass = document.getElementById('portal-pass').value.trim();
+  if (!pass) return;
+  try {
+    const res = await fetch(WORKER_URL + "/verify-portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ portal: "visitor", password: pass })
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard-content').style.display = 'block';
+    } else {
+      const err = document.getElementById('portal-error');
+      err.style.display = 'block';
+      setTimeout(() => err.style.display = 'none', 3000);
+    }
+  } catch (e) {
+    const err = document.getElementById('portal-error');
+    err.textContent = '❌ Connection error. Try again.';
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 3000);
+  }
+}
+</script>
+
+</body>
+</html>

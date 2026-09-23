@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy & Legal Declaration - Online Vault</title>
+    <link rel="icon"
+type="image/png"
+href="favicon.png">
+    <style>
+        :root {
+            --bg-color: #f8fafc; 
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;             
+            --text-main: #0f172a;                
+            --text-muted: #475569;               
+            --accent-primary: #1e3a8a;
+            --accent-gradient: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            --highlight-bg: rgba(30, 58, 138, 0.04);
+            --success: #059669;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 50px 20px;
+        }
+
+        @keyframes fadeIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .policy-wrapper {
+            width: 100%;
+            max-width: 840px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 50px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.03); 
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .header-section { 
+            text-align: center; 
+            margin-bottom: 40px; 
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 30px;
+        }
+
+        .policy-logo {
+            width: 70px; 
+            height: 70px; 
+            background: var(--highlight-bg); 
+            border: 1px solid rgba(30, 58, 138, 0.15);
+            border-radius: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 34px; 
+            margin: 0 auto 20px auto;
+        }
+
+        h1 { 
+            font-size: 28px; 
+            font-weight: 800; 
+            color: var(--accent-primary); 
+            letter-spacing: 0.5px; 
+            margin-bottom: 8px; 
+            text-transform: uppercase;
+        }
+
+        .subtitle { 
+            font-size: 15px; 
+            color: var(--text-muted); 
+            line-height: 1.5; 
+            font-weight: 500;
+        }
+
+        .policy-content {
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--text-main);
+        }
+
+        .highlight-box {
+            background: var(--highlight-bg);
+            border-left: 4px solid var(--accent-primary);
+            padding: 16px 20px;
+            border-radius: 0 14px 14px 0;
+            margin-bottom: 30px;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--accent-primary);
+            letter-spacing: 0.5px;
+        }
+
+        h2 {
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent-primary);
+            margin: 30px 0 12px 0;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 16px;
+            background: var(--accent-gradient);
+            border-radius: 2px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            text-align: justify;
+            color: #334155;
+        }
+
+        ul {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #334155;
+        }
+
+        b {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .security-parameters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-top: 25px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 25px;
+        }
+
+        .param-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 14px 18px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .param-item .icon {
+            color: var(--success);
+            font-size: 16px;
+        }
+
+        .watermark { 
+            font-size: 11px; 
+            font-weight: 700; 
+            letter-spacing: 2px; 
+            color: rgba(15, 23, 42, 0.3); 
+            text-align: center; 
+            margin-top: 45px;
+            text-transform: uppercase;
+            border-top: 1px solid var(--border-color);
+            padding-top: 25px;
+        }
+
+        @media (max-width: 640px) {
+            .policy-wrapper {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="policy-wrapper">
+        <div class="header-section">
+            <div class="policy-logo">🛡️</div>
+            <h1>Privacy Policy & Legal Declaration</h1>
+            <div class="subtitle">Online Vault Architecture & Data Protection Protocol</div>
+        </div>
+
+        <div class="policy-content">
+            <div class="highlight-box">
+                CLASSIFICATION: RESTRICTED • END-TO-END CRYPTOGRAPHIC SANDBOX • AUTHORIZED READING ONLY
+            </div>
+
+            <h2>1. Scope of the Infrastructure</h2>
+            <p>This Online Vault serves as a centralized, secure digital repository constructed exclusively for maintaining the personal, academic, administrative, financial, and legal records of <b>Shineil Keith Mathias</b>. The core objective of this ecosystem is to prevent structural data vulnerabilities, preserve authentic dynamic backups, and guarantee that valid operational assets are available uniquely within a highly controlled environment.</p>
+
+            <h2>2. Document and Content Sovereignty</h2>
+            <p>All items hosted within this interface—including but not limited to identification data sheets, official certificates, academic evaluations, digital signatures, server architectures, encrypted logs, and credentials—remain the absolute personal and intellectual property of the owner. Explicit access rights are non-transferable, situational, and bound by strict verification prerequisites.</p>
+
+            <h2>3. Mandatory Enforcement Rules</h2>
+            <p>For educational tracking, compliance monitoring, and review logic, visitors must process information strictly under the following mandates:</p>
+            <ul>
+                <li><b>Prohibition of Data Capture:</b> Any mechanical, systemic, or localized extraction methods, including hardware-level screenshots, remote screen-recording modules, local source-code printing, or offline manual caching, are strictly forbidden.</li>
+                <li><b>Distribution Interdiction:</b> Sharing individual resource streams, exporting metadata packets, transferring access pathways, or exposing credentials to third parties constitutes a material breach of confidentiality protocols.</li>
+                <li><b>Malicious Action Thresholds:</b> Any systemic manipulation, cross-site payload injection testing, directory traversal analysis, or attempt to read the database state outside explicit rendering windows will immediately revoke session legitimacy.</li>
+            </ul>
+
+            <h2>4. Network Architecture & Security Routing</h2>
+            <p>The stability and defensive boundary of this framework rely on active cloud network configurations. Content availability across geographical areas depends heavily on active <b>Cloudflare Worker Routing matrices</b> and multi-region <b>Firestore configurations</b>. Systems utilize rigorous Cross-Origin Resource Sharing (CORS) limits alongside global firewall patterns to isolate information from local inspection vectors, blocking unauthorized analytical tracking or ambient environmental inspection.</p>
+
+            <h2>5. Auditing and Monitoring Acknowledgement</h2>
+            <p>While navigating this interface for reading purposes, background telemetry operations may evaluate the state of access to confirm runtime safety. This evaluation monitors session duration, device-sandbox statuses, cryptographic handshake integrity, and request parameters. This operational metadata is evaluated transparently and solely to maintain persistent stability, enforce data boundaries, and preserve environmental isolation protocols.</p>
+
+            <div class="security-parameters">
+                <div class="param-item">
+                    <span class="icon">✓</span>
+                    <span>AES-256 Multi-Region Architecture</span>
+                </div>
+                <div class="param-item">
+                    <span class="icon">✓</span>
+                    <span>Active Cloudflare Worker Shielding</span>
+                </div>
+                <div class="param-item">
+                    <span class="icon">✓</span>
+                    <span>Zero Local-Cache Retention</span>
+                </div>
+                <div class="param-item">
+                    <span class="icon">✓</span>
+                    <span>Dynamic Identity Vault Integrity</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="watermark">
+            PROPRIETARY INFORMATION • SHINEIL KEITH MATHIAS
+        </div>
+    </div>
+
+</body>
+</html>

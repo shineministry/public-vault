@@ -1,0 +1,148 @@
+﻿{
+  "name": "Vault Drive - Secure Document Vault",
+  "short_name": "Vault Drive",
+  "description": "Your private vault with Google Drive experience - encrypted, offline-ready, organized.",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "background_color": "#ffffff",
+  "theme_color": "#1a73e8",
+  "orientation": "any",
+  "scope": "/public-vault/",
+  "start_url": "/public-vault/?source=pwa",
+  "id": "/public-vault/",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "OnlineVault.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Vault",
+      "short_name": "My Vault",
+      "description": "Browse all files - like My Drive",
+      "url": "/public-vault/?shortcut=myvault",
+      "icons": [
+        {
+          "src": "favicon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Recent",
+      "short_name": "Recent",
+      "description": "Recently opened documents",
+      "url": "/public-vault/?shortcut=recent",
+      "icons": [
+        {
+          "src": "favicon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Starred",
+      "short_name": "Starred",
+      "description": "Pinned / starred documents",
+      "url": "/public-vault/?shortcut=starred",
+      "icons": [
+        {
+          "src": "favicon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Search Vault",
+      "short_name": "Search",
+      "description": "Search in your vault",
+      "url": "/public-vault/?shortcut=search",
+      "icons": [
+        {
+          "src": "favicon.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "OnlineVault.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Vault Drive - browse like Google Drive"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/public-vault/",
+      "accept": {
+        "application/pdf": [
+          ".pdf"
+        ],
+        "image/*": [
+          ".jpg",
+          ".jpeg",
+          ".png",
+          ".webp"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/public-vault/",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+vault",
+      "url": "/public-vault/?vault=%s"
+    }
+  ]
+}

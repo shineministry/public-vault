@@ -1,0 +1,247 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{font-family:var(--font-sans);padding:1.5rem 0;display:flex;flex-direction:column;gap:2rem}
+.section-label{font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase;margin-bottom:.75rem}
+.card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:1.25rem 1.5rem}
+.step-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--text-accent);background:var(--bg-accent);border-radius:var(--radius);padding:3px 10px;margin-bottom:12px}
+.btn-row{display:flex;flex-direction:column;gap:8px;margin-top:1rem}
+.btn-primary-vault{width:100%;padding:12px;border-radius:var(--radius);border:none;background:var(--fill-accent);color:var(--on-accent);font-size:13px;font-weight:500;cursor:pointer;letter-spacing:.04em}
+.btn-secondary-vault{width:100%;padding:11px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:transparent;color:var(--text-primary);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-otp{width:100%;padding:11px;border-radius:var(--radius);border:0.5px solid var(--border-accent);background:var(--bg-accent);color:var(--text-accent);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.divider{display:flex;align-items:center;gap:10px;margin:4px 0}
+.divider-line{flex:1;height:0.5px;background:var(--border)}
+.divider-text{font-size:11px;color:var(--text-muted)}
+.totp-panel{background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:1.5rem}
+.totp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.totp-title{font-size:14px;font-weight:500;color:var(--text-primary)}
+.totp-subtitle{font-size:12px;color:var(--text-muted);margin-top:2px}
+.timer-wrap{display:flex;align-items:center;gap:8px}
+.timer-ring-wrap{position:relative;width:40px;height:40px}
+.timer-ring-wrap svg{position:absolute;top:0;left:0}
+.timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;font-family:var(--font-mono);color:var(--text-accent)}
+.code-grid{display:flex;gap:6px;justify-content:center;margin:1rem 0}
+.digit-pair{display:flex;gap:6px}
+.digit-sep{width:16px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:18px;font-weight:300;line-height:1;align-self:center}
+.digit-box{width:38px;height:48px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--surface-2);font-family:var(--font-mono);font-size:20px;font-weight:500;color:var(--text-primary);text-align:center;line-height:48px;transition:border-color .2s,color .2s}
+.digit-box.refreshing{color:var(--text-muted);border-color:var(--border)}
+.digit-box.fresh{color:var(--text-accent);border-color:var(--border-accent)}
+.progress-bar-wrap{height:3px;background:var(--surface-0);border-radius:99px;overflow:hidden;margin-top:.5rem}
+.progress-bar{height:100%;background:var(--fill-accent);border-radius:99px;transition:width 1s linear,background .5s}
+.progress-bar.warn{background:var(--fill-warning)}
+.progress-bar.danger{background:var(--fill-danger)}
+.code-label{font-size:11px;color:var(--text-muted);text-align:center;margin-top:.5rem}
+.verify-btn{width:100%;padding:12px;border-radius:var(--radius);border:none;background:var(--fill-accent);color:var(--on-accent);font-size:13px;font-weight:500;cursor:pointer;margin-top:1rem}
+.back-btn{width:100%;padding:8px;border:none;background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer;margin-top:.5rem}
+.info-strip{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);margin-top:.75rem;padding-top:.75rem;border-top:0.5px solid var(--border)}
+.view{display:none}.view.active{display:block}
+.tab-row{display:flex;gap:8px;margin-bottom:1rem}
+.tab{flex:1;padding:8px;border-radius:var(--radius);border:0.5px solid var(--border);background:transparent;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer}
+.tab.active{background:var(--bg-accent);color:var(--text-accent);border-color:var(--border-accent)}
+.input-field{width:100%;padding:10px 12px;border-radius:var(--radius);border:0.5px solid var(--border-strong);background:var(--fill-field);color:var(--text-primary);font-size:13px;margin-bottom:.5rem}
+.field-label{font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:4px}
+</style>
+
+<h2 class="sr-only">Vault login — password, passkey, and TOTP options</h2>
+
+<div class="wrap">
+
+  <div>
+    <div class="section-label">Step 1 — Authentication</div>
+    <div class="card">
+      <div class="tab-row">
+        <button class="tab active" onclick="switchTab('password')">Password</button>
+        <button class="tab" onclick="switchTab('passkey')">Passkey</button>
+        <button class="tab" onclick="switchTab('totp')">Login with OTP</button>
+      </div>
+
+      <div id="view-password" class="view active">
+        <div class="field-label">Username</div>
+        <input class="input-field" type="text" placeholder="Registration identifier">
+        <div class="field-label">Passphrase</div>
+        <input class="input-field" type="password" placeholder="Enter secure passphrase">
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn-primary-vault">Continue securely</button>
+        </div>
+      </div>
+
+      <div id="view-passkey" class="view">
+        <div style="text-align:center;padding:1rem 0">
+          <i class="ti ti-fingerprint" style="font-size:40px;color:var(--text-accent)" aria-hidden="true"></i>
+          <div style="font-size:14px;font-weight:500;color:var(--text-primary);margin-top:.75rem">Hardware security key</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Touch your key or use biometric prompt</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary-vault"><i class="ti ti-key" aria-hidden="true"></i> Authenticate with passkey</button>
+        </div>
+      </div>
+
+      <div id="view-totp" class="view">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:1rem">No password needed. Enter the 8-digit code from your authenticator app to sign in directly.</div>
+        <div class="totp-panel">
+          <div class="totp-header">
+            <div>
+              <div class="totp-title">One-time password</div>
+              <div class="totp-subtitle">Refreshes every 60 seconds</div>
+            </div>
+            <div class="timer-wrap">
+              <div class="timer-ring-wrap">
+                <svg width="40" height="40" viewBox="0 0 40 40">
+                  <circle cx="20" cy="20" r="16" fill="none" stroke="var(--border-strong)" stroke-width="2.5"/>
+                  <circle id="ring" cx="20" cy="20" r="16" fill="none" stroke="var(--fill-accent)" stroke-width="2.5"
+                    stroke-dasharray="100.53" stroke-dashoffset="0" stroke-linecap="round"
+                    transform="rotate(-90 20 20)" style="transition:stroke-dashoffset 1s linear,stroke .5s"/>
+                </svg>
+                <div class="timer-num" id="timer-num">60</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="code-grid">
+            <div class="digit-pair" id="pair1">
+              <div class="digit-box" id="d0"></div>
+              <div class="digit-box" id="d1"></div>
+              <div class="digit-box" id="d2"></div>
+              <div class="digit-box" id="d3"></div>
+            </div>
+            <div class="digit-sep">·</div>
+            <div class="digit-pair" id="pair2">
+              <div class="digit-box" id="d4"></div>
+              <div class="digit-box" id="d5"></div>
+              <div class="digit-box" id="d6"></div>
+              <div class="digit-box" id="d7"></div>
+            </div>
+          </div>
+
+          <div class="progress-bar-wrap">
+            <div class="progress-bar" id="prog"></div>
+          </div>
+          <div class="code-label" id="code-label">Code valid for 60s</div>
+        </div>
+
+        <div style="margin-top:.75rem;font-size:12px;color:var(--text-muted)">Enter this code in your authenticator app entry for <strong style="color:var(--text-primary)">Online Vault</strong>, or paste the displayed digits below to verify:</div>
+
+        <div class="btn-row">
+          <button class="btn-primary-vault" onclick="verifyOTP()">Verify and enter vault</button>
+        </div>
+
+        <div class="info-strip">
+          <i class="ti ti-shield-lock" style="font-size:14px" aria-hidden="true"></i>
+          Independent login — no password or passkey required
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">How login options compare</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+      <div class="card" style="border-top:2px solid var(--border-accent)">
+        <div style="font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:4px">Password</div>
+        <div style="font-size:11px;color:var(--text-muted)">Username + passphrase. Two-step with reCAPTCHA.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--border-accent)">
+        <div style="font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:4px">Passkey</div>
+        <div style="font-size:11px;color:var(--text-muted)">Hardware key or biometric. No typing required.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--border-accent)">
+        <div style="font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:4px">Login with OTP</div>
+        <div style="font-size:11px;color:var(--text-muted)">8-digit code from authenticator. Fully independent — no password needed.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const ids=['password','passkey','totp'];
+    t.classList.toggle('active',ids[i]===id);
+  });
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+}
+
+function genCode(){
+  let s='';
+  for(let i=0;i<8;i++) s+=Math.floor(Math.random()*10);
+  return s;
+}
+
+let code=genCode();
+let secondsLeft=60;
+
+function setCode(c){
+  const digits=c.split('');
+  for(let i=0;i<8;i++){
+    const el=document.getElementById('d'+i);
+    el.classList.remove('fresh','refreshing');
+    el.textContent=digits[i];
+  }
+  void document.getElementById('d0').offsetWidth;
+  for(let i=0;i<8;i++){
+    document.getElementById('d'+i).classList.add('fresh');
+  }
+  setTimeout(()=>{
+    for(let i=0;i<8;i++) document.getElementById('d'+i).classList.remove('fresh');
+  },800);
+}
+
+function updateTimer(s){
+  const pct=s/60;
+  const circ=100.53;
+  const ring=document.getElementById('ring');
+  const prog=document.getElementById('prog');
+  const num=document.getElementById('timer-num');
+  const label=document.getElementById('code-label');
+
+  ring.style.strokeDashoffset=(circ*(1-pct)).toFixed(2);
+  prog.style.width=(pct*100).toFixed(1)+'%';
+  num.textContent=s;
+  label.textContent='Code valid for '+s+'s';
+
+  if(s<=10){
+    ring.style.stroke='var(--fill-danger)';
+    prog.className='progress-bar danger';
+    num.style.color='var(--text-danger)';
+  } else if(s<=20){
+    ring.style.stroke='var(--fill-warning)';
+    prog.className='progress-bar warn';
+    num.style.color='var(--text-warning)';
+  } else {
+    ring.style.stroke='var(--fill-accent)';
+    prog.className='progress-bar';
+    num.style.color='var(--text-accent)';
+  }
+}
+
+function tick(){
+  secondsLeft--;
+  if(secondsLeft<=0){
+    secondsLeft=60;
+    code=genCode();
+    for(let i=0;i<8;i++){
+      const el=document.getElementById('d'+i);
+      el.classList.add('refreshing');
+      el.textContent='·';
+    }
+    setTimeout(()=>setCode(code),300);
+  }
+  updateTimer(secondsLeft);
+}
+
+function verifyOTP(){
+  const btn=document.querySelector('#view-totp .btn-primary-vault');
+  btn.textContent='Verifying…';
+  btn.disabled=true;
+  setTimeout(()=>{
+    btn.textContent='Verify and enter vault';
+    btn.disabled=false;
+  },1800);
+}
+
+setCode(code);
+updateTimer(secondsLeft);
+setInterval(tick,1000);
+</script>

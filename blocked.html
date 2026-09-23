@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Alert - Session Terminated!</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent-color: #dc2626;
+            --accent-glow: rgba(220, 38, 38, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Subtle animated background grid */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            top: -50%;
+            left: -50%;
+            animation: gridMove 80s linear infinite;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
+            max-width: 700px; /* Increased box width */
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            animation: containerApperance 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        /* Decreased banner image height */
+        .image-banner {
+            width: 100%;
+            height: 180px; 
+            position: relative;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        .image-banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.85;
+            animation: slowPan 20s ease-in-out infinite alternate;
+        }
+
+        .image-banner::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 255, 0, 0.06));
+            z-index: 2;
+            background-size: 100% 3px, 6px 100%;
+        }
+
+        .laser-line {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            box-shadow: 0 0 12px var(--accent-color);
+            z-index: 3;
+            animation: laserScan 4s ease-in-out infinite;
+        }
+
+        /* Tighter interior padding */
+        .content {
+            padding: 2rem 3rem 2rem;
+        }
+
+        /* Decreased title font size */
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.025em;
+            color: var(--text-primary);
+        }
+
+        /* Tighter badge spacing */
+        .badge {
+            display: inline-block;
+            background-color: rgba(220, 38, 38, 0.06);
+            color: var(--accent-color);
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(220, 38, 38, 0.15);
+            animation: fadeIn 1s ease-out 0.4s both;
+        }
+
+        /* Decreased body text font size and tighter margin */
+        p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 1.75rem;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.08), transparent);
+            margin-bottom: 1.25rem;
+        }
+
+        .meta-info {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-family: monospace;
+            letter-spacing: 0.05em;
+            animation: fadeIn 1s ease-out 0.8s both;
+        }
+
+        /* Keyframe Animations */
+        @keyframes containerApperance {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(40px, 40px); }
+        }
+
+        @keyframes slowPan {
+            0% { transform: scale(1.0); }
+            100% { transform: scale(1.1); }
+        }
+
+        @keyframes laserScan {
+            0%, 100% { top: 0%; opacity: 0; }
+            5%, 95% { opacity: 1; }
+            50% { top: 100%; opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="image-banner">
+            <div class="laser-line"></div>
+            <img src="https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=1000&q=80" alt="Security Grid Intercept">
+        </div>
+
+        <div class="content">
+            <span class="badge">Security Exception</span>
+            <h1>Session Terminated</h1>
+            
+            <p>
+                Our automated defense systems have detected anomalous telemetry and suspicious structural behavior originating from your connection. As a protective measure to ensure ecosystem integrity, your access privileges have been revoked, and your current session has been formally tagged as suspicious.
+            </p>
+
+            <div class="divider"></div>
+
+            <div class="meta-info">
+                PROTOCOL_VIOLATION // IP_LOGGED // ACCESS_DENIED
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

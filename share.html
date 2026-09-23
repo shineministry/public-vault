@@ -1,0 +1,1387 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shared Vault File</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght=0,300;0,400;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep: #060810;
+      --bg-mid: #0d1020;
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08);
+      --accent: #6ee7f7;
+      --accent2: #a78bfa;
+      --accent3: #f472b6;
+      --text: #e8eaf6;
+      --text-dim: rgba(232,234,246,0.45);
+      --success: #4ade80;
+      --error: #f87171;
+      --glow: rgba(110,231,247,0.18);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg-deep);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── Animated background ── */
+    .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; }
+    .bg::before {
+      content: '';
+      position: absolute;
+      width: 900px; height: 900px;
+      top: -300px; left: -200px;
+      background: radial-gradient(circle, rgba(167,139,250,0.12) 0%, transparent 65%);
+      animation: drift1 18s ease-in-out infinite alternate;
+    }
+    .bg::after {
+      content: '';
+      position: absolute;
+      width: 700px; height: 700px;
+      bottom: -200px; right: -150px;
+      background: radial-gradient(circle, rgba(110,231,247,0.10) 0%, transparent 65%);
+      animation: drift2 22s ease-in-out infinite alternate;
+    }
+    .bg-blob3 {
+      position: absolute;
+      width: 500px; height: 500px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(244,114,182,0.06) 0%, transparent 65%);
+      animation: drift3 14s ease-in-out infinite alternate;
+    }
+    .bg-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%);
+    }
+    @keyframes drift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(80px,60px) scale(1.15); } }
+    @keyframes drift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-60px,-80px) scale(1.1); } }
+    @keyframes drift3 { from { transform: translate(-50%,-50%) scale(0.9); } to { transform: translate(-50%,-50%) scale(1.2); } }
+
+    /* ── Auth card (centered) ── */
+    .scene {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+    }
+
+    .card {
+      width: 100%; max-width: 420px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 44px 40px 40px;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04) inset, 0 32px 64px rgba(0,0,0,0.5), 0 0 80px rgba(110,231,247,0.04);
+      animation: cardIn 0.7s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(28px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Icon ── */
+    .icon-wrap {
+      width: 64px; height: 64px;
+      margin: 0 auto 28px;
+      position: relative;
+      animation: iconIn 0.7s 0.15s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes iconIn {
+      from { opacity: 0; transform: scale(0.6) rotate(-10deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+    .icon-ring {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 1px solid var(--glass-border);
+      animation: ringPulse 3s ease-in-out infinite;
+    }
+    .icon-ring::before {
+      content: '';
+      position: absolute; inset: -8px;
+      border-radius: 50%;
+      border: 1px solid rgba(110,231,247,0.08);
+      animation: ringPulse 3s 0.5s ease-in-out infinite;
+    }
+    @keyframes ringPulse {
+      0%,100% { opacity: 0.5; transform: scale(1); }
+      50%      { opacity: 1;   transform: scale(1.06); }
+    }
+    .icon-inner {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(110,231,247,0.15), rgba(167,139,250,0.15));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .icon-inner svg { width: 28px; height: 28px; color: var(--accent); filter: drop-shadow(0 0 8px rgba(110,231,247,0.6)); }
+
+    /* ── Headings ── */
+    .heading {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;
+      letter-spacing: -0.5px; text-align: center; margin-bottom: 6px;
+      background: linear-gradient(135deg, #e8eaf6 30%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: fadeUp 0.6s 0.25s both;
+    }
+    .subheading {
+      font-size: 13px; color: var(--text-dim); text-align: center; margin-bottom: 24px;
+      animation: fadeUp 0.6s 0.32s both;
+    }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    #status { animation: fadeUp 0.6s 0.4s both; }
+
+    /* ── Timer Style ── */
+    .timer-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--accent3);
+      background: rgba(244, 114, 182, 0.08);
+      border: 1px solid rgba(244, 114, 182, 0.2);
+      border-radius: 10px;
+      padding: 8px 14px;
+      margin: 0 auto 24px auto;
+      width: fit-content;
+      max-width: 100%;
+      font-weight: 600;
+      animation: fadeUp 0.6s 0.36s both;
+      text-align: center;
+    }
+    .timer-badge svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* Loading */
+    .loading-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 12px 0; }
+    .spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid rgba(110,231,247,0.1); border-top-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: var(--text-dim); letter-spacing: 0.5px; }
+
+    /* Msg states */
+    .msg {
+      display: flex; align-items: center; gap: 12px; padding: 16px 18px;
+      border-radius: 14px; font-size: 14px; font-weight: 400;
+    }
+    .msg.error  { background: rgba(248,113,113,0.08);  border: 1px solid rgba(248,113,113,0.2);  color: #fca5a5; }
+    .msg.warning{ background: rgba(251,191,36,0.08);   border: 1px solid rgba(251,191,36,0.2);   color: #fcd34d; }
+    .msg svg { flex-shrink: 0; width: 18px; height: 18px; }
+
+    /* Password form */
+    .pwd-form { display: flex; flex-direction: column; gap: 14px; }
+    .field-label { font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 2px; }
+    .field-wrap { position: relative; }
+    .field-wrap input {
+      width: 100%; padding: 14px 48px 14px 16px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+      border-radius: 12px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 15px;
+      outline: none; transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+      letter-spacing: 2px;
+    }
+    .field-wrap input::placeholder { letter-spacing: 0; color: rgba(232,234,246,0.2); }
+    .field-wrap input:focus {
+      border-color: rgba(110,231,247,0.4);
+      background: rgba(110,231,247,0.04);
+      box-shadow: 0 0 0 3px rgba(110,231,247,0.08), 0 0 20px rgba(110,231,247,0.06);
+    }
+    .field-wrap input.shake { animation: shake 0.4s cubic-bezier(0.36,0.07,0.19,0.97); border-color: rgba(248,113,113,0.5); }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+
+    .toggle-eye {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--text-dim);
+      display: flex; align-items: center; padding: 4px; border-radius: 6px; transition: color 0.2s;
+    }
+    .toggle-eye:hover { color: var(--text); }
+    .toggle-eye svg { width: 16px; height: 16px; }
+
+    .err-hint {
+      font-size: 12px; color: var(--error); display: flex; align-items: center;
+      gap: 6px; min-height: 18px; transition: opacity 0.2s;
+    }
+    .err-hint.hidden { opacity: 0; pointer-events: none; }
+    .err-hint svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+    .btn-submit {
+      position: relative; width: 100%; padding: 15px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, #6ee7f7, #a78bfa);
+      color: #060810; font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 14px; letter-spacing: 0.5px; cursor: pointer; overflow: hidden;
+      transition: transform 0.18s, box-shadow 0.18s;
+      box-shadow: 0 4px 24px rgba(110,231,247,0.2);
+    }
+    .btn-submit::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.25), transparent);
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(110,231,247,0.3); }
+    .btn-submit:hover::before { opacity: 1; }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit.loading { pointer-events: none; opacity: 0.7; }
+
+    .lock-badge {
+      display: flex; align-items: center; justify-content: center;
+      gap: 7px; font-size: 12px; color: var(--text-dim); margin-top: 4px;
+    }
+    .lock-badge svg { width: 12px; height: 12px; }
+
+    /* Card footer */
+    .card-footer {
+      margin-top: 28px; text-align: center; font-size: 11px;
+      color: rgba(232,234,246,0.2); letter-spacing: 0.3px;
+      animation: fadeUp 0.6s 0.5s both;
+    }
+    .card-footer span { color: rgba(110,231,247,0.35); font-family: 'Syne', sans-serif; font-weight: 700; }
+
+    /* Particles */
+    .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .particle { position: absolute; border-radius: 50%; opacity: 0; animation: floatUp linear infinite; }
+    @keyframes floatUp {
+      0%   { opacity: 0; transform: translateY(0) scale(0); }
+      10%  { opacity: 1; }
+      90%  { opacity: 0.3; }
+      100% { opacity: 0; transform: translateY(-100vh) scale(1); }
+    }
+
+    /* ══════════════════════════════════════════
+       PDF VIEWER (full-screen overlay)
+    ══════════════════════════════════════════ */
+    #pdf-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 100;
+      flex-direction: column;
+      background: #0a0c14;
+    }
+    #pdf-overlay.active { display: flex; }
+
+    /* Top toolbar */
+    .pdf-toolbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 16px;
+      background: rgba(13,16,32,0.95);
+      border-bottom: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+    }
+
+    .pdf-toolbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .pdf-toolbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .pdf-title {
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+      color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 240px;
+    }
+
+    .pdf-page-info { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+
+    /* Zoom controls */
+    .zoom-group {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px; padding: 4px 10px;
+    }
+    .zoom-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text); font-size: 18px; line-height: 1;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; transition: background 0.15s, color 0.15s;
+    }
+    .zoom-btn:hover { background: rgba(110,231,247,0.12); color: var(--accent); }
+    .zoom-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .zoom-label { font-size: 12px; font-weight: 600; color: var(--text); min-width: 42px; text-align: center; }
+
+    /* Nav buttons */
+    .nav-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px; padding: 6px 12px;
+      color: var(--text); font-size: 13px; cursor: pointer;
+      transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .nav-btn:hover { background: rgba(110,231,247,0.1); color: var(--accent); border-color: rgba(110,231,247,0.25); }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Download button in toolbar */
+    .dl-btn {
+      display: flex; align-items: center; gap: 7px;
+      background: linear-gradient(135deg, rgba(74,222,128,0.15), rgba(110,231,247,0.1));
+      border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 9px; padding: 7px 14px;
+      color: var(--success); font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 13px; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+      box-shadow: 0 2px 12px rgba(74,222,128,0.08);
+      white-space: nowrap;
+    }
+    .dl-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(74,222,128,0.2); }
+    .dl-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ── Viewer body (sidebar + canvas) ── */
+    #pdf-viewer-body {
+      flex: 1; display: flex; overflow: hidden; min-height: 0;
+    }
+
+    /* Thumbnail sidebar */
+    #pdf-thumb-sidebar {
+      width: 120px; flex-shrink: 0;
+      background: #080a12;
+      border-right: 1px solid var(--glass-border);
+      overflow-y: auto; overflow-x: hidden;
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 12px 0; gap: 10px;
+    }
+    #pdf-thumb-sidebar::-webkit-scrollbar { width: 4px; }
+    #pdf-thumb-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+    .thumb-item {
+      width: 88px; flex-shrink: 0;
+      cursor: pointer;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      position: relative;
+      background: #0d1020;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+    .thumb-item:hover {
+      border-color: rgba(110,231,247,0.35);
+      transform: scale(1.03);
+    }
+    .thumb-item.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 4px 18px rgba(110,231,247,0.25);
+    }
+    .thumb-item canvas {
+      display: block; width: 100%; border-radius: 4px;
+    }
+    .thumb-num {
+      text-align: center; font-size: 10px; font-weight: 600;
+      color: var(--text-dim); padding: 4px 0 5px;
+      letter-spacing: 0.3px;
+    }
+    .thumb-item.active .thumb-num { color: var(--accent); }
+
+    /* Thumbnail skeleton while loading */
+    .thumb-skeleton {
+      width: 88px; height: 114px; border-radius: 6px;
+      background: linear-gradient(90deg, #0d1020 25%, #141828 50%, #0d1020 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Canvas area */
+    #pdf-canvas-wrap {
+      flex: 1; overflow: auto;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 24px 16px; gap: 16px;
+      background: #10121e;
+    }
+
+    .pdf-page-canvas {
+      display: block;
+      border-radius: 6px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+      max-width: 100%;
+    }
+
+    /* Loading overlay inside pdf viewer */
+    #pdf-loading {
+      position: absolute; inset: 0; z-index: 200;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #0a0c14; gap: 16px;
+    }
+    #pdf-loading .loading-text { font-size: 14px; color: var(--text-dim); }
+
+    /* Download password modal */
+    #dl-modal-backdrop {
+      display: none;
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(6,8,16,0.85);
+      backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    #dl-modal-backdrop.active { display: flex; }
+
+    .dl-modal {
+      background: #0d1020;
+      border: 1px solid var(--glass-border);
+      border-radius: 20px; padding: 36px 32px;
+      width: 100%; max-width: 360px;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.6);
+      animation: cardIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    .dl-modal h2 {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #e8eaf6 30%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .dl-modal p { font-size: 13px; color: var(--text-dim); margin-bottom: 22px; }
+    .dl-modal .pwd-form { gap: 12px; }
+    .dl-modal-close {
+      position: absolute; top: 14px; right: 14px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-dim); padding: 6px; border-radius: 8px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .dl-modal-close:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+    .dl-modal-close svg { width: 18px; height: 18px; display: block; }
+    .dl-modal-wrap { position: relative; width: 100%; max-width: 360px; display: flex; justify-content: center; }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE DESIGN & SCREEN-SIZE HANDLING
+    ══════════════════════════════════════════ */
+    /* ── Floating expiry timer (always on top, both auth and PDF views) ── */
+    .timer-badge-float {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent3);
+      background: rgba(6, 8, 16, 0.85);
+      border: 1px solid rgba(244, 114, 182, 0.3);
+      border-radius: 10px;
+      padding: 8px 16px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(244, 114, 182, 0.15);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .timer-badge-float svg { width: 15px; height: 15px; flex-shrink: 0; }
+    .timer-badge-float.expired {
+      color: var(--error);
+      border-color: rgba(248, 113, 113, 0.3);
+      background: rgba(248, 113, 113, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      /* Hide thumbnail preview container entirely on mobile/tablet screens */
+      #pdf-thumb-sidebar {
+        display: none !important;
+      }
+      
+      /* Hide zoom interface elements altogether */
+      #zoom-controls-wrapper {
+        display: none !important;
+      }
+
+      /* Hide long titles to secure space for structural actions */
+      .pdf-title {
+        display: none !important;
+      }
+
+      .pdf-toolbar {
+        padding: 8px 12px;
+      }
+
+      .pdf-toolbar-left {
+        gap: 6px;
+      }
+
+      .nav-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .pdf-page-info {
+        font-size: 11px;
+      }
+
+      .dl-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .card {
+        padding: 32px 24px;
+      }
+
+      .timer-badge {
+        font-size: 12px;
+        padding: 6px 12px;
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Floating expiry timer — always visible regardless of which view is active ── -->
+<div id="link-timer" class="timer-badge-float" style="display: none;">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+  <span id="timer-text">Expires in: --:--:--</span>
+</div>
+
+<div class="bg">
+  <div class="bg-grid"></div>
+  <div class="bg-blob3"></div>
+</div>
+
+<div class="particles" id="particles"></div>
+
+<div class="scene" id="auth-scene">
+  <div class="card">
+
+    <div class="icon-wrap">
+      <div class="icon-ring"></div>
+      <div class="icon-inner">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/>
+        </svg>
+      </div>
+    </div>
+
+    <h1 class="heading">Shared File</h1>
+    <p class="subheading">Secure file access via Vault</p>
+    
+    <div id="status">
+      <div class="loading-wrap">
+        <div class="spinner"></div>
+        <div class="loading-text">Verifying link…</div>
+      </div>
+    </div>
+
+    <div class="card-footer">Protected by <span>VAULT</span> · End-to-end secured</div>
+  </div>
+</div>
+
+<div id="pdf-overlay">
+
+  <div id="pdf-loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading document…</div>
+  </div>
+
+  <div class="pdf-toolbar">
+    <div class="pdf-toolbar-left">
+      <button class="nav-btn" id="btn-prev">‹ Prev</button>
+      <span class="pdf-page-info" id="page-info">Page — / —</span>
+      <button class="nav-btn" id="btn-next">Next ›</button>
+
+      <div class="zoom-group" id="zoom-controls-wrapper">
+        <button class="zoom-btn" id="btn-zoom-out" title="Zoom out">−</button>
+        <span class="zoom-label" id="zoom-label">200%</span>
+        <button class="zoom-btn" id="btn-zoom-in" title="Zoom in">+</button>
+      </div>
+
+      <span class="pdf-title" id="pdf-file-name">Document</span>
+    </div>
+
+    <div class="pdf-toolbar-right">
+      <button class="dl-btn" id="btn-dl">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+        </svg>
+        Download
+      </button>
+    </div>
+  </div>
+
+  <div id="pdf-viewer-body">
+    <div id="pdf-thumb-sidebar"></div>
+    <div id="pdf-canvas-wrap"></div>
+  </div>
+</div>
+
+<div id="dl-modal-backdrop">
+  <div class="dl-modal-wrap">
+    <div class="dl-modal">
+      <button class="dl-modal-close" id="dl-modal-close">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+      <h2>Download File</h2>
+      <p>Enter the download password to save this file.</p>
+      <div class="pwd-form" id="dl-pwd-form">
+        <div>
+          <div class="field-label">Password</div>
+          <div class="field-wrap">
+            <input type="password" id="dl-pwd-input" placeholder="Enter password" autocomplete="current-password" />
+            <button class="toggle-eye" id="dl-eye-btn" title="Show/hide" tabindex="-1">
+              <svg id="dl-eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="err-hint hidden" id="dl-err-hint">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
+            Incorrect password. Try again.
+          </div>
+        </div>
+        <button class="btn-submit" id="dl-submit-btn">Download File</button>
+        <div class="lock-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+          Password required for download
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs" type="module"></script>
+
+<script type="module">
+  async function decryptFile(encryptedData, password) {
+    // FIX: normalize password same as backend normalizePassword()
+    const normalizedPassword = (password || "")
+      .trim()
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+      .normalize("NFKC");
+
+    const buffer = encryptedData;
+
+    // Read settings header — exactly matches index.html openSecureFile format
+    const settingsLength = new Uint32Array(buffer.slice(0, 4))[0];
+    const settingsBytes  = buffer.slice(4, 4 + settingsLength);
+    const settings       = JSON.parse(new TextDecoder().decode(settingsBytes));
+
+    const saltStart = 4 + settingsLength;
+    const saltEnd   = saltStart + 16;
+    const ivStart   = saltEnd;
+    const ivEnd     = ivStart + 12;
+
+    const salt      = buffer.slice(saltStart, saltEnd);
+    const iv        = buffer.slice(ivStart, ivEnd);
+    const encrypted = buffer.slice(ivEnd);
+
+    // sha256Bytes equivalent — returns Uint8Array, same as index.html
+    const passwordHash = new Uint8Array(
+      await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalizedPassword))
+    );
+
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', passwordHash, 'PBKDF2', false, ['deriveKey']
+    );
+
+    const key = await crypto.subtle.deriveKey(
+      {
+        name:       'PBKDF2',
+        salt:       new Uint8Array(salt),
+        iterations: settings.iterations,
+        hash:       settings.hash
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+
+    return await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: new Uint8Array(iv) },
+      key,
+      encrypted
+    );
+  }
+  // ── import pdf.js ──
+  import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.mjs';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.mjs';
+
+  // ── Particles ──
+  (function() {
+    const container = document.getElementById('particles');
+    const colors = ['#6ee7f7','#a78bfa','#f472b6','#4ade80'];
+    for (let i = 0; i < 22; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 3 + 1;
+      p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;bottom:${Math.random()*-20}%;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${8+Math.random()*14}s;animation-delay:${Math.random()*10}s;filter:blur(${Math.random()>0.5?'1px':'0'});opacity:0;`;
+      container.appendChild(p);
+    }
+  })();
+
+  // ── Helpers ──
+  const statusEl  = () => document.getElementById('status');
+  const iconExpired = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>`;
+  const iconBan   = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>`;
+
+  function setStatus(html) {
+    const el = statusEl();
+    el.style.animation = 'none';
+    el.innerHTML = html;
+    el.offsetHeight;
+    el.style.animation = 'fadeUp 0.4s cubic-bezier(0.22,1,0.36,1)';
+  }
+  function showError(icon, message) {
+    setStatus(`<div class="msg error">${icon}<span>${message}</span></div>`);
+  }
+
+  // Helper to accurately check for desktop/laptop clients
+  // Helper to accurately check for desktop/laptop clients
+  function isDesktopDevice() {
+    const ua = navigator.userAgent.toLowerCase();
+    const hasTouch = navigator.maxTouchPoints > 1 || 'ontouchstart' in window;
+    const matchMobileUA = /mobile|android|iphone|ipad|phone|playbook|tablet|kindle/i.test(ua);
+    
+    // If it has a mobile user agent, it's not a desktop/laptop PC
+    if (matchMobileUA) return false;
+    
+    // If it doesn't match mobile UAs, it's a desktop/laptop (even if it has a touchscreen)
+    return true;
+  }
+
+// ── State ──
+  let resolvedData  = null;
+  let pdfDoc        = null;
+  let currentPage   = 1;
+  let zoomLevel     = 2.0;   // Initial scale default at 200%
+  const ZOOM_MIN    = 0.5;   // 50%
+  const ZOOM_MAX    = 2.0;  // Changed from 4.0 to 10.0 for deep microscopic zoom (1000%)
+  const ZOOM_STEP   = 0.25;  // Step increments
+
+  // ── PDF viewer controls ──
+  const overlay      = document.getElementById('pdf-overlay');
+  const canvasWrap   = document.getElementById('pdf-canvas-wrap');
+  const thumbSidebar = document.getElementById('pdf-thumb-sidebar');
+  const pageInfo     = document.getElementById('page-info');
+  const zoomLabel    = document.getElementById('zoom-label');
+  const btnPrev      = document.getElementById('btn-prev');
+  const btnNext      = document.getElementById('btn-next');
+  const btnZoomIn    = document.getElementById('btn-zoom-in');
+  const btnZoomOut   = document.getElementById('btn-zoom-out');
+  const btnDl        = document.getElementById('btn-dl');
+
+  // ── Thumbnail sidebar ──
+  function buildThumbSkeletons(count) {
+    // Only build skeletons if running on a standard computer client environment
+    if (!isDesktopDevice()) return;
+    thumbSidebar.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const wrap = document.createElement('div');
+      wrap.className = 'thumb-item';
+      wrap.dataset.page = i + 1;
+      const skel = document.createElement('div');
+      skel.className = 'thumb-skeleton';
+      const num = document.createElement('div');
+      num.className = 'thumb-num';
+      num.textContent = i + 1;
+      wrap.appendChild(skel);
+      wrap.appendChild(num);
+      thumbSidebar.appendChild(wrap);
+    }
+  }
+
+  async function renderThumb(pageNum) {
+    // Suppress processing thumbnails altogether on mobile/tablets
+    if (!isDesktopDevice()) return;
+    const page     = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 0.18 });
+    const canvas   = document.createElement('canvas');
+    canvas.width   = viewport.width;
+    canvas.height  = viewport.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const item = thumbSidebar.querySelector(`.thumb-item[data-page="${pageNum}"]`);
+    if (!item) return;
+    const skel = item.querySelector('.thumb-skeleton');
+    if (skel) skel.replaceWith(canvas);
+    item.addEventListener('click', () => {
+      currentPage = pageNum;
+      scrollToPage(pageNum);
+      updateUI();
+      setActiveThumb(pageNum);
+    });
+  }
+
+  async function renderAllThumbs() {
+    if (!isDesktopDevice()) return;
+    buildThumbSkeletons(pdfDoc.numPages);
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+      await renderThumb(i);
+    }
+    setActiveThumb(1);
+  }
+
+  function setActiveThumb(pageNum) {
+    if (!isDesktopDevice()) return;
+    thumbSidebar.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+    const active = thumbSidebar.querySelector(`.thumb-item[data-page="${pageNum}"]`);
+    if (active) {
+      active.classList.add('active');
+      active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  // ── Render a single page into a canvas ──
+  async function renderPage(pageNum) {
+    const page = await pdfDoc.getPage(pageNum);
+    
+    // High-DPI Clarity Logic: Multiplies viewport backing store based on monitor resolution ratios
+    const outputScale = window.devicePixelRatio || 1;
+    
+    // Force logical adaptive scale adjustment on non-desktop viewports
+    let operationalZoom = zoomLevel;
+    if (!isDesktopDevice()) {
+      const viewportStandard = page.getViewport({ scale: 1.0 });
+      const clientWidthWidth = canvasWrap.clientWidth - 32; // Accommodate standard structural padding
+      operationalZoom = clientWidthWidth / viewportStandard.width;
+    }
+
+    const viewport = page.getViewport({ scale: operationalZoom });
+
+    let canvas = canvasWrap.querySelector(`canvas[data-page="${pageNum}"]`);
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.className = 'pdf-page-canvas';
+      canvas.dataset.page = pageNum;
+      canvasWrap.appendChild(canvas);
+    }
+    
+    // Upsample inner canvas pixels to avoid blurriness
+    canvas.width  = Math.floor(viewport.width * outputScale);
+    canvas.height = Math.floor(viewport.height * outputScale);
+    
+    // Constrain standard CSS layer sizes to match intended standard sizes
+    canvas.style.width = Math.floor(viewport.width) + "px";
+    canvas.style.height = Math.floor(viewport.height) + "px";
+
+    const ctx = canvas.getContext('2d');
+    ctx.transform(outputScale, 0, 0, outputScale, 0, 0); // Scale the context path matrices
+    
+    await page.render({ canvasContext: ctx, viewport }).promise;
+  }
+
+  // ── Render all pages ──
+  async function renderAllPages() {
+    canvasWrap.innerHTML = '';
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+      await renderPage(i);
+    }
+  }
+
+  function updateUI() {
+    pageInfo.textContent = `Page ${currentPage} / ${pdfDoc.numPages}`;
+    btnPrev.disabled = currentPage <= 1;
+    btnNext.disabled = currentPage >= pdfDoc.numPages;
+    zoomLabel.textContent = Math.round(zoomLevel * 100) + '%';
+    
+    // ── Enforce device-specific zoom visibility ──
+    if (!isDesktopDevice()) {
+      // Hard disable for mobile phones and tablets
+      btnZoomIn.disabled = true;
+      btnZoomOut.disabled = true;
+      btnZoomIn.style.opacity = "0.3";
+      btnZoomOut.style.opacity = "0.3";
+      btnZoomIn.style.cursor = "not-allowed";
+      btnZoomOut.style.cursor = "not-allowed";
+      zoomLabel.style.opacity = "0.5";
+    } else {
+      // Standard functional boundaries for PCs and Laptops
+      btnZoomIn.disabled  = zoomLevel >= ZOOM_MAX;
+      btnZoomOut.disabled = zoomLevel <= ZOOM_MIN;
+      btnZoomIn.style.opacity = "";
+      btnZoomOut.style.opacity = "";
+      btnZoomIn.style.cursor = "";
+      btnZoomOut.style.cursor = "";
+      zoomLabel.style.opacity = "";
+    }
+    
+    setActiveThumb(currentPage);
+  }
+
+  function scrollToPage(n) {
+    const c = canvasWrap.querySelector(`canvas[data-page="${n}"]`);
+    if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  btnPrev.addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; scrollToPage(currentPage); updateUI(); }
+  });
+  btnNext.addEventListener('click', () => {
+    if (currentPage < pdfDoc.numPages) { currentPage++; scrollToPage(currentPage); updateUI(); }
+  });
+
+  // Track current page via scroll
+  canvasWrap.addEventListener('scroll', () => {
+    const canvases = canvasWrap.querySelectorAll('canvas[data-page]');
+    let closest = 1, minDist = Infinity;
+    canvases.forEach(c => {
+      const rect = c.getBoundingClientRect();
+      const wrapRect = canvasWrap.getBoundingClientRect();
+      const dist = Math.abs(rect.top - wrapRect.top);
+      if (dist < minDist) { minDist = dist; closest = +c.dataset.page; }
+    });
+    if (closest !== currentPage) { currentPage = closest; updateUI(); }
+  });
+
+  btnZoomIn.addEventListener('click', async () => {
+    // Block action if not a PC/Laptop or if maximum zoom is reached
+    if (!isDesktopDevice() || zoomLevel >= ZOOM_MAX) return;
+    
+    zoomLevel = Math.min(ZOOM_MAX, +(zoomLevel + ZOOM_STEP).toFixed(2));
+    updateUI();
+    await renderAllPages();
+    scrollToPage(currentPage);
+  });
+
+  btnZoomOut.addEventListener('click', async () => {
+    // Block action if not a PC/Laptop or if minimum zoom is reached
+    if (!isDesktopDevice() || zoomLevel <= ZOOM_MIN) return;
+    
+    zoomLevel = Math.max(ZOOM_MIN, +(zoomLevel - ZOOM_STEP).toFixed(2));
+    updateUI();
+    await renderAllPages();
+    scrollToPage(currentPage);
+  });
+
+  // Re-adjust page widths correctly if a mobile device flips rotation status
+  window.addEventListener('resize', () => {
+    if (!isDesktopDevice() && pdfDoc) {
+      renderAllPages();
+    }
+  });
+
+  // ── Block right-click on canvas wrap (prevent save-as) ──
+  canvasWrap.addEventListener('contextmenu', e => e.preventDefault());
+
+  // ── SHA-256 helper (must be defined before any function that uses it) ──
+  window.sha256 = async function(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  };
+
+  // ── Get a session token using the vaultKey embedded in the share token ──
+  async function getShareSessionToken(vaultKey) {
+    try {
+      const normalized = (vaultKey || "")
+        .trim()
+        .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+        .normalize("NFKC");
+      const hash = await window.sha256(normalized);
+      const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-secret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hash })
+      });
+      const data = await res.json();
+      return data.sessionToken || '';
+    } catch (e) {
+      console.error('getShareSessionToken failed:', e);
+      return '';
+    }
+  }
+
+  // ── Show PDF ──
+  async function showPDF(data) {
+    const fileUrl = 'https://lively-star-38ef.shinumaths989.workers.dev/docs/' + data.file;
+
+    // Switch to overlay
+    document.getElementById('auth-scene').style.display = 'none';
+    overlay.classList.add('active');
+    document.getElementById('pdf-file-name').textContent = data.name || data.file;
+
+    try {
+      // FIX: get a real session token using the vaultKey from the share token
+      const sessionToken = await getShareSessionToken(data.vaultKey);
+      const res = await fetch(fileUrl, {
+        headers: { 'Authorization': 'Bearer ' + sessionToken }
+      });
+      if (!res.ok) throw new Error('Fetch failed');
+      const encrypted = await res.arrayBuffer();
+
+      // Decrypt using vault key embedded in share token
+      const decrypted = await decryptFile(encrypted, data.vaultKey);
+
+      pdfDoc = await pdfjsLib.getDocument({ data: decrypted }).promise;
+
+      await renderAllPages();
+      document.getElementById('pdf-loading').style.display = 'none';
+      updateUI();
+      renderAllThumbs(); // build thumbnails in background (non-blocking)
+    } catch (err) {
+      console.error(err);
+      overlay.classList.remove('active');
+      document.getElementById('auth-scene').style.display = '';
+      showError(iconBan, 'Could not load file. Please try again.');
+    }
+  }
+
+  // ── Download modal ──
+  const dlModal   = document.getElementById('dl-modal-backdrop');
+  const dlInput   = document.getElementById('dl-pwd-input');
+  const dlErrHint = document.getElementById('dl-err-hint');
+  const dlSubmit  = document.getElementById('dl-submit-btn');
+  const dlClose   = document.getElementById('dl-modal-close');
+  const dlEyeBtn  = document.getElementById('dl-eye-btn');
+
+  btnDl.addEventListener('click', () => {
+    dlInput.value = '';
+    dlErrHint.classList.add('hidden');
+    dlModal.classList.add('active');
+    setTimeout(() => dlInput.focus(), 50);
+  });
+  dlClose.addEventListener('click', () => dlModal.classList.remove('active'));
+  dlModal.addEventListener('click', e => { if (e.target === dlModal) dlModal.classList.remove('active'); });
+
+  dlEyeBtn.addEventListener('click', () => {
+    const shown = dlInput.type === 'text';
+    dlInput.type = shown ? 'password' : 'text';
+    document.getElementById('dl-eye-icon').innerHTML = shown
+      ? `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>`
+      : `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>`;
+  });
+
+async function attemptDownload() {
+  const enteredPassword = dlInput.value.trim();
+  const enteredHash = await window.sha256(enteredPassword);
+
+  const verifyRes = await fetch(
+    'https://lively-star-38ef.shinumaths989.workers.dev/get-secret',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hash: enteredHash })
+    }
+  );
+
+  const verifyData = await verifyRes.json();
+
+  if (verifyData.success) {
+    dlSubmit.textContent = 'Downloading…';
+    dlSubmit.classList.add('loading');
+
+    try {
+      const fileUrl = 'https://lively-star-38ef.shinumaths989.workers.dev/docs/' + resolvedData.file;
+      // FIX: get session token using vaultKey from the share token
+      const dlSessionToken = await getShareSessionToken(resolvedData.vaultKey);
+      const res = await fetch(fileUrl, {
+        headers: { 'Authorization': 'Bearer ' + dlSessionToken }
+      });
+      if (!res.ok) throw new Error('Fetch failed');
+
+      const encrypted = await res.arrayBuffer();
+      const decrypted = await decryptFile(encrypted, resolvedData.vaultKey);
+      const blob = new Blob([decrypted], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+
+      a.href = url;
+      a.download = resolvedData.name || resolvedData.file.replace('.enc', '.pdf');
+
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      URL.revokeObjectURL(url);
+      dlModal.classList.remove('active');
+    } catch (e) {
+      console.error(e);
+      dlErrHint.textContent = 'Download failed. Try again.';
+      dlErrHint.classList.remove('hidden');
+    }
+
+    dlSubmit.textContent = 'Download File';
+    dlSubmit.classList.remove('loading');
+  } else {
+    dlErrHint.textContent = 'Incorrect password. Try again.';
+    dlErrHint.classList.remove('hidden');
+    dlInput.classList.add('shake');
+    dlInput.value = '';
+    dlInput.focus();
+
+    setTimeout(() => { dlInput.classList.remove('shake'); }, 450);
+  }
+}
+
+  dlSubmit.addEventListener('click', attemptDownload);
+  dlInput.addEventListener('keydown', e => { if (e.key === 'Enter') attemptDownload(); });
+  dlInput.addEventListener('input', () => dlErrHint.classList.add('hidden'));
+
+  // ── Vault key prompt (when share token has no vaultKey embedded) ──
+  function showVaultKeyPrompt() {
+    setStatus(`
+      <div class="pwd-form" id="vault-form">
+        <div>
+          <div class="field-label">Vault Password</div>
+          <div class="field-wrap">
+            <input type="password" id="vault-input" placeholder="Enter your vault password" autocomplete="current-password" />
+            <button class="toggle-eye" id="vault-eye-btn" title="Show/hide password" tabindex="-1">
+              <svg id="vault-eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="err-hint hidden" id="vault-err-hint">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
+            Incorrect password. Try again.
+          </div>
+        </div>
+        <button class="btn-submit" id="vault-submit-btn">Open File</button>
+        <div class="lock-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+          Enter vault password to access this file
+        </div>
+      </div>
+    `);
+
+    const input   = document.getElementById('vault-input');
+    const btn     = document.getElementById('vault-submit-btn');
+    const errHint = document.getElementById('vault-err-hint');
+    const eyeBtn  = document.getElementById('vault-eye-btn');
+    input.focus();
+
+    eyeBtn.addEventListener('click', () => {
+      const shown = input.type === 'text';
+      input.type = shown ? 'password' : 'text';
+      document.getElementById('vault-eye-icon').innerHTML = shown
+        ? `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>`
+        : `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>`;
+    });
+
+    async function attemptVault() {
+      const enteredKey = input.value;
+      if (!enteredKey) return;
+
+      btn.textContent = 'Verifying…';
+      btn.classList.add('loading');
+
+      try {
+        // Try to get a session token using the entered password as the vaultKey.
+        // If /get-secret returns a sessionToken, the password is correct.
+        const normalized = enteredKey.trim()
+          .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+          .normalize("NFKC");
+        const hash = await window.sha256(normalized);
+        const res = await fetch('https://lively-star-38ef.shinumaths989.workers.dev/get-secret', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hash })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.sessionToken) {
+          // Correct vault password — inject it and proceed
+          resolvedData.vaultKey = enteredKey;
+          await showPDF(resolvedData);
+        } else {
+          throw new Error('Invalid vault key');
+        }
+      } catch (e) {
+        btn.textContent = 'Open File';
+        btn.classList.remove('loading');
+        errHint.classList.remove('hidden');
+        input.classList.add('shake');
+        input.value = '';
+        input.focus();
+        setTimeout(() => input.classList.remove('shake'), 450);
+      }
+    }
+
+    btn.addEventListener('click', attemptVault);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') attemptVault(); });
+    input.addEventListener('input', () => errHint.classList.add('hidden'));
+  }
+
+  // ── Password prompt (for link-level password) ──
+  function showPasswordPrompt() {
+    setStatus(`
+      <div class="pwd-form" id="pwd-form">
+        <div>
+          <div class="field-label">Password</div>
+          <div class="field-wrap">
+            <input type="password" id="pwd-input" placeholder="Enter password" autocomplete="current-password" />
+            <button class="toggle-eye" id="eye-btn" title="Show/hide password" tabindex="-1">
+              <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="err-hint hidden" id="err-hint">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"/></svg>
+            Incorrect password. Try again.
+          </div>
+        </div>
+        <button class="btn-submit" id="submit-btn">Unlock File</button>
+        <div class="lock-badge">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+          Password protected file
+        </div>
+      </div>
+    `);
+
+    const input   = document.getElementById('pwd-input');
+    const btn     = document.getElementById('submit-btn');
+    const errHint = document.getElementById('err-hint');
+    const eyeBtn  = document.getElementById('eye-btn');
+    input.focus();
+
+    eyeBtn.addEventListener('click', () => {
+      const shown = input.type === 'text';
+      input.type = shown ? 'password' : 'text';
+      document.getElementById('eye-icon').innerHTML = shown
+        ? `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>`
+        : `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>`;
+    });
+
+    async function attempt() {
+      if (await window.sha256(input.value) === resolvedData.pwd || input.value === resolvedData.pwd) {
+        btn.textContent = 'Unlocking…';
+        btn.classList.add('loading');
+        await showPDF(resolvedData);
+      } else {
+        errHint.classList.remove('hidden');
+        input.classList.add('shake');
+        input.value = '';
+        input.focus();
+        setTimeout(() => input.classList.remove('shake'), 450);
+      }
+    }
+
+    btn.addEventListener('click', attempt);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') attempt(); });
+    input.addEventListener('input', () => errHint.classList.add('hidden'));
+  }
+
+  // ── Realtime Countdown Setup ──
+  function initializeExpiryTimer(expiryTimestamp) {
+    const timerContainer = document.getElementById('link-timer');
+    const timerText = document.getElementById('timer-text');
+    
+    if (!expiryTimestamp) return;
+    timerContainer.style.display = 'flex';
+
+    function updateCountdown() {
+      const now = Date.now();
+      const timeLeft = expiryTimestamp - now;
+
+      if (timeLeft <= 0) {
+        timerText.textContent = "Link Expired";
+        timerContainer.classList.add('expired');
+        showError(iconExpired, 'This share link has expired.');
+        if(pdfDoc) {
+           document.getElementById('pdf-overlay').classList.remove('active');
+           document.getElementById('auth-scene').style.display = '';
+        }
+        clearInterval(timerInterval);
+        return;
+      }
+
+      // Convert time metric configurations
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+      // Pad zero configurations dynamically
+      const hDisplay = String(hours).padStart(2, '0');
+      const mDisplay = String(minutes).padStart(2, '0');
+      const sDisplay = String(seconds).padStart(2, '0');
+
+      timerText.textContent = `Expires in: ${hDisplay}h ${mDisplay}m ${sDisplay}s`;
+    }
+
+    updateCountdown();
+    const timerInterval = setInterval(updateCountdown, 1000);
+  }
+
+  // ── Decode token: supports both JWT (backend) and plain btoa-JSON (fallback) ──
+  function decodeShareToken(token) {
+    // Try JWT format first: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      try {
+        // JWT payload is base64url encoded — convert to standard base64
+        const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const padded = b64 + '=='.slice(0, (4 - b64.length % 4) % 4);
+        return JSON.parse(atob(padded));
+      } catch (e) { /* not a valid JWT, fall through */ }
+    }
+    // Try plain btoa(JSON.stringify(...)) fallback token
+    return JSON.parse(atob(token));
+  }
+
+  // ── Init ──
+  async function init() {
+    const params = new URLSearchParams(location.search);
+    const token  = params.get('t');
+
+    if (!token) { showError(iconBan, 'Missing or invalid share token.'); return; }
+
+    try {
+      const data = decodeShareToken(token);
+
+      // exp field: backend JWTs use seconds, fallback tokens use milliseconds
+      let expMs = null;
+      if (data.exp) {
+        // If exp looks like a Unix timestamp in seconds (< year 3000 in ms), convert
+        expMs = data.exp < 1e12 ? data.exp * 1000 : data.exp;
+        initializeExpiryTimer(expMs);
+        if (Date.now() > expMs) {
+          showError(iconExpired, 'This share link has expired.');
+          return;
+        }
+      }
+
+      // Backend tokens may use different field names — normalize them
+      const normalized = {
+        file:     data.file     || data.f,
+        name:     data.name     || data.n || data.file,
+        vaultKey: data.vaultKey || data.vk || data.key,
+        pwd:      data.pwd      || data.password || null,
+        exp:      expMs,
+      };
+
+      if (!normalized.file) {
+        showError(iconBan, 'Invalid share token: missing file reference.');
+        return;
+      }
+
+      resolvedData = normalized;
+
+      if (!normalized.vaultKey) {
+        // Token was generated without a vaultKey (masterPassword was undefined at share time).
+        // Ask the recipient to enter the vault password to authenticate + decrypt.
+        showVaultKeyPrompt();
+      } else if (normalized.pwd) {
+        showPasswordPrompt();
+      } else {
+        await showPDF(normalized);
+      }
+    } catch (err) {
+      console.error(err);
+      showError(iconBan, 'Invalid share link. Please request a new one.');
+    }
+  }
+
+  init();
+</script>
+
+</body>
+</html>

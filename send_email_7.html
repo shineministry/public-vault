@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shine Ministry Email Dispatcher</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 40px 20px; background-color: #f4f6f9; display: flex; justify-content: center; }
+        .container { max-width: 500px; width: 100%; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h2 { color: #333; margin-top: 0; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; color: #444; font-size: 14px; }
+        .hint { font-weight: 400; color: #888; font-size: 12px; margin-top: 4px; }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccd1d9;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: #fcfdfd;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+            box-sizing: border-box;
+        }
+        #recipientCount { font-size: 12px; color: #0070f3; margin-top: 6px; font-weight: 600; }
+        button { background-color: #0070f3; color: white; border: none; padding: 14px 20px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; margin-top: 10px; }
+        button:disabled { background-color: #a0c0f0; cursor: not-allowed; }
+        #status { margin-top: 20px; font-weight: 600; text-align: left; font-size: 14px; padding: 15px; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Ministry Email Dispatch</h2>
+
+    <div class="input-group">
+        <label for="emailsInput">Recipients:</label>
+        <textarea id="emailsInput" placeholder="Type any number of emails, separated by commas or new lines&#10;e.g.&#10;name1@example.com&#10;name2@example.com, name3@example.com"></textarea>
+        <div class="hint">Separate multiple emails with a comma or a new line. Optional name format: Name &lt;email@example.com&gt;</div>
+        <div id="recipientCount">0 recipients</div>
+    </div>
+
+    <button id="sendBtn" onclick="sendViaWorker()">Launch Email Campaign</button>
+    <div id="status" style="display: none;"></div>
+</div>
+
+<script>
+const emailsInput = document.getElementById('emailsInput');
+const recipientCount = document.getElementById('recipientCount');
+
+// Parses free-form text into a list of {email, name} objects.
+// Accepts: plain emails, comma-separated, newline-separated,
+// and "Name <email@example.com>" format.
+function parseRecipients(raw) {
+    const tokens = raw
+        .split(/[,\n]/)
+        .map(t => t.trim())
+        .filter(t => t.length > 0);
+
+    const recipients = [];
+    const seen = new Set();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    for (const token of tokens) {
+        let name = "";
+        let email = token;
+
+        const angleMatch = token.match(/^(.*)<([^>]+)>$/);
+        if (angleMatch) {
+            name = angleMatch[1].trim();
+            email = angleMatch[2].trim();
+        }
+
+        if (!emailRegex.test(email)) continue;
+        const key = email.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        recipients.push({ email: email, name: name || email });
+    }
+    return recipients;
+}
+
+function updateRecipientCount() {
+    const count = parseRecipients(emailsInput.value).length;
+    recipientCount.textContent = count + (count === 1 ? " recipient" : " recipients");
+}
+emailsInput.addEventListener('input', updateRecipientCount);
+
+async function sendViaWorker() {
+    const statusDiv = document.getElementById('status');
+    const btn = document.getElementById('sendBtn');
+    const WORKER_URL = "https://email.shinumaths989.workers.dev";
+
+    const recipients = parseRecipients(emailsInput.value);
+
+    statusDiv.style.display = "block";
+
+    if (recipients.length === 0) {
+        statusDiv.innerText = "Please enter at least one valid email address.";
+        statusDiv.style.color = "#d9534f";
+        statusDiv.style.backgroundColor = "#fdf7f7";
+        return;
+    }
+
+    statusDiv.innerText = "Connecting to worker...";
+    statusDiv.style.color = "#0070f3";
+    statusDiv.style.backgroundColor = "#f0f7ff";
+    btn.disabled = true;
+
+    const payload = { recipients: recipients };
+
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            statusDiv.innerText = "Success! Emails dispatched.\n\nAPI Response Details:\n" + JSON.stringify(result, null, 2);
+            statusDiv.style.color = "#2b542c";
+            statusDiv.style.backgroundColor = "#e9f7ef";
+        } else {
+            statusDiv.innerText = `Worker Error Status: ${response.status}\n\nServer Message:\n` + JSON.stringify(result, null, 2);
+            statusDiv.style.color = "#d9534f";
+            statusDiv.style.backgroundColor = "#fdf7f7";
+        }
+    } catch (err) {
+        statusDiv.innerText = "Network Blocked / CORS Error:\nThe browser blocked the request before hitting the worker. Verify that your Cloudflare worker is deployed correctly and your computer has an active internet connection.\n\nDetails: " + err.message;
+        statusDiv.style.color = "#d9534f";
+        statusDiv.style.backgroundColor = "#fdf7f7";
+    } finally {
+        btn.disabled = false;
+    }
+}
+</script>
+
+</body>
+</html>
